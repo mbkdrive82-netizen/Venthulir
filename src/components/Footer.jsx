@@ -643,19 +643,40 @@ export default function Footer() {
               <rect x="15" y="48" width="193" height="6" fill="url(#cleanEmeraldStripe)" />
               <rect x="15" y="45" width="193" height="2.5" fill="url(#cleanGoldTrim)" />
 
-              {/* 🌟 VENTHULIR Clean Luxury Branding (Strictly inside Cargo Box) */}
-              <g transform="translate(18, 18)">
+              {/* 🌟 VENTHULIR Clean Luxury Branding (Strictly Constrained inside Cargo Box) */}
+              <g transform="translate(20, 16)">
                 {/* Brand Emblem */}
-                <circle cx="14" cy="13" r="10" fill="#0F3D2A" stroke="#C59B27" strokeWidth="1.2" />
-                <path d="M 14 7 C 10 11 10 16 14 19 C 18 16 18 11 14 7 Z" fill="#F4DA90" />
+                <circle cx="12" cy="14" r="9.5" fill="#0F3D2A" stroke="#C59B27" strokeWidth="1.2" />
+                <path d="M 12 8 C 8.5 12 8.5 16 12 19 C 15.5 16 15.5 12 12 8 Z" fill="#F4DA90" />
                 
-                {/* Brand Name */}
-                <text x="30" y="12" fill="#0F3D2A" fontSize="11" fontWeight="900" fontFamily="'Cinzel', Georgia, serif" letterSpacing="0.8">
+                {/* Brand Name (Strictly bounded to 58px max) */}
+                <text 
+                  x="28" 
+                  y="13" 
+                  fill="#0F3D2A" 
+                  fontSize="11" 
+                  fontWeight="900" 
+                  fontFamily="'Cinzel', Georgia, serif" 
+                  letterSpacing="0.8"
+                  textLength="58"
+                  lengthAdjust="spacingAndGlyphs"
+                >
                   VENTHULIR
                 </text>
-                {/* Tagline */}
-                <text x="30" y="21" fill="#8C5815" fontSize="5.2" fontWeight="800" fontFamily="sans-serif" letterSpacing="0.4">
-                  100% PURE WOOD COLD-PRESSED
+                
+                {/* Crisp Tagline (Strictly bounded to 54px max, 40px away from driver) */}
+                <text 
+                  x="28" 
+                  y="22" 
+                  fill="#8C5815" 
+                  fontSize="6" 
+                  fontWeight="800" 
+                  fontFamily="sans-serif" 
+                  letterSpacing="0.6"
+                  textLength="54"
+                  lengthAdjust="spacingAndGlyphs"
+                >
+                  COLD-PRESSED
                 </text>
               </g>
 
