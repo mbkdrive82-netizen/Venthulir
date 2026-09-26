@@ -599,12 +599,6 @@ a.contact-item:hover {
     transparent 56px
   );
   background-size: 56px 3px;
-  animation: moveRoadDashes 0.6s linear infinite;
-}
-
-@keyframes moveRoadDashes {
-  0% { background-position-x: 0; }
-  100% { background-position-x: -56px; }
 }
 
 /* ─────────────────────────────────────────────────────────────
