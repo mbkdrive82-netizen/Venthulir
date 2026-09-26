@@ -643,15 +643,18 @@ export default function Footer() {
               <rect x="15" y="48" width="193" height="6" fill="url(#cleanEmeraldStripe)" />
               <rect x="15" y="45" width="193" height="2.5" fill="url(#cleanGoldTrim)" />
 
-              {/* 🌟 VENTHULIR Clean Luxury Branding */}
-              <g transform="translate(26, 20)">
-                <circle cx="14" cy="11" r="10.5" fill="#0F3D2A" stroke="#C59B27" strokeWidth="1.2" />
-                <path d="M 14 5 C 10 9 10 15 14 17 C 18 15 18 9 14 5 Z" fill="#F4DA90" />
+              {/* 🌟 VENTHULIR Clean Luxury Branding (Strictly inside Cargo Box) */}
+              <g transform="translate(18, 18)">
+                {/* Brand Emblem */}
+                <circle cx="14" cy="13" r="10" fill="#0F3D2A" stroke="#C59B27" strokeWidth="1.2" />
+                <path d="M 14 7 C 10 11 10 16 14 19 C 18 16 18 11 14 7 Z" fill="#F4DA90" />
                 
-                <text x="32" y="12" fill="#0F3D2A" fontSize="13" fontWeight="950" fontFamily="'Cinzel', Georgia, serif" letterSpacing="1.5">
+                {/* Brand Name */}
+                <text x="30" y="12" fill="#0F3D2A" fontSize="11" fontWeight="900" fontFamily="'Cinzel', Georgia, serif" letterSpacing="0.8">
                   VENTHULIR
                 </text>
-                <text x="32" y="21" fill="#8C5815" fontSize="6.2" fontWeight="850" fontFamily="sans-serif" letterSpacing="0.8">
+                {/* Tagline */}
+                <text x="30" y="21" fill="#8C5815" fontSize="5.2" fontWeight="800" fontFamily="sans-serif" letterSpacing="0.4">
                   100% PURE WOOD COLD-PRESSED
                 </text>
               </g>
