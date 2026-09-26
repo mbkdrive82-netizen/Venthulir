@@ -305,11 +305,11 @@
   cursor: pointer;
 }
 
-/* ── Primary Button (Modern Charcoal Black #222222) ── */
+/* ── Primary Button (Brand Forest Green #1B5E2F & White Text) ── */
 .luxury-btn-primary {
-  background: #1B5E2F;
-  color: #ffffff;
-  border: 1px solid #1B5E2F;
+  background: #1B5E2F !important;
+  color: #ffffff !important;
+  border: 1px solid #1B5E2F !important;
   border-radius: 6px;
   padding: 12px 20px;
   font-size: 14.5px;
@@ -321,15 +321,15 @@
   gap: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: none;
+  box-shadow: 0 2px 8px rgba(27, 94, 47, 0.2);
   margin-top: 4px;
   font-family: inherit;
 }
 
 .luxury-btn-primary:hover {
-  background: #000000;
-  border-color: #000000;
-  color: #ffffff;
+  background: #134522 !important;
+  border-color: #134522 !important;
+  color: #ffffff !important;
 }
 
 .luxury-btn-primary:disabled {

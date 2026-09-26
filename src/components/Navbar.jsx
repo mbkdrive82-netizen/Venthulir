@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useUIModal } from '@/components/Providers';
-import { INITIAL_PRODUCTS } from '@/data/products';
 import { 
   ShoppingBag, 
   Menu, 
@@ -65,7 +64,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const [categoryDropOpen, setCategoryDropOpen] = useState(false);
-  const [catalog, setCatalog] = useState(INITIAL_PRODUCTS);
+  const [catalog, setCatalog] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
@@ -84,7 +83,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
     fetch('/api/products?limit=100', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
-        if (data && Array.isArray(data.products) && data.products.length > 0) {
+        if (data && Array.isArray(data.products)) {
           setCatalog(data.products);
         }
       })
@@ -279,7 +278,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
               <Search size={16} className="search-lead-icon" />
               <input
                 type="text"
-                placeholder="Search turmeric, cold-pressed oils, sambar masala..."
+                placeholder="Search spices, oils, masalas..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Product from '@/models/Product';
 import { requireAdmin, verifyToken } from '@/lib/auth';
-import { INITIAL_PRODUCTS } from '@/data/products';
 import { cache, invalidateProductCache } from '@/lib/cache';
 
 const PUBLIC_PROJECTION = 'name slug productCode price originalPrice discountPercent category badge imageUrl images currentStock variants rating reviewsCount createdAt';
@@ -17,7 +16,7 @@ export async function GET(request) {
     const isAdminQuery = searchParams.get('admin') === 'true';
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '100', 10)));
-    const noCache = searchParams.get('nocache') === 'true';
+    const noCache = searchParams.get('nocache') === 'true' || searchParams.has('t');
 
     // Check if user is authenticated admin or requested admin mode
     let userIsAdmin = false;
@@ -55,21 +54,19 @@ export async function GET(request) {
       if (category && category !== 'All' && category !== 'all') {
         const catClean = category.trim();
         const catLower = catClean.toLowerCase();
+        const escapeRegex = catClean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        query.$or = [
+          { category: { $regex: new RegExp(`^${escapeRegex}$`, 'i') } },
+          { category: { $regex: new RegExp(escapeRegex, 'i') } }
+        ];
 
         if (catLower.includes('spice')) {
-          query.category = { $regex: /spice/i };
+          query.$or.push({ category: { $regex: /spice/i } }, { name: { $regex: /spice|powder/i } });
         } else if (catLower.includes('oil')) {
-          query.category = { $regex: /oil/i };
+          query.$or.push({ category: { $regex: /oil/i } }, { name: { $regex: /oil/i } });
         } else if (catLower.includes('masala')) {
-          query.category = { $regex: /masala/i };
-        } else if (catLower.includes('grain') || catLower.includes('rice')) {
-          query.category = { $regex: /grain|rice|millet/i };
-        } else if (catLower.includes('sweet') || catLower.includes('sugar') || catLower.includes('jaggery')) {
-          query.category = { $regex: /sweet|sugar|jaggery|honey/i };
-        } else if (catLower.includes('herb')) {
-          query.category = { $regex: /herb/i };
-        } else {
-          query.category = { $regex: new RegExp(catClean, 'i') };
+          query.$or.push({ category: { $regex: /masala/i } }, { name: { $regex: /masala/i } });
         }
       }
 
@@ -160,41 +157,21 @@ export async function GET(request) {
       });
     }
 
-    // High-performance instant fallback to initial catalog
-    let filtered = [...INITIAL_PRODUCTS];
-    if (category && category !== 'All' && category !== 'all') {
-      filtered = filtered.filter(p => p.category?.toLowerCase() === category.toLowerCase());
-    }
-    if (search) {
-      const q = search.toLowerCase();
-      filtered = filtered.filter(p => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
-    }
-    if (badge) {
-      filtered = filtered.filter(p => p.badge?.toLowerCase() === badge.toLowerCase());
-    }
-
-    const totalItems = filtered.length;
-    const paginated = filtered.slice((page - 1) * limit, page * limit);
-
-    const fallbackPayload = {
-      products: paginated,
-      totalPages: Math.ceil(totalItems / limit) || 1,
-      currentPage: page,
-      totalItems,
-      hasNextPage: page < Math.ceil(totalItems / limit),
-      hasPreviousPage: page > 1,
-    };
-
-    return NextResponse.json(fallbackPayload, {
-      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' }
+    return NextResponse.json({
+      products: [],
+      totalPages: 1,
+      currentPage: 1,
+      totalItems: 0,
+      hasNextPage: false,
+      hasPreviousPage: false,
     });
   } catch (err) {
     console.error('API Products Error:', err);
     return NextResponse.json({
-      products: INITIAL_PRODUCTS,
+      products: [],
       totalPages: 1,
       currentPage: 1,
-      totalItems: INITIAL_PRODUCTS.length
+      totalItems: 0
     });
   }
 }

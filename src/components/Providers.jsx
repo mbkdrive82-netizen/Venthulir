@@ -20,15 +20,14 @@ export const useUIModal = () => useContext(UIModalContext);
 function ProvidersInner({ children }) {
   const [authOpen, setAuthOpen] = useState(false);
   const [checkoutData, setCheckoutData] = useState(null);
-  const { setIsCartOpen } = useCart();
+  const { setIsCartOpen, isCartOpen } = useCart();
 
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith('/admin');
   const isProfileRoute = pathname?.startsWith('/profile') || pathname?.startsWith('/account');
 
-
-
   const router = useRouter();
+  const lenisRef = React.useRef(null);
 
   useEffect(() => {
     // Disable smooth scrolling in Admin dashboard to prevent scroll hijacking bugs
@@ -44,6 +43,8 @@ function ProvidersInner({ children }) {
       touchMultiplier: 2,
     });
 
+    lenisRef.current = lenis;
+
     function raf(time) {
       lenis.raf(time);
       requestAnimationFrame(raf);
@@ -53,8 +54,19 @@ function ProvidersInner({ children }) {
 
     return () => {
       lenis.destroy();
+      lenisRef.current = null;
     };
-  }, []);
+  }, [isAdminRoute]);
+
+  // Pause Lenis smooth scrolling when drawers or modals are open to allow full native scrolling inside them
+  useEffect(() => {
+    if (!lenisRef.current) return;
+    if (isCartOpen || authOpen || Boolean(checkoutData)) {
+      lenisRef.current.stop();
+    } else {
+      lenisRef.current.start();
+    }
+  }, [isCartOpen, authOpen, checkoutData]);
 
   const openCheckout = (cartSummary) => {
     setIsCartOpen(false);

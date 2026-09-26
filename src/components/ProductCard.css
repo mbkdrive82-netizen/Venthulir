@@ -163,9 +163,9 @@
   bottom: 12px;
   left: 50%;
   transform: translateX(-50%) translateY(14px);
-  background-color: #1B5E2F;
-  color: #ffffff;
-  border: 1px solid #1B5E2F;
+  background-color: #1B5E2F !important;
+  color: #ffffff !important;
+  border: 1px solid #1B5E2F !important;
   padding: 7px 18px;
   border-radius: 10px;
   font-size: 0.76rem;
@@ -189,9 +189,9 @@
 }
 
 .quick-view-action:hover {
-  background-color: #134522;
-  border-color: #134522;
-  color: #ffffff;
+  background-color: #134522 !important;
+  border-color: #134522 !important;
+  color: #ffffff !important;
   box-shadow: 0 6px 16px rgba(27, 94, 47, 0.35);
 }
 
@@ -298,9 +298,9 @@
 }
 
 .variant-option-btn.active {
-  background-color: #1B5E2F;
-  border-color: #1B5E2F;
-  color: #ffffff;
+  background-color: #1B5E2F !important;
+  border-color: #1B5E2F !important;
+  color: #ffffff !important;
   box-shadow: 0 2px 8px rgba(27, 94, 47, 0.25);
 }
 
@@ -360,65 +360,117 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background-color: #E8F5E9;
-  color: #1B5E2F;
-  border: 1.5px solid #C8E6C9;
+  background-color: #E8F5E9 !important;
+  color: #1B5E2F !important;
+  border: 1.5px solid #C8E6C9 !important;
   font-size: 0.84rem;
   font-weight: 750;
   padding: 10px 12px;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
 }
 
 .btn-add-cart:hover {
-  background-color: #1B5E2F;
-  border-color: #1B5E2F;
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(27, 94, 47, 0.2);
+  background-color: #1B5E2F !important;
+  border-color: #1B5E2F !important;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(27, 94, 47, 0.22);
+}
+
+.btn-add-cart:active {
+  transform: scale(0.96) translateY(0);
 }
 
 .btn-add-cart.added-state {
-  background-color: #1B5E2F;
-  border-color: #1B5E2F;
-  color: #ffffff;
+  background-color: #1B5E2F !important;
+  border-color: #1B5E2F !important;
+  color: #ffffff !important;
+  animation: pulseAdded 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Buy Now Button (Brand Dark Green with Gold/Elevation) */
+@keyframes pulseAdded {
+  0% { transform: scale(0.95); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+/* Buy Now Button (Glowing Pulse & Continuous Shimmer) */
 .btn-buy-instant {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background-color: #1B5E2F;
-  color: #ffffff;
-  border: 1.5px solid #1B5E2F;
+  background: linear-gradient(135deg, #1B5E2F 0%, #114529 100%) !important;
+  color: #ffffff !important;
+  border: 1.5px solid #1B5E2F !important;
   font-size: 0.84rem;
   font-weight: 750;
   padding: 10px 14px;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
-  box-shadow: 0 3px 10px rgba(27, 94, 47, 0.22);
+  position: relative;
+  overflow: hidden;
+  animation: buyGlowPulse 2.8s infinite ease-in-out;
+}
+
+.btn-buy-instant::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  animation: continuousShimmer 3.5s infinite ease-in-out;
+  pointer-events: none;
 }
 
 .btn-buy-instant:hover {
-  background-color: #134522;
-  border-color: #134522;
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(27, 94, 47, 0.32);
+  background: linear-gradient(135deg, #134522 0%, #0B331F 100%) !important;
+  border-color: #0B331F !important;
+  color: #ffffff !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(27, 94, 47, 0.5), 0 0 20px rgba(230, 201, 138, 0.5) !important;
+}
+
+.btn-buy-instant:active {
+  transform: scale(0.96) translateY(0);
 }
 
 .btn-arrow {
-  transition: transform 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-buy-instant:hover .btn-arrow {
-  transform: translateX(3px);
+  transform: translateX(5px) scale(1.15);
+}
+
+@keyframes buyGlowPulse {
+  0% {
+    box-shadow: 0 4px 12px rgba(27, 94, 47, 0.3), 0 0 0 0 rgba(27, 94, 47, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(27, 94, 47, 0.5), 0 0 14px 3px rgba(230, 201, 138, 0.45);
+  }
+  100% {
+    box-shadow: 0 4px 12px rgba(27, 94, 47, 0.3), 0 0 0 0 rgba(27, 94, 47, 0.3);
+  }
+}
+
+@keyframes continuousShimmer {
+  0% {
+    transform: translateX(-150%) skewX(-20deg);
+  }
+  30%, 100% {
+    transform: translateX(250%) skewX(-20deg);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════

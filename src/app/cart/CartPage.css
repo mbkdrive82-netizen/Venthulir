@@ -386,18 +386,18 @@
   padding: 11px 18px;
   font-size: 0.84rem;
   font-weight: 600;
-  color: #222222;
-  background: #F5F5F5;
-  border: 1px solid #E0E0E0;
+  color: #ffffff !important;
+  background: #1B5E2F !important;
+  border: 1px solid #1B5E2F !important;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-apply-cart-coupon:hover {
-  background: #EBEBEB;
-  border-color: #D6D6D6;
-  color: #000000;
+  background: #134522 !important;
+  border-color: #134522 !important;
+  color: #ffffff !important;
 }
 
 /* Breakdown rows */
@@ -440,20 +440,20 @@
   padding: 14px 24px;
   font-size: 1rem;
   font-weight: 600;
-  color: #ffffff;
-  background: #1B5E2F;
-  border: 1px solid #1B5E2F;
+  color: #ffffff !important;
+  background: #1B5E2F !important;
+  border: 1px solid #1B5E2F !important;
   border-radius: 6px;
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: none;
+  box-shadow: 0 4px 14px rgba(27, 94, 47, 0.25);
 }
 
 .btn-proceed-checkout:hover {
-  background: #000000;
-  border-color: #000000;
-  color: #ffffff;
+  background: #134522 !important;
+  border-color: #134522 !important;
+  color: #ffffff !important;
 }
 
 /* Trust Perks in Cart */

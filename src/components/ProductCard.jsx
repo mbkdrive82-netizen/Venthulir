@@ -18,9 +18,20 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
   if (!product) return null;
 
   const price = selectedVariant?.price ?? product.price ?? 0;
-  const originalPrice = product.originalPrice || Math.round(price * 1.25);
+  let originalPrice = selectedVariant?.originalPrice;
+  if (!originalPrice) {
+    if (product.originalPrice && product.price && product.originalPrice > product.price) {
+      const ratio = product.originalPrice / product.price;
+      originalPrice = Math.round(price * ratio);
+    } else {
+      originalPrice = Math.round(price * 1.25);
+    }
+  }
+
   const savings = Math.max(0, originalPrice - price);
-  const discountPercent = product.discountPercent || (originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 20);
+  const discountPercent = originalPrice > price 
+    ? Math.round(((originalPrice - price) / originalPrice) * 100) 
+    : 0;
   const getFallbackImg = (p) => {
     const name = (p?.name || '').toLowerCase();
     const cat = (p?.category || '').toLowerCase();
@@ -47,12 +58,12 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
 
   const handleBuyNow = (e) => {
     e.stopPropagation();
-    addToCart(product, selectedVariant);
+    const itemKey = addToCart(product, selectedVariant);
     setIsCartOpen(false);
     if (onBuyNow) {
-      onBuyNow(product, selectedVariant);
+      onBuyNow(product, selectedVariant, itemKey);
     } else {
-      router.push('/checkout');
+      router.push(`/checkout?buyNow=${encodeURIComponent(itemKey)}`);
     }
   };
 

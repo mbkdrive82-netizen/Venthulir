@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Printer, Download, X, CheckCircle, FileText, Maximize2, Minimize2 } from 'lucide-react';
+import { Printer, Download, X, CheckCircle, FileText, Maximize2, Minimize2, Loader2 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import './TaxInvoice.css';
 
 /**
@@ -77,6 +79,7 @@ export default function TaxInvoice({ order, isOpen, onClose }) {
   const [isMobile, setIsMobile] = useState(false);
   const [scale, setScale] = useState(1);
   const [invoiceHeight, setInvoiceHeight] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Lock background scroll when invoice is open
   useEffect(() => {
@@ -190,6 +193,35 @@ export default function TaxInvoice({ order, isOpen, onClose }) {
     window.print();
   };
 
+  const handleDownloadPdf = async () => {
+    if (!invoiceRef.current) return;
+    try {
+      setIsDownloading(true);
+      const element = invoiceRef.current;
+      
+      // Temporarily remove transform scaling for high quality render
+      const originalTransform = element.style.transform;
+      element.style.transform = 'none';
+      
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      
+      element.style.transform = originalTransform;
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Tax_Invoice_${invoiceNo}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF', error);
+      alert('Failed to download PDF. Please try the Print option instead.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const isFitActive = isMobile && viewMode === 'fit';
 
   return (
@@ -218,9 +250,14 @@ export default function TaxInvoice({ order, isOpen, onClose }) {
               </button>
             )}
 
-            <button type="button" className="btn-invoice-action primary" onClick={handlePrint}>
+            <button type="button" className="btn-invoice-action primary" onClick={handleDownloadPdf} disabled={isDownloading} style={{ marginRight: '8px' }}>
+              {isDownloading ? <Loader2 size={15} className="lounge-spin-icon" /> : <Download size={15} />}
+              <span className="btn-print-text">{isDownloading ? 'Downloading...' : 'Download'}</span>
+            </button>
+
+            <button type="button" className="btn-invoice-action secondary" onClick={handlePrint}>
               <Printer size={15} />
-              <span className="btn-print-text">Print / PDF</span>
+              <span className="btn-print-text">Print</span>
             </button>
             
             <button type="button" className="btn-invoice-close" onClick={onClose} aria-label="Close invoice">

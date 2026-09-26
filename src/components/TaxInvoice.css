@@ -108,13 +108,15 @@
 }
 
 .btn-invoice-action.primary {
-  background: #0c2f34;
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(12, 47, 52, 0.25);
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid #000000 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .btn-invoice-action.primary:hover {
-  background: #12434a;
+  background: #1f1f1f !important;
+  border-color: #1f1f1f !important;
 }
 
 .btn-invoice-close {

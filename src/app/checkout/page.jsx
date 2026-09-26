@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -22,6 +22,8 @@ import {
   QrCode,
   PackageCheck,
   Plus,
+  Minus,
+  Trash2,
   Lock,
   MessageCircle,
   ExternalLink
@@ -49,8 +51,50 @@ const getFallbackImage = (name = '', category = '') => {
 
 function CheckoutContent() {
   const router = useRouter();
-  const { cartItems, cartTotal, clearCart } = useCart();
+  const searchParams = useSearchParams();
+  const buyNowParam = searchParams.get('buyNow');
+  const { cartItems, updateQty, removeFromCart, clearCart } = useCart();
   const { user, isAuthenticated } = useAuth();
+
+  // Selection state for items included in this checkout order
+  const [selectedKeys, setSelectedKeys] = useState(new Set());
+  const [hasInitSelection, setHasInitSelection] = useState(false);
+
+  useEffect(() => {
+    if (cartItems.length > 0 && !hasInitSelection) {
+      if (buyNowParam && cartItems.some(i => i.key === buyNowParam)) {
+        setSelectedKeys(new Set([buyNowParam]));
+      } else {
+        setSelectedKeys(new Set(cartItems.map(i => i.key)));
+      }
+      setHasInitSelection(true);
+    }
+  }, [cartItems, buyNowParam, hasInitSelection]);
+
+  const toggleSelectItem = (key) => {
+    setSelectedKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedKeys(new Set(cartItems.map(i => i.key)));
+  };
+
+  const deselectAll = () => {
+    setSelectedKeys(new Set());
+  };
+
+  // Filter only items checked by user for this purchase
+  const selectedCartItems = cartItems.filter(item => selectedKeys.has(item.key));
+  const selectedTotal = selectedCartItems.reduce((s, i) => s + (i.price * i.quantity), 0);
+  const selectedCount = selectedCartItems.reduce((s, i) => s + i.quantity, 0);
 
   // Delivery / Contact Details
   const [formData, setFormData] = useState({
@@ -133,15 +177,15 @@ function CheckoutContent() {
     }
   };
 
-  // Financial Calculations
+  // Financial Calculations based ONLY on selected items
   const discountAmount = appliedCoupon
     ? appliedCoupon.type === 'percent'
-      ? Math.round((cartTotal * appliedCoupon.value) / 100)
-      : Math.min(appliedCoupon.value, cartTotal)
+      ? Math.round((selectedTotal * appliedCoupon.value) / 100)
+      : Math.min(appliedCoupon.value, selectedTotal)
     : 0;
 
-  const afterDiscountTotal = Math.max(cartTotal - discountAmount, 0);
-  const shippingCharge = afterDiscountTotal >= SHIPPING_FREE_THRESHOLD || afterDiscountTotal === 0 ? 0 : SHIPPING_FEE;
+  const afterDiscountTotal = Math.max(selectedTotal - discountAmount, 0);
+  const shippingCharge = (afterDiscountTotal >= SHIPPING_FREE_THRESHOLD || afterDiscountTotal === 0 || selectedCartItems.length === 0) ? 0 : SHIPPING_FEE;
   const finalPayable = afterDiscountTotal + shippingCharge;
 
   // Order Submission
@@ -157,6 +201,11 @@ function CheckoutContent() {
 
     if (cartItems.length === 0) {
       setOrderError('Your cart is empty. Please add products before placing an order.');
+      return;
+    }
+
+    if (selectedCartItems.length === 0) {
+      setOrderError('Please select at least 1 product above to proceed with order.');
       return;
     }
 
@@ -202,7 +251,7 @@ function CheckoutContent() {
           state: formData.state.trim(),
           zipCode: formData.zipCode.trim()
         },
-        items: cartItems.map(item => ({
+        items: selectedCartItems.map(item => ({
           product: item.productId || item.product,
           name: item.name,
           variant: item.variant?.label || null,
@@ -210,7 +259,7 @@ function CheckoutContent() {
           quantity: item.quantity,
           imageUrl: item.image
         })),
-        originalAmount: cartTotal,
+        originalAmount: selectedTotal,
         discountAmount,
         couponCode: appliedCoupon ? appliedCoupon.code : null,
         shippingCharge,
@@ -233,7 +282,12 @@ function CheckoutContent() {
 
       if (res.ok) {
         setPlacedOrder(data.order || { _id: 'VEN-' + Date.now(), totalAmount: finalPayable });
-        clearCart();
+        // Remove only the purchased items from cart, keep remaining items safe
+        if (selectedCartItems.length === cartItems.length) {
+          clearCart();
+        } else {
+          selectedCartItems.forEach(item => removeFromCart(item.key));
+        }
       } else {
         setOrderError(data.error || data.msg || 'Unable to place order. Please verify details.');
       }
@@ -621,13 +675,16 @@ function CheckoutContent() {
                 <button
                   type="submit"
                   className="btn-confirm-place-order"
-                  disabled={submitting}
+                  disabled={submitting || selectedCartItems.length === 0}
+                  style={selectedCartItems.length === 0 ? { opacity: 0.6, cursor: 'not-allowed', background: '#94a3b8' } : {}}
                 >
                   {submitting ? (
                     <span>Securing Your Order...</span>
+                  ) : selectedCartItems.length === 0 ? (
+                    <span>Select Products to Order</span>
                   ) : (
                     <>
-                      <span>Confirm & Place Order • ₹{finalPayable}</span>
+                      <span>Confirm & Place Order ({selectedCount} items) • ₹{finalPayable}</span>
                       <ArrowRight size={18} />
                     </>
                   )}
@@ -644,41 +701,81 @@ function CheckoutContent() {
 
           {/* ── RIGHT COLUMN: SUMMARY & CONFIRMATION ── */}
           <div className="checkout-right-col">
-            <div className="checkout-card order-summary-card">
+            <div className="checkout-card order-summary-card" data-lenis-prevent>
               <div className="checkout-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div className="checkout-card-icon-wrap">
                     <ShoppingBag size={20} />
                   </div>
-                  <h2 className="checkout-card-title">3. Order Summary & Items ({cartItems.reduce((s, i) => s + i.quantity, 0)})</h2>
+                  <div>
+                    <h2 className="checkout-card-title" style={{ margin: 0 }}>
+                      3. Order Items ({selectedCount} of {cartItems.reduce((s, i) => s + i.quantity, 0)})
+                    </h2>
+                    <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                      {selectedCartItems.length === cartItems.length 
+                        ? 'All cart items selected' 
+                        : `${selectedCartItems.length} of ${cartItems.length} items in this order`}
+                    </span>
+                  </div>
                 </div>
-                <Link 
-                  href="/products" 
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    fontSize: '0.78rem',
-                    fontWeight: 750,
-                    color: '#0f3d2a',
-                    background: '#edf6f1',
-                    border: '1px solid #b8dfc8',
-                    padding: '6px 14px',
-                    borderRadius: '9999px',
-                    textDecoration: 'none',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <Plus size={14} />
-                  <span>Add Products</span>
-                </Link>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {cartItems.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={selectedCartItems.length === cartItems.length ? deselectAll : selectAll}
+                      className="btn-select-toggle"
+                    >
+                      {selectedCartItems.length === cartItems.length ? 'Deselect All' : 'Select All'}
+                    </button>
+                  )}
+                  <Link 
+                    href="/products" 
+                    className="btn-add-more-pill"
+                  >
+                    <Plus size={13} />
+                    <span>Add Products</span>
+                  </Link>
+                </div>
               </div>
 
-              {/* Items Mini List */}
-              <div className="summary-items-list">
-                {cartItems.map((item) => (
-                  <div key={item.key} className="summary-single-item">
-                    <div className="summary-item-left">
+              {/* Direct Buy Now Mode Banner (if buyNow query param was active) */}
+              {buyNowParam && cartItems.length > 1 && selectedCartItems.length < cartItems.length && (
+                <div className="buy-now-mode-banner">
+                  <div className="buy-now-banner-text">
+                    <Sparkles size={14} color="#b45309" />
+                    <span><strong>Direct Buy:</strong> Selected item only. Other cart items remain saved.</span>
+                  </div>
+                  <button type="button" onClick={selectAll} className="buy-now-include-all-btn">
+                    Include All ({cartItems.length})
+                  </button>
+                </div>
+              )}
+
+              {/* Items Mini List with interactive controls */}
+              <div 
+                className="summary-items-list" 
+                data-lenis-prevent
+                onWheel={(e) => e.stopPropagation()}
+              >
+                {cartItems.map((item) => {
+                  const isSelected = selectedKeys.has(item.key);
+                  return (
+                    <div 
+                      key={item.key} 
+                      className={`summary-single-item ${isSelected ? 'is-selected' : 'is-unselected'}`}
+                    >
+                      {/* Checkbox */}
+                      <label className="summary-item-check-label" title={isSelected ? 'Uncheck to exclude from this order' : 'Check to include in this order'}>
+                        <input 
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectItem(item.key)}
+                          className="summary-item-checkbox"
+                        />
+                      </label>
+
+                      {/* Thumbnail */}
                       <div className="summary-item-thumb">
                         <img 
                           src={item.image || getFallbackImage(item.name, item.category)} 
@@ -689,42 +786,95 @@ function CheckoutContent() {
                           }}
                         />
                       </div>
+
+                      {/* Details & In-Checkout Actions */}
                       <div className="summary-item-details">
-                        <h5>{item.name}</h5>
-                        <span>Qty: {item.quantity} {item.variant ? `• ${item.variant.label}` : ''}</span>
+                        <div className="summary-item-header-row">
+                          <h5 title={item.name}>{item.name}</h5>
+                          <span className="summary-item-total">₹{item.price * item.quantity}</span>
+                        </div>
+                        
+                        <div className="summary-item-meta">
+                          <span className="summary-item-price-tag">₹{item.price} each</span>
+                          {item.variant && <span className="summary-item-variant">• {item.variant.label}</span>}
+                        </div>
+
+                        {/* In-Checkout Quantity Stepper & Remove Button */}
+                        <div className="summary-item-actions-row">
+                          <div className="summary-qty-stepper">
+                            <button 
+                              type="button" 
+                              onClick={() => updateQty(item.key, item.quantity - 1)}
+                              title="Decrease quantity"
+                              aria-label="Decrease quantity"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span className="summary-qty-val">{item.quantity}</span>
+                            <button 
+                              type="button" 
+                              onClick={() => updateQty(item.key, item.quantity + 1)}
+                              title="Increase quantity"
+                              aria-label="Increase quantity"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+
+                          <button 
+                            type="button" 
+                            className="summary-item-remove-btn" 
+                            onClick={() => {
+                              removeFromCart(item.key);
+                              setSelectedKeys(prev => {
+                                const next = new Set(prev);
+                                next.delete(item.key);
+                                return next;
+                              });
+                            }}
+                            title="Remove item completely"
+                            aria-label="Remove item"
+                          >
+                            <Trash2 size={13} />
+                            <span>Remove</span>
+                          </button>
+
+                          <span className={`summary-include-tag ${isSelected ? 'included' : 'excluded'}`}>
+                            {isSelected ? '✓ In Order' : '○ Excluded'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div className="summary-item-total">
-                      ₹{item.price * item.quantity}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
 
-                <div style={{ paddingTop: '8px', marginTop: '8px' }}>
+                <div style={{ paddingTop: '6px' }}>
                   <Link 
                     href="/products" 
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      width: '100%',
-                      padding: '10px 14px',
-                      fontSize: '0.82rem',
-                      fontWeight: 750,
-                      color: '#0f3d2a',
-                      background: '#f0f9f4',
-                      border: '1.5px dashed #86efac',
-                      borderRadius: '10px',
-                      textDecoration: 'none',
-                      transition: 'all 0.2s ease'
-                    }}
+                    className="btn-add-more-dashed"
                   >
                     <Plus size={15} />
-                    <span>+ Add More Items to Your Order</span>
+                    <span>+ Add More Products to Your Order</span>
                   </Link>
                 </div>
               </div>
+
+              {/* Warning if no items selected */}
+              {selectedCartItems.length === 0 && (
+                <div style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 650,
+                  color: '#b45309',
+                  background: '#fffbeb',
+                  border: '1px solid #fde68a',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  marginBottom: '14px',
+                  textAlign: 'center'
+                }}>
+                  ⚠️ No products selected. Please check at least 1 item to proceed.
+                </div>
+              )}
 
               {/* Coupon Box */}
               <div className="checkout-coupon-wrap">
@@ -758,8 +908,8 @@ function CheckoutContent() {
               {/* Pricing Breakdown */}
               <div className="checkout-pricing-list">
                 <div className="pricing-row">
-                  <span>Subtotal</span>
-                  <span>₹{cartTotal}</span>
+                  <span>Subtotal ({selectedCount} items)</span>
+                  <span>₹{selectedTotal}</span>
                 </div>
 
                 {discountAmount > 0 && (
@@ -804,9 +954,11 @@ function CheckoutContent() {
                   onClick={() => router.push('/login?redirect=/checkout')}
                   className="btn-confirm-place-order"
                   style={{
-                    background: 'linear-gradient(135deg, #b45309 0%, #92400e 100%)',
+                    background: '#1B5E2F',
+                    color: '#ffffff',
+                    border: '1px solid #1B5E2F',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(180, 83, 9, 0.35)',
+                    boxShadow: '0 4px 14px rgba(27, 94, 47, 0.25)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -821,13 +973,16 @@ function CheckoutContent() {
                 <button
                   type="submit"
                   className="btn-confirm-place-order"
-                  disabled={submitting}
+                  disabled={submitting || selectedCartItems.length === 0}
+                  style={selectedCartItems.length === 0 ? { opacity: 0.6, cursor: 'not-allowed', background: '#94a3b8' } : {}}
                 >
                   {submitting ? (
                     <span>Securing Your Order...</span>
+                  ) : selectedCartItems.length === 0 ? (
+                    <span>Select Products to Order</span>
                   ) : (
                     <>
-                      <span>Confirm & Place Order • ₹{finalPayable}</span>
+                      <span>Confirm & Place Order ({selectedCount} items) • ₹{finalPayable}</span>
                       <ArrowRight size={18} />
                     </>
                   )}

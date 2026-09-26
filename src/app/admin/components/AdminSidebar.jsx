@@ -171,6 +171,7 @@ export default function AdminSidebar({
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={true}
                       className={`admin-nav-item ${isActive ? 'active' : ''}`}
                       onClick={handleNavClick}
                       title={collapsed ? item.label : undefined}

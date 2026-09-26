@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
-import { X, Plus, Minus, ShoppingBag, Tag, Truck } from 'lucide-react';
+import { X, Plus, Minus, ShoppingBag, Tag, Truck, Trash2, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
 import { PRESET_COUPONS } from '@/data/constants';
 import './CartDrawer.css';
 
@@ -42,11 +42,13 @@ export default function CartDrawer({ onCheckout }) {
     };
   }, [isCartOpen]);
 
-  const applyCoupon = () => {
-    const code = couponInput.trim().toUpperCase();
+  const applyCouponCode = (codeToApply) => {
+    const code = (codeToApply || couponInput).trim().toUpperCase();
+    if (!code) return;
     if (PRESET_COUPONS[code]) {
       setAppliedCoupon({ code, ...PRESET_COUPONS[code] });
       setCouponError('');
+      setCouponInput(code);
     } else {
       setCouponError('Invalid coupon code');
       setAppliedCoupon(null);
@@ -56,36 +58,82 @@ export default function CartDrawer({ onCheckout }) {
   const discount = appliedCoupon
     ? appliedCoupon.type === 'percent'
       ? Math.round(cartTotal * appliedCoupon.value / 100)
-      : appliedCoupon.value
+      : Math.min(appliedCoupon.value, cartTotal)
     : 0;
 
   const afterDiscount = Math.max(cartTotal - discount, 0);
-  const shippingFee   = afterDiscount >= SHIPPING_FREE_THRESHOLD ? 0 : SHIPPING_FEE;
+  const shippingFee   = afterDiscount >= SHIPPING_FREE_THRESHOLD || cartItems.length === 0 ? 0 : SHIPPING_FEE;
   const grandTotal    = afterDiscount + shippingFee;
+  const freeShipRemaining = Math.max(0, SHIPPING_FREE_THRESHOLD - afterDiscount);
+  const freeShipPercent = Math.min(100, Math.round((afterDiscount / SHIPPING_FREE_THRESHOLD) * 100));
+  const totalItemCount = cartItems.reduce((s, i) => s + i.quantity, 0);
 
   if (!isCartOpen) return null;
 
   return (
     <>
       <div className="cart-overlay" onClick={() => setIsCartOpen(false)} />
-      <div className="cart-drawer animate-slide-right">
+      <div className="cart-drawer animate-slide-right" data-lenis-prevent>
         {/* Header */}
         <div className="cart-header">
-          <div className="cart-header-title">
-            <ShoppingBag size={20} />
-            <span>Your Cart</span>
-            {cartItems.length > 0 && <span className="cart-count-pill">{cartItems.reduce((s, i) => s + i.quantity, 0)}</span>}
+          <div className="cart-header-top">
+            <div className="cart-header-title">
+              <div className="cart-title-icon-wrap">
+                <ShoppingBag size={18} />
+              </div>
+              <span>Your Basket</span>
+              {totalItemCount > 0 && (
+                <span className="cart-count-pill">{totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}</span>
+              )}
+            </div>
+            <button className="cart-close" onClick={() => setIsCartOpen(false)} aria-label="Close cart">
+              <X size={18} />
+            </button>
           </div>
-          <button className="cart-close" onClick={() => setIsCartOpen(false)}><X size={20} /></button>
+
+          {/* Free Shipping Gamification Bar */}
+          {cartItems.length > 0 && (
+            <div className="cart-shipping-progress-wrap">
+              <div className="cart-shipping-progress-text">
+                {freeShipRemaining === 0 ? (
+                  <span className="free-ship-unlocked">
+                    <Sparkles size={13} />
+                    <span><strong>Congratulations!</strong> Free Delivery Unlocked!</span>
+                  </span>
+                ) : (
+                  <span>
+                    Add <strong>₹{freeShipRemaining}</strong> more for <strong>FREE Delivery</strong>
+                  </span>
+                )}
+                <span className="free-ship-threshold-tag">Goal: ₹{SHIPPING_FREE_THRESHOLD}</span>
+              </div>
+              <div className="cart-progress-track">
+                <div 
+                  className={`cart-progress-bar ${freeShipRemaining === 0 ? 'is-complete' : ''}`}
+                  style={{ width: `${freeShipPercent}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Items */}
-        <div className="cart-items">
+        {/* Items List */}
+        <div 
+          className="cart-items" 
+          data-lenis-prevent
+          onWheel={(e) => e.stopPropagation()}
+        >
           {cartItems.length === 0 ? (
             <div className="cart-empty">
-              <ShoppingBag size={48} strokeWidth={1} />
-              <p>Your cart is empty</p>
-              <button className="btn-primary" onClick={() => setIsCartOpen(false)}>Continue Shopping</button>
+              <div className="cart-empty-icon-wrap">
+                <ShoppingBag size={42} strokeWidth={1.5} />
+              </div>
+              <h4>Your basket is empty</h4>
+              <p>Explore our organic stone-ground spices, wood cold-pressed oils, and traditional staples.</p>
+              <button className="btn-empty-shop" onClick={() => setIsCartOpen(false)}>
+                <span>Start Shopping</span>
+                <ArrowRight size={15} />
+              </button>
             </div>
           ) : (
             cartItems.map(item => (
@@ -100,74 +148,168 @@ export default function CartDrawer({ onCheckout }) {
                     }}
                   />
                 </div>
+
                 <div className="cart-item-info">
-                  <p className="cart-item-name">{item.name}</p>
-                  {item.variant && <p className="cart-item-variant">{item.variant.label}</p>}
-                  <p className="cart-item-price">₹{item.price}</p>
-                </div>
-                <div className="cart-item-actions">
-                  <div className="qty-control">
-                    <button onClick={() => updateQty(item.key, item.quantity - 1)}><Minus size={13} /></button>
-                    <span>{item.quantity}</span>
-                    <button onClick={() => updateQty(item.key, item.quantity + 1)}><Plus size={13} /></button>
+                  <div className="cart-item-title-row">
+                    <h5 className="cart-item-name" title={item.name}>{item.name}</h5>
+                    <button 
+                      className="remove-btn" 
+                      onClick={() => removeFromCart(item.key)}
+                      title="Remove item"
+                      aria-label="Remove item"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-                  <button className="remove-btn" onClick={() => removeFromCart(item.key)}><X size={14} /></button>
+
+                  <div className="cart-item-submeta">
+                    {item.variant && (
+                      <span className="cart-item-variant">🌿 {item.variant.label}</span>
+                    )}
+                    {item.quantity > 1 && (
+                      <span className="cart-item-unit-price">₹{item.price} each</span>
+                    )}
+                  </div>
+
+                  <div className="cart-item-bottom-row">
+                    <span className="cart-item-total-price">₹{item.price * item.quantity}</span>
+                    <div className="qty-control">
+                      <button 
+                        onClick={() => updateQty(item.key, item.quantity - 1)}
+                        title="Decrease quantity"
+                        aria-label="Decrease quantity"
+                      >
+                        <Minus size={12} />
+                      </button>
+                      <span>{item.quantity}</span>
+                      <button 
+                        onClick={() => updateQty(item.key, item.quantity + 1)}
+                        title="Increase quantity"
+                        aria-label="Increase quantity"
+                      >
+                        <Plus size={12} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))
           )}
         </div>
 
+        {/* Footer */}
         {cartItems.length > 0 && (
           <div className="cart-footer">
-            {/* Shipping notice */}
-            {afterDiscount < SHIPPING_FREE_THRESHOLD && (
-              <div className="shipping-notice">
-                <Truck size={15} />
-                <span>Add <strong>₹{SHIPPING_FREE_THRESHOLD - afterDiscount}</strong> more for free shipping!</span>
+            {/* Coupon Box */}
+            <div className="coupon-section">
+              <div className="coupon-row">
+                <Tag size={15} className="coupon-icon" />
+                <input
+                  placeholder="Enter coupon code"
+                  value={couponInput}
+                  onChange={e => { setCouponInput(e.target.value); setCouponError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && applyCouponCode()}
+                />
+                <button type="button" onClick={() => applyCouponCode()}>Apply</button>
               </div>
-            )}
 
-            {/* Coupon */}
-            <div className="coupon-row">
-              <Tag size={15} />
-              <input
-                placeholder="Coupon code"
-                value={couponInput}
-                onChange={e => { setCouponInput(e.target.value); setCouponError(''); }}
-                onKeyDown={e => e.key === 'Enter' && applyCoupon()}
-              />
-              <button onClick={applyCoupon}>Apply</button>
+              {!appliedCoupon && !couponError && (
+                <div className="coupon-suggestion-row">
+                  <span className="coupon-suggestion-label">Available:</span>
+                  <button 
+                    type="button" 
+                    className="coupon-chip"
+                    onClick={() => applyCouponCode('VENTHULIR')}
+                  >
+                    🏷️ VENTHULIR
+                  </button>
+                  <button 
+                    type="button" 
+                    className="coupon-chip"
+                    onClick={() => applyCouponCode('WELCOME10')}
+                  >
+                    🏷️ WELCOME10
+                  </button>
+                </div>
+              )}
+
+              {couponError && <p className="coupon-error">{couponError}</p>}
+              {appliedCoupon && (
+                <div className="coupon-success-badge">
+                  <span>✓ {appliedCoupon.label} applied!</span>
+                  <button type="button" onClick={() => { setAppliedCoupon(null); setCouponInput(''); }}>Remove</button>
+                </div>
+              )}
             </div>
-            {couponError   && <p className="coupon-error">{couponError}</p>}
-            {appliedCoupon && <p className="coupon-success">✓ {appliedCoupon.label} applied!</p>}
 
             {/* Totals */}
             <div className="cart-totals">
-              <div className="total-row"><span>Subtotal</span><span>₹{cartTotal}</span></div>
-              {discount > 0 && <div className="total-row discount"><span>Discount</span><span>−₹{discount}</span></div>}
-              <div className="total-row"><span>Shipping</span><span>{shippingFee === 0 ? <span className="free-ship">FREE</span> : `₹${shippingFee}`}</span></div>
-              <div className="total-row grand"><span>Total</span><span>₹{grandTotal}</span></div>
+              <div className="total-row">
+                <span>Subtotal ({totalItemCount} items)</span>
+                <span>₹{cartTotal}</span>
+              </div>
+              {discount > 0 && (
+                <div className="total-row discount">
+                  <span>Discount ({appliedCoupon?.code})</span>
+                  <span>−₹{discount}</span>
+                </div>
+              )}
+              <div className="total-row">
+                <span>Delivery</span>
+                <span>
+                  {shippingFee === 0 ? (
+                    <span className="free-ship-badge">FREE</span>
+                  ) : (
+                    `₹${shippingFee}`
+                  )}
+                </span>
+              </div>
+              <div className="total-row grand">
+                <div>
+                  <span className="grand-label">Total Payable</span>
+                  <span className="tax-included-note">Inclusive of all taxes</span>
+                </div>
+                <span className="grand-amount">₹{grandTotal}</span>
+              </div>
             </div>
 
-            <button className="btn-primary checkout-cta" onClick={() => onCheckout({ grandTotal, discount, appliedCoupon, shippingFee })}>
-              Proceed to Checkout →
+            {/* Primary CTA */}
+            <button 
+              className="checkout-cta" 
+              onClick={() => onCheckout({ grandTotal, discount, appliedCoupon, shippingFee })}
+            >
+              <span>Proceed to Checkout • ₹{grandTotal}</span>
+              <ArrowRight size={17} />
             </button>
 
-            <div style={{ textAlign: 'center', marginTop: '10px' }}>
+            {/* Secondary Navigation */}
+            <div className="cart-footer-sublinks">
               <a
                 href="/cart"
                 onClick={() => setIsCartOpen(false)}
-                style={{
-                  fontSize: '0.84rem',
-                  fontWeight: 750,
-                  color: '#0f3d2a',
-                  textDecoration: 'underline',
-                  cursor: 'pointer'
-                }}
+                className="btn-detailed-cart-link"
               >
-                View Detailed Cart Page →
+                <span>View Detailed Cart &amp; Save for Later</span>
+                <ArrowRight size={13} />
               </a>
+            </div>
+
+            {/* Micro Trust Indicators */}
+            <div className="cart-trust-row">
+              <div className="trust-item">
+                <ShieldCheck size={13} />
+                <span>100% Authentic</span>
+              </div>
+              <span>•</span>
+              <div className="trust-item">
+                <Truck size={13} />
+                <span>Fast Dispatch</span>
+              </div>
+              <span>•</span>
+              <div className="trust-item">
+                <Sparkles size={13} />
+                <span>Farm Direct</span>
+              </div>
             </div>
           </div>
         )}

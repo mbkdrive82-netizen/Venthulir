@@ -79,6 +79,7 @@ export const CartProvider = ({ children }) => {
       }];
     });
     setIsCartOpen(true);
+    return key;
   };
 
   const updateQty = (key, qty) => {

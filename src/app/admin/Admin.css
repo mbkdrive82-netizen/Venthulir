@@ -819,15 +819,16 @@
 
 .admin-btn-primary,
 .adm-btn-primary {
-  background: var(--admin-primary);
-  color: #ffffff;
-  border-color: var(--admin-primary);
-  box-shadow: 0 2px 6px rgba(15, 61, 42, 0.2);
+  background: #1B5E2F !important;
+  color: #ffffff !important;
+  border-color: #1B5E2F !important;
+  box-shadow: 0 2px 6px rgba(27, 94, 47, 0.2);
 }
 
 .admin-btn-primary:hover,
 .adm-btn-primary:hover {
-  background: var(--admin-primary-hover);
+  background: #134522 !important;
+  border-color: #134522 !important;
   transform: translateY(-1px);
 }
 

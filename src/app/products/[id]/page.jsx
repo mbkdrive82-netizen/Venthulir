@@ -71,7 +71,7 @@ export default function ProductDetailPage() {
   // Accordion active tab
   const [activeAccordion, setActiveAccordion] = useState('heritage');
 
-  // 1. Fetch Product Detail and Catalog
+  // 1. Fetch Product Detail and Catalog (Instant Display)
   useEffect(() => {
     let isMounted = true;
     const fetchProductData = async () => {
@@ -80,35 +80,46 @@ export default function ProductDetailPage() {
         const productId = params?.id;
         if (!productId) return;
 
-        const [prodRes, catalogRes] = await Promise.all([
-          fetch(`/api/products/${productId}`).then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/products').then(r => r.ok ? r.json() : null).catch(() => null)
-        ]);
+        // Step 1: Fetch single product details first for INSTANT loading
+        const prodRes = await fetch(`/api/products/${productId}`)
+          .then(r => r.ok ? r.json() : null)
+          .catch(() => null);
 
-        const fullCatalog = Array.isArray(catalogRes) 
-          ? catalogRes 
-          : (catalogRes?.products && Array.isArray(catalogRes.products) ? catalogRes.products : []);
-
-        if (isMounted) {
-          if (prodRes && !prodRes.error && !prodRes.msg) {
-            setProduct(prodRes);
-            if (prodRes.variants?.length > 0) {
-              setSelectedVariant(prodRes.variants[0]);
-            }
-          } else {
-            // Fallback: search in catalog by id or slug
-            const matched = fullCatalog.find(p => (p._id || p.id) === productId || p.slug === productId);
-            if (matched) {
-              setProduct(matched);
-              if (matched.variants?.length > 0) setSelectedVariant(matched.variants[0]);
-            }
+        if (isMounted && prodRes && !prodRes.error && !prodRes.msg) {
+          setProduct(prodRes);
+          if (prodRes.variants?.length > 0) {
+            setSelectedVariant(prodRes.variants[0]);
           }
-
-          setAllProducts(fullCatalog);
+          setLoading(false); // Unblock rendering immediately!
         }
+
+        // Step 2: Asynchronously fetch catalog for related products without blocking
+        fetch('/api/products')
+          .then(r => r.ok ? r.json() : null)
+          .then(catalogRes => {
+            if (!isMounted) return;
+            const fullCatalog = Array.isArray(catalogRes) 
+              ? catalogRes 
+              : (catalogRes?.products && Array.isArray(catalogRes.products) ? catalogRes.products : []);
+
+            setAllProducts(fullCatalog);
+
+            // Fallback if single product fetch had failed
+            if (!prodRes || prodRes.error || prodRes.msg) {
+              const matched = fullCatalog.find(p => (p._id || p.id) === productId || p.slug === productId);
+              if (matched) {
+                setProduct(matched);
+                if (matched.variants?.length > 0) setSelectedVariant(matched.variants[0]);
+              }
+              setLoading(false);
+            }
+          })
+          .catch(() => {
+            if (isMounted) setLoading(false);
+          });
+
       } catch (err) {
         console.error('Error loading product detail:', err);
-      } finally {
         if (isMounted) setLoading(false);
       }
     };
@@ -150,11 +161,24 @@ export default function ProductDetailPage() {
   const currentImageUrl = productImages[activeImgIndex] || productImages[0];
   const hasMultipleImages = productImages.length > 1;
 
-  // Price calculations
+  // Price calculations (Mathematically 100% Accurate & Dynamic per selected variant)
   const unitPrice = selectedVariant?.price ?? product.price ?? 0;
-  const originalPrice = product.originalPrice || Math.round(unitPrice * 1.25);
+
+  let originalPrice = selectedVariant?.originalPrice;
+  if (!originalPrice) {
+    if (product.originalPrice && product.price && product.originalPrice > product.price) {
+      const ratio = product.originalPrice / product.price;
+      originalPrice = Math.round(unitPrice * ratio);
+    } else {
+      originalPrice = Math.round(unitPrice * 1.25);
+    }
+  }
+
   const savingsPerUnit = Math.max(0, originalPrice - unitPrice);
-  const discountPercent = product.discountPercent || (originalPrice > unitPrice ? Math.round(((originalPrice - unitPrice) / originalPrice) * 100) : 20);
+  const discountPercent = originalPrice > unitPrice 
+    ? Math.round(((originalPrice - unitPrice) / originalPrice) * 100) 
+    : 0;
+
   const subtotalPrice = unitPrice * quantity;
 
   // Zoom Handler
@@ -207,9 +231,9 @@ export default function ProductDetailPage() {
   };
 
   const handleBuyNow = () => {
-    addToCart(product, selectedVariant, quantity);
+    const itemKey = addToCart(product, selectedVariant, quantity);
     setIsCartOpen(false);
-    router.push('/checkout');
+    router.push(`/checkout?buyNow=${encodeURIComponent(itemKey)}`);
   };
 
   // Pincode delivery check

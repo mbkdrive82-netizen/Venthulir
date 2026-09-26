@@ -9,7 +9,6 @@ import {
   ShieldCheck, Package, ShoppingCart, Plus, Minus, Star 
 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
-import { INITIAL_PRODUCTS } from '@/data/products';
 import './ProductsPage.css';
 
 const API = '/api';
@@ -21,8 +20,8 @@ function ProductsPageContent({ onCheckout }) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('featured');
@@ -85,16 +84,22 @@ function ProductsPageContent({ onCheckout }) {
       if (query && query.trim()) params.set('search', query.trim());
       if (sort) params.set('sort', sort);
       params.set('limit', '60');
+      params.set('t', Date.now().toString());
 
-      const res = await fetch(`${API}/products?${params.toString()}`);
+      const res = await fetch(`${API}/products?${params.toString()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data && Array.isArray(data.products)) {
           setProducts(data.products);
+        } else {
+          setProducts([]);
         }
+      } else {
+        setProducts([]);
       }
     } catch (err) {
       console.error('Catalog fetch error:', err);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -445,12 +450,10 @@ function ProductsPageContent({ onCheckout }) {
                     <button
                       className="qv-buy-now-btn"
                       onClick={() => {
-                        for (let i = 0; i < quantity; i++) {
-                          addToCart(quickViewProduct, selectedVariant);
-                        }
+                        const itemKey = addToCart(quickViewProduct, selectedVariant, quantity);
                         handleCloseQuickView();
                         setIsCartOpen(false);
-                        router.push('/checkout');
+                        router.push(`/checkout?buyNow=${encodeURIComponent(itemKey)}`);
                       }}
                       type="button"
                     >

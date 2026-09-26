@@ -13,6 +13,7 @@ import {
   Truck, CheckCircle2, Sparkles, Heart, RefreshCw, Flame, Sun, Wheat
 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
+import { BotanicalCorner } from '@/components/BotanicalOrnament';
 import './HomePage.css';
 
 if (typeof window !== 'undefined') {
@@ -200,7 +201,7 @@ const HERO_POWDERS = [
     tag: 'Authentic Ground Turmeric Roots',
     price: 'From ₹140',
     rating: '4.9 ★ (420+)',
-    bgGradient: '#f4f8f5',
+    bgGradient: 'radial-gradient(circle at 50% 32%, #ffffff 0%, #faf5ea 55%, #f2e9d8 100%)',
     spiceColor: '#1B5E2F',
     auraGlow: 'rgba(22, 101, 52, 0.15)',
   },
@@ -213,7 +214,7 @@ const HERO_POWDERS = [
     tag: 'Rich Heat & Zero Added Colors',
     price: 'From ₹150',
     rating: '4.9 ★ (380+)',
-    bgGradient: '#f4f8f5',
+    bgGradient: 'radial-gradient(circle at 50% 32%, #ffffff 0%, #faf5ea 55%, #f2e9d8 100%)',
     spiceColor: '#991b1b',
     auraGlow: 'rgba(153, 27, 27, 0.15)',
   },
@@ -226,7 +227,7 @@ const HERO_POWDERS = [
     tag: 'Essential Daily Kitchen Aroma',
     price: 'From ₹130',
     rating: '4.8 ★ (310+)',
-    bgGradient: '#f4f8f5',
+    bgGradient: 'radial-gradient(circle at 50% 32%, #ffffff 0%, #faf5ea 55%, #f2e9d8 100%)',
     spiceColor: '#059669',
     auraGlow: 'rgba(5, 150, 105, 0.15)',
   },
@@ -239,7 +240,7 @@ const HERO_POWDERS = [
     tag: 'Cardamom, Cinnamon, Cloves & Star Anise',
     price: 'From ₹180',
     rating: '5.0 ★ (290+)',
-    bgGradient: '#f4f8f5',
+    bgGradient: 'radial-gradient(circle at 50% 32%, #ffffff 0%, #faf5ea 55%, #f2e9d8 100%)',
     spiceColor: '#0f766e',
     auraGlow: 'rgba(15, 118, 110, 0.15)',
   },
@@ -252,7 +253,7 @@ const HERO_POWDERS = [
     tag: 'Rich Aroma & Perfect Homestyle Flavor',
     price: 'From ₹160',
     rating: '4.9 ★ (510+)',
-    bgGradient: '#f4f8f5',
+    bgGradient: 'radial-gradient(circle at 50% 32%, #ffffff 0%, #faf5ea 55%, #f2e9d8 100%)',
     spiceColor: '#047857',
     auraGlow: 'rgba(4, 120, 87, 0.15)',
   }
@@ -268,7 +269,7 @@ const HERO_OILS = [
     tag: 'Fresh Sun-Dried Copra Extraction',
     price: 'From ₹280',
     rating: '4.9 ★ (640+)',
-    bgGradient: '#f4f8f5',
+    bgGradient: 'radial-gradient(circle at 50% 32%, #ffffff 0%, #faf5ea 55%, #f2e9d8 100%)',
     spiceColor: '#15803d',
     auraGlow: 'rgba(21, 128, 61, 0.15)',
   },
@@ -281,7 +282,7 @@ const HERO_OILS = [
     tag: 'Slow Chekku Pressed Under 40°C',
     price: 'From ₹260',
     rating: '4.9 ★ (820+)',
-    bgGradient: '#f4f8f5',
+    bgGradient: 'radial-gradient(circle at 50% 32%, #ffffff 0%, #faf5ea 55%, #f2e9d8 100%)',
     spiceColor: '#0f766e',
     auraGlow: 'rgba(15, 118, 110, 0.15)',
   },
@@ -294,7 +295,7 @@ const HERO_OILS = [
     tag: 'Generations of Authentic Flavour',
     price: 'From ₹340',
     rating: '5.0 ★ (570+)',
-    bgGradient: '#f4f8f5',
+    bgGradient: 'radial-gradient(circle at 50% 32%, #ffffff 0%, #faf5ea 55%, #f2e9d8 100%)',
     spiceColor: '#1B5E2F',
     auraGlow: 'rgba(22, 101, 52, 0.15)',
   },
@@ -307,7 +308,7 @@ const HERO_OILS = [
     tag: 'Fresh Seed Cold Extraction',
     price: 'From ₹240',
     rating: '4.8 ★ (390+)',
-    bgGradient: '#f4f8f5',
+    bgGradient: 'radial-gradient(circle at 50% 32%, #ffffff 0%, #faf5ea 55%, #f2e9d8 100%)',
     spiceColor: '#0d9488',
     auraGlow: 'rgba(13, 148, 136, 0.15)',
   }
@@ -478,8 +479,8 @@ export default function HomePage({ onCheckout }) {
   const handleCheckout = onCheckout || uiModal?.openCheckout;
 
   const homeRootRef = useRef(null);
-  const [products, setProducts] = useState(INITIAL_CATALOG_PRODUCTS);
-  const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -509,10 +510,13 @@ export default function HomePage({ onCheckout }) {
 
   // Filter products by category and search
   const filteredProducts = products.filter((p) => {
+    const pCat = (p.category || '').trim().toLowerCase();
+    const aCat = activeCategory.trim().toLowerCase();
     const matchCategory = activeCategory === 'All' || 
-      (p.category && p.category.toLowerCase() === activeCategory.toLowerCase()) ||
-      (activeCategory === 'Spices & Powders' && /spice|powder/i.test(p.category || '')) ||
-      (activeCategory === 'Cold-Pressed Oils' && /oil/i.test(p.category || ''));
+      pCat === aCat ||
+      (aCat.includes('spice') && /spice|powder/i.test(pCat)) ||
+      (aCat.includes('oil') && /oil/i.test(pCat)) ||
+      (aCat.includes('masala') && /masala/i.test(pCat));
     const matchSearch = !searchQuery || p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.description && p.description?.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchCategory && matchSearch;
@@ -575,16 +579,15 @@ export default function HomePage({ onCheckout }) {
   // Load products from API (Fresh live fetch + newest first sort)
   const fetchFreshProducts = useCallback(() => {
     setLoading(true);
-    fetch(`${API}/products?limit=100&sort=newest`)
+    fetch(`${API}/products?limit=100&sort=newest&t=${Date.now()}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         const list = Array.isArray(data) ? data : (data?.products || []);
-        if (list.length > 0) {
-          setProducts(sortNewestFirst(list));
-        }
+        setProducts(sortNewestFirst(list));
       })
       .catch((err) => {
-        console.error('API load failed, using catalog products:', err);
+        console.error('API load failed:', err);
+        setProducts([]);
       })
       .finally(() => {
         setLoading(false);
@@ -713,6 +716,8 @@ export default function HomePage({ onCheckout }) {
           1. HERO SECTION (Warm Ivory Luxury Organic D2C Layout)
       ───────────────────────────────────────────────────────────── */}
       <section id="home" className="home-hero">
+        <BotanicalCorner position="top-left" variant="royal" opacity={0.9} size={96} />
+        <BotanicalCorner position="bottom-right" variant="royal" opacity={0.9} size={96} />
         <div className="hero-bg-accent" />
         <div className="container hero-container">
           <div className="hero-content-grid">
@@ -984,6 +989,8 @@ export default function HomePage({ onCheckout }) {
           2. VALUE PROPOSITIONS STRIP (Rich Forest Green with White Icons)
       ───────────────────────────────────────────────────────────── */}
       <section className="features-strip">
+        <BotanicalCorner position="top-left" variant="eucalyptus" opacity={0.85} size={84} />
+        <BotanicalCorner position="bottom-right" variant="eucalyptus" opacity={0.85} size={84} />
         <div className="container">
           <div className="features-grid">
             <div className="feature-cell">
@@ -1033,6 +1040,8 @@ export default function HomePage({ onCheckout }) {
           3. PRODUCTS CATALOG (GSAP Horizontal Scrolling Showcase)
       ───────────────────────────────────────────────────────────── */}
       <section id="products" ref={productsSectionRef} className="section-products">
+        <BotanicalCorner position="top-left" variant="olive" opacity={0.9} size={92} />
+        <BotanicalCorner position="bottom-right" variant="olive" opacity={0.9} size={92} />
         <div className="container">
           
           <div className="products-top-bar">
@@ -1135,6 +1144,8 @@ export default function HomePage({ onCheckout }) {
           4. CATEGORIES SECTION (Curated Visual Bento Showcase)
       ───────────────────────────────────────────────────────────── */}
       <section id="categories" className="section-categories-showcase">
+        <BotanicalCorner position="top-left" variant="wheat" opacity={0.9} size={92} />
+        <BotanicalCorner position="bottom-right" variant="wheat" opacity={0.9} size={92} />
         <div className="container">
           <div className="section-header text-center cat-showcase-header">
             <div className="cat-eyebrow-pill">
@@ -1301,6 +1312,8 @@ export default function HomePage({ onCheckout }) {
           5. WHY CHOOSE VENTHULIR (Numbered Value Cards)
       ───────────────────────────────────────────────────────────── */}
       <section className="section-why-choose">
+        <BotanicalCorner position="top-left" variant="spice" opacity={0.9} size={92} />
+        <BotanicalCorner position="bottom-right" variant="spice" opacity={0.9} size={92} />
         <div className="container">
           <div className="section-header text-center">
             <span className="section-eyebrow">Our Core Principles</span>
@@ -1395,6 +1408,8 @@ export default function HomePage({ onCheckout }) {
           6. FROM FARM TO HOME (4-Step Process)
       ───────────────────────────────────────────────────────────── */}
       <section className="section-process">
+        <BotanicalCorner position="top-left" variant="wheat" opacity={0.9} size={92} />
+        <BotanicalCorner position="bottom-right" variant="wheat" opacity={0.9} size={92} />
         <div className="container">
           <div className="section-header text-center">
             <span className="section-eyebrow">The Journey of Purity</span>
@@ -1456,6 +1471,8 @@ export default function HomePage({ onCheckout }) {
           7. BRAND STORY & HERITAGE (Editorial 2-Column on Warm Ivory)
       ───────────────────────────────────────────────────────────── */}
       <section id="story" className="section-story">
+        <BotanicalCorner position="top-left" variant="olive" opacity={0.9} size={92} />
+        <BotanicalCorner position="bottom-right" variant="olive" opacity={0.9} size={92} />
         <div className="container">
           <div className="story-layout-grid">
             
@@ -1555,6 +1572,8 @@ export default function HomePage({ onCheckout }) {
           8. CUSTOMER REVIEWS & TESTIMONIALS (Carousel)
       ───────────────────────────────────────────────────────────── */}
       <section id="reviews" className="section-reviews">
+        <BotanicalCorner position="top-left" variant="eucalyptus" opacity={0.9} size={92} />
+        <BotanicalCorner position="bottom-right" variant="eucalyptus" opacity={0.9} size={92} />
         <div className="container">
           
           <div className="reviews-header-bar">
@@ -1631,6 +1650,8 @@ export default function HomePage({ onCheckout }) {
           9. FAQ & DIRECT INQUIRY
       ───────────────────────────────────────────────────────────── */}
       <section id="faq" className="section-faq-contact">
+        <BotanicalCorner position="top-left" variant="spice" opacity={0.9} size={92} />
+        <BotanicalCorner position="bottom-right" variant="spice" opacity={0.9} size={92} />
         <div className="container">
           <div className="faq-contact-grid">
             
@@ -1773,6 +1794,8 @@ export default function HomePage({ onCheckout }) {
       <section className="section-final-cta">
         <div className="container">
           <div className="final-cta-card">
+            <BotanicalCorner position="top-left" variant="royal" opacity={0.85} size={88} />
+            <BotanicalCorner position="bottom-right" variant="royal" opacity={0.85} size={88} />
             <div className="final-cta-content">
               <span className="final-cta-eyebrow">Pure • Traditional • Honest</span>
               <h2 className="final-cta-heading">
@@ -1941,22 +1964,10 @@ export default function HomePage({ onCheckout }) {
                   <button
                     className="btn-qv-buy-now"
                     onClick={() => {
-                      addToCart(quickViewProduct, selectedVariant, quantity);
+                      const itemKey = addToCart(quickViewProduct, selectedVariant, quantity);
                       handleCloseQuickView();
                       setIsCartOpen(false);
-                      const price = qvPrice * quantity;
-                      const shippingFee = price >= 499 ? 0 : 49;
-                      if (handleCheckout) {
-                        handleCheckout({
-                          grandTotal: price + shippingFee,
-                          discount: 0,
-                          appliedCoupon: null,
-                          shippingFee
-                        });
-                      } else {
-                        const checkoutBtn = document.querySelector('.checkout-cta') || document.querySelector('.btn-checkout');
-                        if (checkoutBtn) checkoutBtn.click();
-                      }
+                      router.push(`/checkout?buyNow=${encodeURIComponent(itemKey)}`);
                     }}
                     type="button"
                   >

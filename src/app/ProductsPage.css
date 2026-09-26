@@ -238,20 +238,22 @@
 
 .btn-reset-catalog {
   margin-top: 16px;
-  background: linear-gradient(135deg, #c9922c 0%, #b47a1b 100%);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #1B5E2F !important;
+  color: #ffffff !important;
+  border: 1px solid #1B5E2F !important;
   padding: 10px 24px;
   border-radius: 50px;
   font-size: 0.88rem;
   font-weight: 750;
   cursor: pointer;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 14px rgba(180, 122, 27, 0.25);
+  box-shadow: 0 4px 14px rgba(27, 94, 47, 0.25);
 }
 
 .btn-reset-catalog:hover {
-  background: linear-gradient(135deg, #b47a1b 0%, #926010 100%);
+  background: #134522 !important;
+  border-color: #134522 !important;
+  color: #ffffff !important;
   transform: translateY(-1px);
 }
 

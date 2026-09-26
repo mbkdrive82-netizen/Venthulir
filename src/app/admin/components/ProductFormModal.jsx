@@ -160,15 +160,23 @@ export default function ProductFormModal({
   // Add Variant
   const handleAddVariant = () => {
     if (!newVariant.label.trim() || !newVariant.price) return;
+    const priceVal = parseFloat(newVariant.price);
+    const origVal = newVariant.originalPrice 
+      ? parseFloat(newVariant.originalPrice) 
+      : (formData.originalPrice && formData.price 
+          ? Math.round(priceVal * (parseFloat(formData.originalPrice) / parseFloat(formData.price))) 
+          : Math.round(priceVal * 1.25));
+
     setFormData({
       ...formData,
       variants: [...formData.variants, {
         label: newVariant.label.trim(),
-        price: parseFloat(newVariant.price),
+        price: priceVal,
+        originalPrice: origVal,
         contents: newVariant.contents.trim()
       }]
     });
-    setNewVariant({ label: '', price: '', contents: '' });
+    setNewVariant({ label: '', price: '', originalPrice: '', contents: '' });
   };
 
   const handleRemoveVariant = (index) => {
@@ -441,20 +449,27 @@ export default function ProductFormModal({
               <Layers size={15} /> Multi-Weight Pricing Variants (Optional)
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '8px', marginBottom: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1fr auto', gap: '8px', marginBottom: '10px' }}>
               <input
                 type="text"
                 className="adm-form-input"
-                placeholder="Variant (e.g. 500ml / 1kg)"
+                placeholder="Variant (e.g. 500ml)"
                 value={newVariant.label}
                 onChange={(e) => setNewVariant({ ...newVariant, label: e.target.value })}
               />
               <input
                 type="number"
                 className="adm-form-input"
-                placeholder="Price (₹)"
+                placeholder="Selling Price (₹)"
                 value={newVariant.price}
                 onChange={(e) => setNewVariant({ ...newVariant, price: e.target.value })}
+              />
+              <input
+                type="number"
+                className="adm-form-input"
+                placeholder="MRP (₹) opt"
+                value={newVariant.originalPrice}
+                onChange={(e) => setNewVariant({ ...newVariant, originalPrice: e.target.value })}
               />
               <input
                 type="text"
@@ -467,6 +482,7 @@ export default function ProductFormModal({
                 type="button"
                 className="adm-btn-secondary"
                 onClick={handleAddVariant}
+                title="Add Variant"
               >
                 <Plus size={14} />
               </button>
@@ -474,14 +490,20 @@ export default function ProductFormModal({
 
             {formData.variants.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {formData.variants.map((v, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px' }}>
-                    <span><strong>{v.label}</strong> — ₹{v.price} {v.contents ? `(${v.contents})` : ''}</span>
-                    <button type="button" onClick={() => handleRemoveVariant(idx)} style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '2px' }}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
+                {formData.variants.map((v, idx) => {
+                  const vOrig = v.originalPrice || Math.round(v.price * 1.25);
+                  const vDisc = vOrig > v.price ? Math.round(((vOrig - v.price) / vOrig) * 100) : 0;
+                  return (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px' }}>
+                      <span>
+                        <strong>{v.label}</strong> — ₹{v.price} {vOrig > v.price ? <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '11.5px', marginLeft: '4px' }}>₹{vOrig}</span> : ''} {vDisc > 0 ? <span style={{ background: '#dcfce7', color: '#15803d', fontSize: '11px', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>{vDisc}% OFF</span> : ''} {v.contents ? `(${v.contents})` : ''}
+                      </span>
+                      <button type="button" onClick={() => handleRemoveVariant(idx)} style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '2px' }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

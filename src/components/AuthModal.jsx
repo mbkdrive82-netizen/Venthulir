@@ -166,7 +166,7 @@ export default function AuthModal({ onClose }) {
   return (
     <>
       <div className="modal-overlay" onClick={onClose} />
-      <div className="auth-modal" role="dialog" aria-modal="true">
+      <div className="auth-modal" role="dialog" aria-modal="true" data-lenis-prevent>
         <button className="modal-close" onClick={onClose} aria-label="Close modal">
           <X size={18} />
         </button>
