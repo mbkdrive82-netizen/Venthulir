@@ -31,7 +31,7 @@
 ───────────────────────────────────────────────────────────── */
 .product-card-media {
   position: relative;
-  height: 185px;
+  height: 220px;
   width: 100%;
   background: radial-gradient(circle at 50% 40%, #ffffff 0%, #f4f7f5 100%);
   display: flex;
@@ -138,16 +138,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 4px;
 }
 
 .product-img {
   width: auto;
   height: auto;
-  max-height: 155px;
-  max-width: 160px;
+  max-height: 195px;
+  max-width: 200px;
   object-fit: contain;
   mix-blend-mode: multiply;
-  filter: drop-shadow(0 8px 16px rgba(15, 61, 42, 0.10));
+  filter: drop-shadow(0 8px 16px rgba(15, 61, 42, 0.12));
   transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -702,7 +703,7 @@
   }
   
   .product-card-media {
-    height: 135px !important;
+    height: 165px !important;
     padding: 8px 6px 4px !important;
     background: #ffffff !important;
     border-bottom: 1px solid #f1f5f9 !important;
@@ -710,8 +711,10 @@
   }
 
   .product-img {
-    max-height: 108px !important;
-    max-width: 112px !important;
+    max-height: 145px !important;
+    max-width: 150px !important;
+    width: auto !important;
+    height: auto !important;
   }
 
   /* Badge stays strictly on top-left without hitting top-right wishlist button */
