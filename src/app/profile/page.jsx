@@ -151,8 +151,20 @@ function ProfileContent() {
         gender: user.gender || 'Male',
       });
 
+      const userKey = user._id || user.id || user.email || 'guest';
+      const localSaved = typeof window !== 'undefined' ? localStorage.getItem(`venthulir_addresses_${userKey}`) : null;
+      if (localSaved) {
+        try {
+          const parsed = JSON.parse(localSaved);
+          if (Array.isArray(parsed)) {
+            setAddresses(parsed);
+            return;
+          }
+        } catch {}
+      }
+
       const initialAddresses = [];
-      if (user.deliveryAddress?.address) {
+      if (user.deliveryAddress?.address && user.deliveryAddress.address.trim() !== '') {
         initialAddresses.push({
           name: user.name || 'Primary Delivery',
           phone: user.phone || '',
@@ -164,19 +176,10 @@ function ProfileContent() {
           type: 'Home',
           isDefault: true
         });
-      } else {
-        initialAddresses.push({
-          name: user.name || 'Valued Patron',
-          phone: user.phone || '+91 9876543210',
-          address: '42, Heritage Farm Road, Gandhipuram',
-          locality: 'Near Central Post Office',
-          city: 'Coimbatore',
-          state: 'Tamil Nadu',
-          zipCode: '641012',
-          type: 'Home',
-          isDefault: true
-        });
+      } else if (Array.isArray(user.addresses) && user.addresses.length > 0) {
+        user.addresses.forEach(addr => initialAddresses.push(addr));
       }
+
       setAddresses(initialAddresses);
     }
   }, [user]);
@@ -264,6 +267,11 @@ function ProfileContent() {
 
       setAddresses(updatedList);
 
+      const userKey = user?._id || user?.id || user?.email || 'guest';
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`venthulir_addresses_${userKey}`, JSON.stringify(updatedList));
+      }
+
       const primary = updatedList.find(a => a.isDefault) || updatedList[0];
       if (primary) {
         const token = localStorage.getItem('venthulir_token');
@@ -299,6 +307,10 @@ function ProfileContent() {
         updated[0].isDefault = true;
       }
       setAddresses(updated);
+      const userKey = user?._id || user?.id || user?.email || 'guest';
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`venthulir_addresses_${userKey}`, JSON.stringify(updated));
+      }
     }
   };
 
@@ -439,7 +451,7 @@ function ProfileContent() {
                 className={`fk-sub-item ${activeTab === 'addresses' ? 'active' : ''}`}
               >
                 <span>Manage Addresses</span>
-                <span className="fk-badge-pill">{addresses.length}</span>
+                {addresses.length > 0 && <span className="fk-badge-pill">{addresses.length}</span>}
               </button>
 
               <button 
@@ -1015,36 +1027,45 @@ function ProfileContent() {
               )}
 
               {/* Saved Addresses List */}
-              <div className="fk-address-list">
-                {addresses.map((addr, idx) => (
-                  <div key={idx} className={`fk-address-card ${addr.isDefault ? 'is-default' : ''}`}>
-                    <div className="fk-addr-header">
-                      <span className={`fk-addr-badge ${addr.type.toLowerCase()}`}>
-                        {addr.type}
-                      </span>
-                      <div className="fk-addr-actions">
-                        <button type="button" onClick={() => handleOpenEditAddress(addr, idx)} className="fk-link-btn">
-                          Edit
-                        </button>
-                        {addresses.length > 1 && (
+              {addresses.length === 0 && !isAddressFormOpen ? (
+                <div style={{ textAlign: 'center', padding: '36px 20px', background: '#fcfcfc', border: '1px dashed #cbd5e1', borderRadius: '4px', margin: '14px 0' }}>
+                  <MapPin size={32} color="#94a3b8" style={{ margin: '0 auto 10px' }} />
+                  <div style={{ fontWeight: 700, color: '#334155', fontSize: '14px' }}>No saved addresses yet</div>
+                  <p style={{ color: '#94a3b8', fontSize: '12.5px', margin: '4px 0 14px' }}>Add your delivery address for fast 1-click order checkout</p>
+                  <button type="button" onClick={handleOpenAddAddress} className="fk-btn-save" style={{ width: 'auto', padding: '8px 18px', fontSize: '12px' }}>
+                    + ADD YOUR ADDRESS
+                  </button>
+                </div>
+              ) : (
+                <div className="fk-address-list">
+                  {addresses.map((addr, idx) => (
+                    <div key={idx} className={`fk-address-card ${addr.isDefault ? 'is-default' : ''}`}>
+                      <div className="fk-addr-header">
+                        <span className={`fk-addr-badge ${addr.type.toLowerCase()}`}>
+                          {addr.type}
+                        </span>
+                        <div className="fk-addr-actions">
+                          <button type="button" onClick={() => handleOpenEditAddress(addr, idx)} className="fk-link-btn">
+                            Edit
+                          </button>
                           <button type="button" onClick={() => handleDeleteAddress(idx)} className="fk-link-btn" style={{ color: '#d32f2f' }}>
                             Delete
                           </button>
-                        )}
+                        </div>
                       </div>
-                    </div>
 
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <strong style={{ fontSize: '0.94rem', color: '#212121' }}>{addr.name}</strong>
-                      <strong style={{ fontSize: '0.9rem', color: '#212121' }}>{addr.phone}</strong>
-                    </div>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <strong style={{ fontSize: '0.94rem', color: '#212121' }}>{addr.name}</strong>
+                        <strong style={{ fontSize: '0.9rem', color: '#212121' }}>{addr.phone}</strong>
+                      </div>
 
-                    <p className="fk-addr-text">
-                      {addr.address}{addr.locality ? `, ${addr.locality}` : ''}, {addr.city}, {addr.state} - <strong style={{ color: '#212121' }}>{addr.zipCode}</strong>
-                    </p>
-                  </div>
-                ))}
-              </div>
+                      <p className="fk-addr-text">
+                        {addr.address}{addr.locality ? `, ${addr.locality}` : ''}, {addr.city}, {addr.state} - <strong style={{ color: '#212121' }}>{addr.zipCode}</strong>
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
