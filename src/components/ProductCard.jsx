@@ -7,7 +7,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useUIModal } from '@/components/Providers';
 import { 
   ShoppingBag, Eye, Star, Check, Heart, ArrowRight, 
-  Flame, Camera, Tag, Zap, ShieldCheck, Leaf, Sparkles 
+  Flame, Camera, Tag, Zap, ShieldCheck, Leaf, Sparkles,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import './ProductCard.css';
 
@@ -43,6 +44,8 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
   const { t, isTamil, getProductName, getCategory } = useLanguage();
   const uiModal = useUIModal?.() || null;
   const [selectedVariant, setSelectedVariant] = useState(product?.variants?.[0] || null);
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState(null);
   const [added, setAdded] = useState(false);
   const [liked, setLiked] = useState(false);
 
@@ -81,12 +84,44 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
     return '/assets/hero/turmeric.png';
   };
 
-  const imagesList = Array.isArray(product.images) && product.images.length > 0 
+  const rawImages = Array.isArray(product.images) && product.images.length > 0 
     ? product.images 
     : (product.imageUrl ? [product.imageUrl] : []);
-  const imageUrl = imagesList[0] || getFallbackImg(product);
-  const extraPhotos = imagesList.length > 1 ? imagesList.length - 1 : 0;
+  const imagesList = rawImages.length > 0 ? rawImages : [getFallbackImg(product)];
+  const safeIndex = currentImgIndex % imagesList.length;
+  const currentImage = imagesList[safeIndex] || getFallbackImg(product);
+  const hasMultipleImages = imagesList.length > 1;
   const hasVariants = product.variants?.length > 0;
+
+  const handlePrevImg = (e) => {
+    e.stopPropagation();
+    setCurrentImgIndex((prev) => (prev - 1 + imagesList.length) % imagesList.length);
+  };
+
+  const handleNextImg = (e) => {
+    e.stopPropagation();
+    setCurrentImgIndex((prev) => (prev + 1) % imagesList.length);
+  };
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null || !hasMultipleImages) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 35) {
+      if (diff > 0) {
+        // Swiped Left -> Next
+        setCurrentImgIndex((prev) => (prev + 1) % imagesList.length);
+      } else {
+        // Swiped Right -> Prev
+        setCurrentImgIndex((prev) => (prev - 1 + imagesList.length) % imagesList.length);
+      }
+    }
+    setTouchStartX(null);
+  };
 
   // Dynamic 3-spec value proposition items
   const getProductSpecs = (p) => {
@@ -172,7 +207,11 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
     <div className="product-card" onClick={handleCardNavigate} style={{ cursor: 'pointer' }}>
       
       {/* ── Top Media Showcase Stage ── */}
-      <div className="product-card-media">
+      <div 
+        className="product-card-media"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         
         {/* Top-Left Badge (Best Seller or Top Rated) */}
         <div className="product-top-badge">
@@ -203,9 +242,10 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
         {/* Product Image */}
         <div className="product-img-box">
           <img 
-            src={imageUrl} 
+            key={currentImage}
+            src={currentImage} 
             alt={localizedTitle} 
-            className="product-img" 
+            className="product-img card-img-fade" 
             loading="lazy" 
             onError={(e) => {
               e.currentTarget.onerror = null;
@@ -214,12 +254,56 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
           />
         </div>
 
-        {/* Bottom-Right Photo Count Badge (Only visible when multiple photos exist) */}
-        {extraPhotos > 0 && (
-          <div className="product-photo-count">
+        {/* Image Switcher Navigation Arrows (Visible when multiple images) */}
+        {hasMultipleImages && (
+          <>
+            <button
+              type="button"
+              className="card-img-arrow left"
+              onClick={handlePrevImg}
+              aria-label="Previous image"
+              title="Previous photo"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              type="button"
+              className="card-img-arrow right"
+              onClick={handleNextImg}
+              aria-label="Next image"
+              title="Next photo"
+            >
+              <ChevronRight size={16} />
+            </button>
+
+            {/* Pagination Dots */}
+            <div className="card-img-dots-bar" onClick={(e) => e.stopPropagation()}>
+              {imagesList.map((_, dotIdx) => (
+                <span
+                  key={dotIdx}
+                  className={`card-img-dot ${dotIdx === safeIndex ? 'active' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImgIndex(dotIdx);
+                  }}
+                  title={`Photo ${dotIdx + 1} of ${imagesList.length}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Bottom-Right Photo Count Interactive Badge */}
+        {hasMultipleImages && (
+          <button 
+            type="button"
+            className="product-photo-count clickable"
+            onClick={handleNextImg}
+            title="Click to view next photo"
+          >
             <Camera size={11} />
-            <span>+{extraPhotos} Photo{extraPhotos > 1 ? 's' : ''}</span>
-          </div>
+            <span>{safeIndex + 1}/{imagesList.length}</span>
+          </button>
         )}
 
         {/* Quick View Button on Hover */}
