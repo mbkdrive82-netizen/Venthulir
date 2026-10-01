@@ -274,9 +274,9 @@
   padding: 13px 20px;
   font-size: 0.95rem;
   font-weight: 600;
-  background: #1B5E2F;
+  background: #0b331f;
   color: #ffffff;
-  border: 1px solid #1B5E2F;
+  border: 1px solid #0b331f;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -284,8 +284,8 @@
 }
 
 .co-submit:hover {
-  background: #000000;
-  border-color: #000000;
+  background: #064e26;
+  border-color: #064e26;
 }
 
 .co-auth-note {

@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { useUIModal } from '@/components/Providers';
 import { 
   ShoppingBag, 
@@ -28,37 +29,46 @@ import {
   Check,
   TrendingUp,
   Package,
-  MapPin
+  MapPin,
+  Globe
 } from 'lucide-react';
 import './Navbar.css';
-
-const QUICK_CATEGORIES = [
-  { id: 'all',          name: 'All Harvest',       emoji: '🌿' },
-  { id: 'spices',       name: 'Spices & Powders',  emoji: '🌶️', filter: 'Spices & Powders' },
-  { id: 'oils',         name: 'Cold-Pressed Oils', emoji: '🛢️', filter: 'Cold-Pressed Oils' },
-  { id: 'masalas',      name: 'Heritage Masalas',  emoji: '🍲', filter: 'Masala Blends' },
-];
-
-const ANNOUNCEMENTS = [
-  { text: '🌿 100% Certified Organic & Single-Origin Direct from Farms', icon: ShieldCheck },
-  { text: '🚚 Free Express Delivery Across India on Orders Above ₹499', icon: Truck },
-  { text: '🎁 Flat 15% OFF On 1st Order — Code: FIRSTPURE', icon: Gift },
-  { text: '💬 Instant WhatsApp Order & Support: +91 87784 76414', icon: PhoneCall },
-];
-
-const TRENDING_SEARCHES = [
-  'Turmeric Powder',
-  'Red Chilli',
-  'Cold-Pressed Gingelly Oil',
-  'Sambar Powder',
-  'Groundnut Oil',
-  'powder'
-];
 
 export default function Navbar({ onAuthOpen, onSearchOpen }) {
   const { cartCount, setIsCartOpen, addToCart } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
+  const { language, setLanguage, toggleLanguage, t, isTamil } = useLanguage();
   const uiModal = useUIModal?.() || null;
+
+  const QUICK_CATEGORIES = [
+    { id: 'all',          name: t('catAll', 'All Harvest'),       emoji: '🌿' },
+    { id: 'spices',       name: t('catSpices', 'Spices & Powders'),  emoji: '🌶️', filter: 'Spices & Powders' },
+    { id: 'oils',         name: t('catOils', 'Cold-Pressed Oils'), emoji: '🛢️', filter: 'Cold-Pressed Oils' },
+    { id: 'masalas',      name: t('catMasalas', 'Heritage Masalas'),  emoji: '🍲', filter: 'Masala Blends' },
+  ];
+
+  const ANNOUNCEMENTS = [
+    { text: t('announcement1', '🌿 100% Certified Organic & Single-Origin Direct from Farms'), icon: ShieldCheck },
+    { text: t('announcement2', '🚚 Free Express Delivery Across India on Orders Above ₹499'), icon: Truck },
+    { text: t('announcement3', '🎁 Flat 15% OFF On 1st Order — Code: FIRSTPURE'), icon: Gift },
+    { text: t('announcement4', '💬 Instant WhatsApp Order & Support: +91 87784 76414'), icon: PhoneCall },
+  ];
+
+  const TRENDING_SEARCHES = isTamil ? [
+    'சேலம் மஞ்சள் பொடி',
+    'குண்டூர் மிளகாய்',
+    'மரச்செக்கு நல்லெண்ணெய்',
+    'பாரம்பரிய சாம்பார் பொடி',
+    'மரச்செக்கு கடலை எண்ணெய்',
+    'மஞ்சள்'
+  ] : [
+    'Turmeric Powder',
+    'Red Chilli',
+    'Cold-Pressed Gingelly Oil',
+    'Sambar Powder',
+    'Groundnut Oil',
+    'powder'
+  ];
   
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -80,7 +90,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
 
   useEffect(() => {
     setMounted(true);
-    fetch('/api/products?limit=100', { cache: 'no-store' })
+    fetch('/api/products?limit=100')
       .then(res => res.json())
       .then(data => {
         if (data && Array.isArray(data.products)) {
@@ -213,8 +223,16 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
 
   const navigateToSection = (sectionId, fallbackUrl) => {
     setMenuOpen(false);
-    if (sectionId === 'offers') {
+    if (sectionId === 'offers' || sectionId === 'products') {
       router.push('/products');
+      return;
+    }
+    if (sectionId === 'home') {
+      if (pathname === '/home' || pathname === '/') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        router.push('/home');
+      }
       return;
     }
     if (pathname === '/home' || pathname === '/') {
@@ -241,11 +259,25 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
             <span className="ticker-text">{activeAnnouncement.text}</span>
           </div>
           <div className="announcement-quick-links">
-            <span className="announcement-badge-pill">100% PURE</span>
+            <button 
+              type="button" 
+              className="announcement-lang-toggle" 
+              onClick={toggleLanguage}
+              title={isTamil ? 'Switch to English' : 'தமிழுக்கு மாற்றுக'}
+            >
+              <Globe size={13} />
+              <span>{language === 'en' ? 'தமிழ்' : 'English'}</span>
+            </button>
             <span className="divider">|</span>
-            <Link href="/products" prefetch={true} className="quick-link-btn" onClick={() => setMenuOpen(false)}>Shop Fresh Harvest</Link>
+            <span className="announcement-badge-pill">{t('purityBadge', '100% PURE')}</span>
             <span className="divider">|</span>
-            <a href="https://wa.me/918778476414" target="_blank" rel="noreferrer" className="quick-link-btn highlight">WhatsApp Order</a>
+            <Link href="/products" prefetch={true} className="quick-link-btn" onClick={() => setMenuOpen(false)}>
+              {t('shopFreshHarvest', 'Shop Fresh Harvest')}
+            </Link>
+            <span className="divider">|</span>
+            <a href="https://wa.me/918778476414" target="_blank" rel="noreferrer" className="quick-link-btn highlight">
+              {t('whatsappOrder', 'WhatsApp Order')}
+            </a>
           </div>
         </div>
       </div>
@@ -268,7 +300,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
             </div>
             <div className="brand-text-stack">
               <span className="brand-name">VENTHULIR</span>
-              <span className="brand-tagline">100% PURE ORGANIC HARVEST</span>
+              <span className="brand-tagline">{isTamil ? '100% அசல் இயற்கை விளைபொருட்கள்' : '100% PURE ORGANIC HARVEST'}</span>
             </div>
           </Link>
 
@@ -278,7 +310,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
               <Search size={16} className="search-lead-icon" />
               <input
                 type="text"
-                placeholder="Search spices, oils, masalas..."
+                placeholder={isTamil ? 'மசாலா, எண்ணெய், தேன்...' : 'Search spices, oils, masalas...'}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -298,7 +330,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                 </button>
               )}
               <button type="submit" className="search-submit-btn" aria-label="Submit search">
-                <span>Search</span>
+                <span>{t('search', 'Search')}</span>
               </button>
             </form>
 
@@ -310,7 +342,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                 {searchQuery.trim() && searchResults.length > 0 && (
                   <div className="search-results-list">
                     <div className="search-results-header">
-                      <span>Matching Organic Harvest ({searchResults.length})</span>
+                      <span>{t('matchingResults', 'Matching Organic Harvest')} ({searchResults.length})</span>
                     </div>
 
                     {searchResults.slice(0, 6).map((p) => {
@@ -337,17 +369,17 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                               type="button"
                               className={`search-item-add-btn ${isAdded ? 'added' : ''}`}
                               onClick={(e) => handleQuickAdd(e, p)}
-                              title="Add to Cart"
+                              title={t('addToCart', 'Add to Cart')}
                             >
                               {isAdded ? (
                                 <>
                                   <Check size={12} />
-                                  <span>Added</span>
+                                  <span>{t('addedToCart', 'Added')}</span>
                                 </>
                               ) : (
                                 <>
                                   <Plus size={13} />
-                                  <span>Add</span>
+                                  <span>{t('addToCart', 'Add')}</span>
                                 </>
                               )}
                             </button>
@@ -361,7 +393,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                       className="search-view-all-link"
                       onClick={() => setSearchFocused(false)}
                     >
-                      <span>View all {searchResults.length} results for &quot;{searchQuery}&quot;</span>
+                      <span>{t('viewAllResults', 'View all results')} ({searchResults.length})</span>
                       <ArrowRight size={13} />
                     </Link>
                   </div>
@@ -370,8 +402,8 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                 {/* 2. When query returned 0 results */}
                 {searchQuery.trim() && searchResults.length === 0 && (
                   <div className="search-no-results">
-                    <p className="no-res-title">No organic products found for &quot;{searchQuery}&quot;</p>
-                    <p className="no-res-sub">Try searching for authentic staples like:</p>
+                    <p className="no-res-title">{t('noResultsFound', 'No organic products found for')} &quot;{searchQuery}&quot;</p>
+                    <p className="no-res-sub">{isTamil ? 'இவற்றைத் தேடிப் பாருங்கள்:' : 'Try searching for authentic staples like:'}</p>
                     <div className="search-suggestion-pills">
                       {TRENDING_SEARCHES.map((term) => (
                         <button
@@ -394,7 +426,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                   <div className="search-trending-section">
                     <div className="trending-header">
                       <TrendingUp size={14} className="trending-icon" />
-                      <span>Trending Organic Harvest</span>
+                      <span>{t('trendingHarvest', 'Trending Organic Harvest')}</span>
                     </div>
                     <div className="trending-chips-grid">
                       {TRENDING_SEARCHES.map((term) => (
@@ -432,7 +464,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                 }
               }}
             >
-              Home
+              {t('home', 'Home')}
             </Link>
 
             <Link 
@@ -441,7 +473,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
               className="nav-item-btn"
               onClick={() => { setMenuOpen(false); }}
             >
-              All Products
+              {t('allProducts', 'All Products')}
             </Link>
 
             {/* Categories Dropdown */}
@@ -460,13 +492,13 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                   setCategoryDropOpen(v => !v);
                 }}
               >
-                <span>Categories</span>
+                <span>{t('categories', 'Categories')}</span>
                 <ChevronDown size={14} className={`chevron-icon ${categoryDropOpen ? 'rotate' : ''}`} />
               </button>
 
               {categoryDropOpen && (
                 <div className="nav-flyout-menu">
-                  <div className="flyout-header">Browse Organic Categories</div>
+                  <div className="flyout-header">{t('browseCategories', 'Browse Organic Categories')}</div>
                   {QUICK_CATEGORIES.map(cat => (
                     <Link
                       key={cat.id}
@@ -490,19 +522,38 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
               onClick={() => navigateToSection('offers', '/home#offers')}
             >
               <Flame size={13} className="flame-icon" />
-              <span>Festive Offers</span>
+              <span>{t('festiveOffers', 'Festive Offers')}</span>
             </button>
           </div>
 
-          {/* User Actions (Wishlist, Cart, Profile) */}
+          {/* User Actions (Wishlist, Cart, Profile, Language) */}
           <div className="navbar-actions-group">
             
+            {/* Desktop Language Switcher */}
+            <div className="nav-lang-switcher" title={isTamil ? 'மொழியை மாற்றுக' : 'Choose Language'}>
+              <button 
+                type="button" 
+                className={`lang-btn ${language === 'en' ? 'active' : ''}`}
+                onClick={() => setLanguage('en')}
+              >
+                EN
+              </button>
+              <span className="lang-divider">/</span>
+              <button 
+                type="button" 
+                className={`lang-btn ${language === 'ta' ? 'active' : ''}`}
+                onClick={() => setLanguage('ta')}
+              >
+                தமிழ்
+              </button>
+            </div>
+
             {/* Wishlist Button */}
             <Link 
               href="/products"
               prefetch={true}
               className="nav-action-icon-btn"
-              title="Saved Items"
+              title={t('wishlist', 'Saved Items')}
             >
               <Heart size={19} />
             </Link>
@@ -512,14 +563,14 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
               type="button" 
               className="nav-action-cart-btn" 
               onClick={() => setIsCartOpen(true)}
-              title="Shopping Cart"
+              title={t('cart', 'Shopping Cart')}
               aria-label="Open Shopping Cart"
             >
               <div className="cart-icon-wrapper">
                 <ShoppingBag size={18} />
                 {cartCount > 0 && <span className="nav-cart-badge">{cartCount}</span>}
               </div>
-              <span className="cart-label-text">Cart</span>
+              <span className="cart-label-text">{t('cart', 'Cart')}</span>
             </button>
 
             {/* Auth / Account Profile */}
@@ -528,7 +579,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                 <div className="user-avatar-initial">
                   {user?.name?.[0]?.toUpperCase() || <User size={14} />}
                 </div>
-                <span className="user-firstname">{user?.name?.split(' ')[0] || 'Account'}</span>
+                <span className="user-firstname">{user?.name?.split(' ')[0] || t('account', 'Account')}</span>
               </Link>
             ) : (
               <Link 
@@ -537,7 +588,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                 onClick={() => setMenuOpen(false)}
               >
                 <User size={15} />
-                <span>Sign In</span>
+                <span>{t('signIn', 'Sign In')}</span>
               </Link>
             )}
 
@@ -572,15 +623,38 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
               <Search size={15} className="mobile-search-icon" />
               <input
                 type="text"
-                placeholder="Search organic products..."
+                placeholder={t('searchPlaceholder', 'Search organic products...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </form>
 
+            {/* Mobile Language Selector */}
+            <div className="mobile-menu-section mobile-lang-section">
+              <span className="mobile-section-label">Language / மொழி</span>
+              <div className="mobile-lang-options">
+                <button 
+                  type="button" 
+                  className={`mobile-lang-btn ${language === 'en' ? 'active' : ''}`}
+                  onClick={() => setLanguage('en')}
+                >
+                  <span>English</span>
+                  {language === 'en' && <Check size={14} />}
+                </button>
+                <button 
+                  type="button" 
+                  className={`mobile-lang-btn ${language === 'ta' ? 'active' : ''}`}
+                  onClick={() => setLanguage('ta')}
+                >
+                  <span>தமிழ்</span>
+                  {language === 'ta' && <Check size={14} />}
+                </button>
+              </div>
+            </div>
+
             {/* Mobile Category List */}
             <div className="mobile-menu-section">
-              <span className="mobile-section-label">Quick Shop</span>
+              <span className="mobile-section-label">{t('categories', 'Quick Shop')}</span>
               <div className="mobile-category-grid">
                 {QUICK_CATEGORIES.map((cat) => (
                   <button
@@ -598,25 +672,25 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
 
             {/* Mobile Nav Links */}
             <div className="mobile-menu-section">
-              <span className="mobile-section-label">Navigation</span>
+              <span className="mobile-section-label">{isTamil ? 'வழிகாட்டல்' : 'Navigation'}</span>
               <button type="button" className="mobile-nav-row" onClick={() => navigateToSection('home', '/home')}>
-                <span>Home</span>
+                <span>{t('home', 'Home')}</span>
                 <ChevronDown size={14} style={{ transform: 'rotate(-90deg)', color: '#94a3b8' }} />
               </button>
               <Link href="/products" prefetch={true} className="mobile-nav-row" onClick={() => setMenuOpen(false)} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <span>All Products</span>
+                <span>{t('allProducts', 'All Products')}</span>
+                <ChevronDown size={14} style={{ transform: 'rotate(-90deg)', color: '#94a3b8' }} />
+              </Link>
+              <Link href="/products" prefetch={true} className="mobile-nav-row" onClick={() => setMenuOpen(false)} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <span>{t('wishlist', 'Saved Items / Wishlist')}</span>
                 <ChevronDown size={14} style={{ transform: 'rotate(-90deg)', color: '#94a3b8' }} />
               </Link>
               <button type="button" className="mobile-nav-row" onClick={() => navigateToSection('story', '/home#story')}>
-                <span>Our Story</span>
+                <span>{t('learnOurStory', 'Our Story')}</span>
                 <ChevronDown size={14} style={{ transform: 'rotate(-90deg)', color: '#94a3b8' }} />
               </button>
               <button type="button" className="mobile-nav-row" onClick={() => navigateToSection('reviews', '/home#reviews')}>
-                <span>Customer Reviews</span>
-                <ChevronDown size={14} style={{ transform: 'rotate(-90deg)', color: '#94a3b8' }} />
-              </button>
-              <button type="button" className="mobile-nav-row" onClick={() => navigateToSection('faq', '/home#faq')}>
-                <span>Help &amp; Contact</span>
+                <span>{t('reviewsEyebrow', 'Customer Reviews')}</span>
                 <ChevronDown size={14} style={{ transform: 'rotate(-90deg)', color: '#94a3b8' }} />
               </button>
             </div>
@@ -630,7 +704,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                   onClick={() => setMenuOpen(false)}
                 >
                   <User size={16} />
-                  <span>Sign In / Register</span>
+                  <span>{t('signIn', 'Sign In / Register')}</span>
                 </Link>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -641,7 +715,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                     style={{ background: '#1B5E2F' }}
                   >
                     <User size={16} />
-                    <span>My Profile &amp; Orders</span>
+                    <span>{isTamil ? 'எனது கணக்கு & ஆர்டர்கள்' : 'My Profile & Orders'}</span>
                   </Link>
                   <button 
                     type="button" 
@@ -649,7 +723,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                     onClick={() => { logout(); setMenuOpen(false); }}
                   >
                     <LogOut size={16} />
-                    <span>Sign Out</span>
+                    <span>{isTamil ? 'வெளியேறுக' : 'Sign Out'}</span>
                   </button>
                 </div>
               )}

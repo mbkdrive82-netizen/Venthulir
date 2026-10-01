@@ -341,9 +341,9 @@
 }
 
 .btn-add-more-pill:hover {
-  background: #1B5E2F;
+  background: #0b331f;
   color: #ffffff;
-  border-color: #1B5E2F;
+  border-color: #0b331f;
 }
 
 /* Buy Now Mode Alert Banner */
@@ -390,7 +390,8 @@
 .summary-items-list {
   max-height: 380px;
   overflow-y: auto !important;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
+  overscroll-behavior-y: auto;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   margin-bottom: 18px;
@@ -429,6 +430,7 @@
   background: #fbfdfc;
   border: 1.5px solid #edf2ee;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .summary-single-item.is-selected {
@@ -451,11 +453,26 @@
   flex-shrink: 0;
 }
 
+.summary-item-check-label.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
 .summary-item-checkbox {
   width: 18px;
   height: 18px;
   accent-color: #1B5E2F;
   cursor: pointer;
+}
+
+.summary-item-checkbox:disabled {
+  cursor: not-allowed;
+}
+
+.stepper-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  background: #f1f5f9;
 }
 
 .summary-item-thumb {
@@ -599,11 +616,38 @@
 .summary-include-tag.included {
   background: #dcfce7;
   color: #15803d;
+  border: 1px solid #bbf7d0;
 }
 
 .summary-include-tag.excluded {
   background: #f1f5f9;
   color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.summary-include-tag.out-of-stock {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border: 1.5px solid #f87171 !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.2px;
+  animation: pulse-subtle-red 2.2s infinite ease-in-out;
+}
+
+.summary-include-tag.limited-stock {
+  background: #fef3c7 !important;
+  color: #b45309 !important;
+  border: 1.5px solid #fcd34d !important;
+  font-weight: 800 !important;
+}
+
+@keyframes pulse-subtle-red {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+  }
 }
 
 .btn-add-more-dashed {
@@ -652,16 +696,16 @@
   font-size: 0.84rem;
   font-weight: 600;
   color: #ffffff !important;
-  background: #1B5E2F !important;
-  border: 1px solid #1B5E2F !important;
+  background: #0b331f !important;
+  border: 1px solid #0b331f !important;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-checkout-coupon:hover {
-  background: #134522 !important;
-  border-color: #134522 !important;
+  background: #064e26 !important;
+  border-color: #064e26 !important;
   color: #ffffff !important;
 }
 
@@ -706,17 +750,17 @@
   font-size: 1rem;
   font-weight: 600;
   color: #ffffff !important;
-  background: #1B5E2F !important;
-  border: 1px solid #1B5E2F !important;
+  background: #0b331f !important;
+  border: 1px solid #0b331f !important;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(27, 94, 47, 0.25);
+  box-shadow: 0 4px 14px rgba(11, 51, 31, 0.25);
 }
 
 .btn-confirm-place-order:hover:not(:disabled) {
-  background: #134522 !important;
-  border-color: #134522 !important;
+  background: #064e26 !important;
+  border-color: #064e26 !important;
   color: #ffffff !important;
 }
 

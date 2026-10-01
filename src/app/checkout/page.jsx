@@ -26,7 +26,10 @@ import {
   Trash2,
   Lock,
   MessageCircle,
-  ExternalLink
+  ExternalLink,
+  AlertCircle,
+  AlertTriangle,
+  XCircle
 } from 'lucide-react';
 import { PRESET_COUPONS } from '@/data/constants';
 import './CheckoutPage.css';
@@ -115,6 +118,81 @@ function CheckoutContent() {
   const [submitting, setSubmitting] = useState(false);
   const [orderError, setOrderError] = useState('');
   const [placedOrder, setPlacedOrder] = useState(null);
+
+  // Live Catalog Inventory for Real-Time Stock Detection
+  const [catalogProducts, setCatalogProducts] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/products?nocache=true&limit=100')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.products && Array.isArray(data.products)) {
+          setCatalogProducts(data.products);
+        } else if (Array.isArray(data)) {
+          setCatalogProducts(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Stock status determination for any cart item
+  const getStockInfo = (item) => {
+    const isErrorMentionedZero = Boolean(
+      orderError && 
+      orderError.toLowerCase().includes((item.name || '').toLowerCase()) && 
+      (orderError.includes('0 unit') || orderError.toLowerCase().includes('remaining in warehouse') || orderError.toLowerCase().includes('out of stock'))
+    );
+
+    const matchedProd = catalogProducts.find(p => 
+      (p._id && (p._id === item.productId || p._id === item.product || p._id === item._id || p._id === item.id)) ||
+      (p.id && (p.id === item.productId || p.id === item.product || p.id === item._id || p.id === item.id)) ||
+      (p.name && item.name && p.name.trim().toLowerCase() === item.name.trim().toLowerCase()) ||
+      (p.slug && item.slug && p.slug === item.slug)
+    );
+
+    let currentStock = matchedProd?.currentStock !== undefined 
+      ? matchedProd.currentStock 
+      : (item.currentStock !== undefined ? item.currentStock : 50);
+
+    if (isErrorMentionedZero) {
+      currentStock = 0;
+    }
+
+    const isOutOfStock = currentStock <= 0 || matchedProd?.inStock === false || isErrorMentionedZero;
+    const isLimitedStock = !isOutOfStock && currentStock > 0 && currentStock < item.quantity;
+
+    return {
+      isOutOfStock,
+      isLimitedStock,
+      currentStock,
+      unitsLeft: Math.max(0, currentStock)
+    };
+  };
+
+  // Identify out of stock items
+  const outOfStockItems = cartItems.filter(item => getStockInfo(item).isOutOfStock);
+  const hasOutOfStockSelected = selectedCartItems.some(item => getStockInfo(item).isOutOfStock);
+
+  const handleUncheckOutOfStock = () => {
+    setSelectedKeys(prev => {
+      const next = new Set(prev);
+      outOfStockItems.forEach(item => next.delete(item.key));
+      return next;
+    });
+    setOrderError('');
+  };
+
+  const handleRemoveOutOfStock = () => {
+    outOfStockItems.forEach(item => {
+      removeFromCart(item.key);
+      setSelectedKeys(prev => {
+        const next = new Set(prev);
+        next.delete(item.key);
+        return next;
+      });
+    });
+    setOrderError('');
+  };
 
   // Auto-fill form when user is logged in
   useEffect(() => {
@@ -211,6 +289,13 @@ function CheckoutContent() {
 
     if (!formData.name || !formData.phone || !formData.address || !formData.city || !formData.zipCode) {
       setOrderError('Please complete all mandatory delivery fields.');
+      return;
+    }
+
+    if (hasOutOfStockSelected) {
+      const oosItem = outOfStockItems.find(i => selectedKeys.has(i.key));
+      const oosName = oosItem?.name || 'Selected product';
+      setOrderError(`"${oosName}" has only 0 unit(s) remaining in warehouse. Please uncheck or remove it to place your order.`);
       return;
     }
 
@@ -753,24 +838,34 @@ function CheckoutContent() {
               )}
 
               {/* Items Mini List with interactive controls */}
-              <div 
-                className="summary-items-list" 
-                data-lenis-prevent
-                onWheel={(e) => e.stopPropagation()}
-              >
+              <div className="summary-items-list">
                 {cartItems.map((item) => {
                   const isSelected = selectedKeys.has(item.key);
+                  const { isOutOfStock, isLimitedStock, unitsLeft } = getStockInfo(item);
+
                   return (
                     <div 
                       key={item.key} 
-                      className={`summary-single-item ${isSelected ? 'is-selected' : 'is-unselected'}`}
+                      className={`summary-single-item ${
+                        isSelected && !isOutOfStock
+                          ? 'is-selected' 
+                          : 'is-unselected'
+                      }`}
                     >
                       {/* Checkbox */}
-                      <label className="summary-item-check-label" title={isSelected ? 'Uncheck to exclude from this order' : 'Check to include in this order'}>
+                      <label 
+                        className={`summary-item-check-label ${isOutOfStock ? 'is-disabled' : ''}`} 
+                        title={isOutOfStock ? 'Out of Stock' : (isSelected ? 'Uncheck to exclude from this order' : 'Check to include in this order')}
+                      >
                         <input 
                           type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleSelectItem(item.key)}
+                          checked={isSelected && !isOutOfStock}
+                          onChange={() => {
+                            if (!isOutOfStock) {
+                              toggleSelectItem(item.key);
+                            }
+                          }}
+                          disabled={isOutOfStock}
                           className="summary-item-checkbox"
                         />
                       </label>
@@ -790,23 +885,43 @@ function CheckoutContent() {
                       {/* Details & In-Checkout Actions */}
                       <div className="summary-item-details">
                         <div className="summary-item-header-row">
-                          <h5 title={item.name}>{item.name}</h5>
-                          <span className="summary-item-total">₹{item.price * item.quantity}</span>
+                          <h5 title={item.name}>
+                            {item.name}
+                          </h5>
+                          <span className="summary-item-total">
+                            ₹{item.price * item.quantity}
+                          </span>
                         </div>
                         
-                        <div className="summary-item-meta">
+                        <div className="summary-item-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
                           <span className="summary-item-price-tag">₹{item.price} each</span>
                           {item.variant && <span className="summary-item-variant">• {item.variant.label}</span>}
+                          
+                          {/* Clean In-Place Real-World Stock Notification */}
+                          {isOutOfStock ? (
+                            <span style={{ color: '#dc2626', fontSize: '0.74rem', fontWeight: 800, background: '#fee2e2', padding: '1px 7px', borderRadius: '4px' }}>
+                              ✕ Out of Stock
+                            </span>
+                          ) : isLimitedStock ? (
+                            <span style={{ color: '#b45309', fontSize: '0.74rem', fontWeight: 750, background: '#fef3c7', padding: '1px 7px', borderRadius: '4px' }}>
+                              ⚠️ Only {unitsLeft} left
+                            </span>
+                          ) : (
+                            <span style={{ color: '#16a34a', fontSize: '0.74rem', fontWeight: 750, background: '#ecfdf5', padding: '1px 7px', borderRadius: '4px' }}>
+                              ✓ In Stock
+                            </span>
+                          )}
                         </div>
 
                         {/* In-Checkout Quantity Stepper & Remove Button */}
                         <div className="summary-item-actions-row">
-                          <div className="summary-qty-stepper">
+                          <div className={`summary-qty-stepper ${isOutOfStock ? 'stepper-disabled' : ''}`}>
                             <button 
                               type="button" 
                               onClick={() => updateQty(item.key, item.quantity - 1)}
                               title="Decrease quantity"
                               aria-label="Decrease quantity"
+                              disabled={isOutOfStock}
                             >
                               <Minus size={12} />
                             </button>
@@ -816,6 +931,7 @@ function CheckoutContent() {
                               onClick={() => updateQty(item.key, item.quantity + 1)}
                               title="Increase quantity"
                               aria-label="Increase quantity"
+                              disabled={isOutOfStock || (isLimitedStock && item.quantity >= unitsLeft)}
                             >
                               <Plus size={12} />
                             </button>
@@ -839,8 +955,8 @@ function CheckoutContent() {
                             <span>Remove</span>
                           </button>
 
-                          <span className={`summary-include-tag ${isSelected ? 'included' : 'excluded'}`}>
-                            {isSelected ? '✓ In Order' : '○ Excluded'}
+                          <span className={`summary-include-tag ${isSelected && !isOutOfStock ? 'included' : 'excluded'}`} style={{ marginLeft: 'auto' }}>
+                            {isOutOfStock ? 'Not in Order' : isSelected ? '✓ In Order' : '○ Excluded'}
                           </span>
                         </div>
                       </div>

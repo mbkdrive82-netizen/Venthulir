@@ -4,6 +4,7 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider, useCart } from '@/context/CartContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
@@ -125,10 +126,12 @@ function ProvidersInner({ children }) {
 
 export default function Providers({ children }) {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <ProvidersInner>{children}</ProvidersInner>
-      </CartProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <CartProvider>
+          <ProvidersInner>{children}</ProvidersInner>
+        </CartProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }

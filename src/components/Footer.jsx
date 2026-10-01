@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
 import { 
   ArrowRight, 
   CheckCircle2, 
   Leaf, 
   ShieldCheck, 
-  Sparkles, 
   Truck, 
   Phone, 
   Mail, 
@@ -16,24 +16,18 @@ import {
   MessageCircle, 
   Instagram, 
   Facebook,
-  Heart,
-  Droplets,
-  Moon,
-  Sun,
-  Palette
+  Droplets
 } from 'lucide-react';
 import './Footer.css';
 
 export default function Footer() {
   const router = useRouter();
   const pathname = usePathname();
+  const { t, isTamil } = useLanguage();
 
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  
-  // Interactive Scenery Themes: 'minimal-ivory' | 'midnight-stars' | 'pollachi-express' | 'golden-sunset'
-  const [sceneryTheme, setSceneryTheme] = useState('minimal-ivory');
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -264,461 +258,280 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* ── INTERACTIVE LUXURY DELIVERY HIGHWAY STAGE ── */}
-      <div className={`footer-animation-stage theme-${sceneryTheme}`}>
-        
-        {/* 🌟 Interactive Scenery Switcher Bar */}
-        <div className="scenery-theme-switcher" aria-label="Choose scenery theme">
-          <span className="switcher-title">
-            <Palette size={13} />
-            <span>Theme Options:</span>
-          </span>
-          <div className="switcher-buttons">
-            <button 
-              className={`switcher-btn ${sceneryTheme === 'minimal-ivory' ? 'active' : ''}`}
-              onClick={() => setSceneryTheme('minimal-ivory')}
-            >
-              ✨ Minimal Ivory
-            </button>
-            <button 
-              className={`switcher-btn ${sceneryTheme === 'midnight-stars' ? 'active' : ''}`}
-              onClick={() => setSceneryTheme('midnight-stars')}
-            >
-              🌙 Midnight Stars
-            </button>
-            <button 
-              className={`switcher-btn ${sceneryTheme === 'pollachi-express' ? 'active' : ''}`}
-              onClick={() => setSceneryTheme('pollachi-express')}
-            >
-              🌴 Pollachi Palms
-            </button>
-            <button 
-              className={`switcher-btn ${sceneryTheme === 'golden-sunset' ? 'active' : ''}`}
-              onClick={() => setSceneryTheme('golden-sunset')}
-            >
-              🌅 Amber Sunset
-            </button>
-          </div>
-        </div>
-
-        {/* ── VECTOR SCENERY BACKDROPS ── */}
+      {/* ── 2. PERFECTED LUXURY DELIVERY HIGHWAY & TRUCK STAGE ── */}
+      <div className="footer-animation-stage theme-pollachi-express">
+        {/* Subtle Organic Scenery Backdrop */}
         <div className="anim-scenery-backdrop" aria-hidden="true">
-          
-          {/* ═════════════════════════════════════════════════════════════
-              THEME 1: MINIMAL ROYAL IVORY (Zen & Extraordinary)
-          ═════════════════════════════════════════════════════════════ */}
-          {sceneryTheme === 'minimal-ivory' && (
-            <svg className="scenery-svg" viewBox="0 0 1440 160" preserveAspectRatio="none" fill="none">
-              <defs>
-                <linearGradient id="ivorySky" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#FAF7F0" />
-                  <stop offset="60%" stopColor="#F5EFE4" />
-                  <stop offset="100%" stopColor="#EFE8D8" />
-                </linearGradient>
-                <linearGradient id="ivoryHills1" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#E6DFD0" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="#DDD4C2" stopOpacity="0.95" />
-                </linearGradient>
-                <linearGradient id="ivoryHills2" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#D5CBB5" />
-                  <stop offset="100%" stopColor="#C8BC9F" />
-                </linearGradient>
-              </defs>
+          <svg className="scenery-svg" viewBox="0 0 1440 140" preserveAspectRatio="xMidYMax slice" fill="none">
+            <defs>
+              {/* Golden Morning Sky Gradient */}
+              <linearGradient id="morningSky" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#FFFBEB" />
+                <stop offset="50%" stopColor="#FEF3C7" />
+                <stop offset="85%" stopColor="#ECFDF5" />
+                <stop offset="100%" stopColor="#D1FAE5" />
+              </linearGradient>
 
-              <rect width="1440" height="160" fill="url(#ivorySky)" />
+              {/* Sun Glow */}
+              <radialGradient id="morningSun" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#FEF08A" stopOpacity="0.9" />
+                <stop offset="60%" stopColor="#FDE047" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#FDE047" stopOpacity="0" />
+              </radialGradient>
 
-              {/* Minimal Gold Sun Halo */}
-              <circle cx="720" cy="46" r="28" stroke="#D4AF37" strokeWidth="1.2" fill="#FAF5EB" opacity="0.8" />
-              <circle cx="720" cy="46" r="24" fill="#F4E8CB" opacity="0.5" />
+              {/* Distant Ghats Mountain Ridge */}
+              <linearGradient id="ghatsGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#64748B" stopOpacity="0.5" />
+                <stop offset="100%" stopColor="#475569" stopOpacity="0.75" />
+              </linearGradient>
 
-              {/* Hills */}
-              <path d="M 0 72 Q 220 38 480 62 T 980 44 Q 1220 28 1440 56 L 1440 160 L 0 160 Z" fill="url(#ivoryHills1)" />
-              <path d="M 0 94 Q 280 66 620 88 T 1180 72 Q 1330 84 1440 88 L 1440 160 L 0 160 Z" fill="url(#ivoryHills2)" />
+              {/* Midground Lush Farmlands */}
+              <linearGradient id="midGrovesGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#4ADE80" />
+                <stop offset="100%" stopColor="#15803D" />
+              </linearGradient>
 
-              {/* Minimal Palm Silhouettes */}
-              <g transform="translate(160, 48) scale(0.68)" opacity="0.85">
-                <path d="M 28 95 Q 24 45 36 0 Q 40 45 35 95 Z" fill="#4B3D2A" />
-                <path d="M 36 0 C 10 -24 -20 -14 -42 6 C -18 -2 16 -12 36 0 Z" fill="#2E3B32" />
-                <path d="M 36 0 C 48 -28 85 -28 108 -8 C 84 -15 50 -15 36 0 Z" fill="#2E3B32" />
-                <path d="M 36 0 C 24 -34 50 -52 58 -68 C 45 -45 32 -28 36 0 Z" fill="#1C2820" />
-              </g>
+              {/* Foreground Emerald Harvest Groves */}
+              <linearGradient id="foreGrovesGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#22C55E" />
+                <stop offset="40%" stopColor="#16A34A" />
+                <stop offset="100%" stopColor="#0B331F" />
+              </linearGradient>
+            </defs>
 
-              <g transform="translate(880, 40) scale(0.75)" opacity="0.85">
-                <path d="M 28 95 Q 24 45 36 0 Q 40 45 35 95 Z" fill="#4B3D2A" />
-                <path d="M 36 0 C 10 -24 -20 -14 -42 6 C -18 -2 16 -12 36 0 Z" fill="#2E3B32" />
-                <path d="M 36 0 C 48 -28 85 -28 108 -8 C 84 -15 50 -15 36 0 Z" fill="#2E3B32" />
-                <path d="M 36 0 C 24 -34 50 -52 58 -68 C 45 -45 32 -28 36 0 Z" fill="#1C2820" />
-              </g>
+            {/* Sky */}
+            <rect width="1440" height="140" fill="url(#morningSky)" />
 
-              <g transform="translate(1300, 44) scale(0.65)" opacity="0.85">
-                <path d="M 28 95 Q 24 45 36 0 Q 40 45 35 95 Z" fill="#4B3D2A" />
-                <path d="M 36 0 C 10 -24 -20 -14 -42 6 C -18 -2 16 -12 36 0 Z" fill="#2E3B32" />
-                <path d="M 36 0 C 48 -28 85 -28 108 -8 C 84 -15 50 -15 36 0 Z" fill="#2E3B32" />
-                <path d="M 36 0 C 24 -34 50 -52 58 -68 C 45 -45 32 -28 36 0 Z" fill="#1C2820" />
-              </g>
+            {/* Morning Sun */}
+            <circle cx="1200" cy="36" r="42" fill="url(#morningSun)" />
 
-              {/* Minimal Windmill */}
-              <g transform="translate(380, 44) scale(0.65)" opacity="0.65">
-                <line x1="0" y1="0" x2="0" y2="46" stroke="#8C7A5E" strokeWidth="1.8" />
-                <circle cx="0" cy="0" r="2.5" fill="#8C7A5E" />
-                <g>
-                  <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="5s" repeatCount="indefinite" />
-                  <line x1="0" y1="0" x2="0" y2="-22" stroke="#8C7A5E" strokeWidth="1.5" strokeLinecap="round" />
-                  <line x1="0" y1="0" x2="19" y2="11" stroke="#8C7A5E" strokeWidth="1.5" strokeLinecap="round" />
-                  <line x1="0" y1="0" x2="-19" y2="11" stroke="#8C7A5E" strokeWidth="1.5" strokeLinecap="round" />
-                </g>
-              </g>
-            </svg>
-          )}
+            {/* Layer 1: Distant Western Ghats Mountain Silhouette */}
+            <path
+              d="M0 68 Q180 38 380 58 T820 46 T1260 52 T1440 42 L1440 140 L0 140 Z"
+              fill="url(#ghatsGrad)"
+            />
 
-          {/* ═════════════════════════════════════════════════════════════
-              THEME 2: ROYAL MIDNIGHT STARLIGHT (Ultra-Luxury Dark Gold)
-          ═════════════════════════════════════════════════════════════ */}
-          {sceneryTheme === 'midnight-stars' && (
-            <svg className="scenery-svg" viewBox="0 0 1440 160" preserveAspectRatio="none" fill="none">
-              <defs>
-                <linearGradient id="nightSkyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#04130C" />
-                  <stop offset="60%" stopColor="#082317" />
-                  <stop offset="100%" stopColor="#0E3322" />
-                </linearGradient>
+            {/* Layer 2: Midground Rolling Organic Farmlands */}
+            <path
+              d="M0 84 Q260 62 560 78 T1060 68 T1440 76 L1440 140 L0 140 Z"
+              fill="url(#midGrovesGrad)"
+            />
 
-                <linearGradient id="nightHills1" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#0F3826" stopOpacity="0.85" />
-                  <stop offset="100%" stopColor="#071E14" />
-                </linearGradient>
+            {/* Layer 3: Foreground Emerald Plantation Hills */}
+            <path
+              d="M0 98 Q320 86 700 96 T1240 88 T1440 94 L1440 140 L0 140 Z"
+              fill="url(#foreGrovesGrad)"
+            />
 
-                <linearGradient id="nightHills2" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#174A33" />
-                  <stop offset="100%" stopColor="#0B261A" />
-                </linearGradient>
+            {/* Detailed Natural Tropical Coconut Palms */}
+            {/* Palm 1 */}
+            <g transform="translate(75, 42) scale(0.95)">
+              <path d="M12 68 Q15 32 10 0" stroke="#78350F" strokeWidth="3" fill="none" strokeLinecap="round" />
+              <circle cx="10" cy="0" r="2.8" fill="#451A03" />
+              <circle cx="8" cy="2" r="2" fill="#D97706" />
+              <circle cx="12" cy="2" r="2" fill="#D97706" />
+              <path d="M10 0 Q-12 -12 -22 6" stroke="#15803D" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+              <path d="M10 0 Q2 -16 -8 -18" stroke="#16A34A" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+              <path d="M10 0 Q20 -18 32 -10" stroke="#15803D" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+              <path d="M10 0 Q30 -6 38 12" stroke="#16A34A" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+            </g>
 
-                {/* Moon Radial Glow */}
-                <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#FEF08A" stopOpacity="1" />
-                  <stop offset="40%" stopColor="#FACC15" stopOpacity="0.5" />
-                  <stop offset="100%" stopColor="#EAB308" stopOpacity="0" />
-                </radialGradient>
-              </defs>
+            {/* Palm 2 */}
+            <g transform="translate(340, 36) scale(1.1)">
+              <path d="M14 74 Q10 36 13 0" stroke="#5F2C0B" strokeWidth="3.2" fill="none" strokeLinecap="round" />
+              <circle cx="13" cy="0" r="3" fill="#381A05" />
+              <circle cx="11" cy="2.5" r="2.2" fill="#D97706" />
+              <circle cx="15" cy="2.5" r="2.2" fill="#D97706" />
+              <path d="M13 0 Q-15 -14 -26 6" stroke="#16A34A" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+              <path d="M13 0 Q-2 -20 -10 -22" stroke="#22C55E" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+              <path d="M13 0 Q24 -22 36 -12" stroke="#16A34A" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+              <path d="M13 0 Q34 -8 42 14" stroke="#22C55E" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+            </g>
 
-              <rect width="1440" height="160" fill="url(#nightSkyGrad)" />
+            {/* Palm 3 */}
+            <g transform="translate(740, 40) scale(1.0)">
+              <path d="M12 70 Q16 34 11 0" stroke="#78350F" strokeWidth="3" fill="none" strokeLinecap="round" />
+              <circle cx="11" cy="0" r="2.8" fill="#451A03" />
+              <circle cx="9" cy="2" r="2" fill="#D97706" />
+              <circle cx="13" cy="2" r="2" fill="#D97706" />
+              <path d="M11 0 Q-13 -12 -22 8" stroke="#15803D" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+              <path d="M11 0 Q1 -17 -8 -19" stroke="#16A34A" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+              <path d="M11 0 Q21 -19 32 -9" stroke="#15803D" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+              <path d="M11 0 Q30 -6 38 12" stroke="#16A34A" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+            </g>
 
-              {/* Glowing Golden Crescent Moon */}
-              <circle cx="280" cy="45" r="32" fill="url(#moonGlow)" />
-              <circle cx="280" cy="45" r="14" fill="#FEF08A" />
-              <circle cx="285" cy="42" r="12" fill="#061B11" />
-
-              {/* Twinkling Stars */}
-              {[
-                { x: 120, y: 25, r: 1.5, dur: '1.8s' },
-                { x: 210, y: 50, r: 1.2, dur: '2.4s' },
-                { x: 420, y: 28, r: 2, dur: '2s' },
-                { x: 580, y: 40, r: 1.5, dur: '3.1s' },
-                { x: 740, y: 20, r: 1.8, dur: '2.2s' },
-                { x: 890, y: 35, r: 1.2, dur: '2.7s' },
-                { x: 1060, y: 22, r: 2, dur: '1.9s' },
-                { x: 1240, y: 45, r: 1.5, dur: '2.5s' },
-                { x: 1360, y: 28, r: 1.8, dur: '3s' },
-              ].map((s, idx) => (
-                <circle key={idx} cx={s.x} cy={s.y} r={s.r} fill="#FDE047">
-                  <animate attributeName="opacity" values="0.3;1;0.3" dur={s.dur} repeatCount="indefinite" />
-                </circle>
-              ))}
-
-              {/* Distant Midnight Hills */}
-              <path d="M 0 72 Q 220 38 480 62 T 980 44 Q 1220 28 1440 56 L 1440 160 L 0 160 Z" fill="url(#nightHills1)" />
-              <path d="M 0 94 Q 280 66 620 88 T 1180 72 Q 1330 84 1440 88 L 1440 160 L 0 160 Z" fill="url(#nightHills2)" />
-
-              {/* Silhouetted Night Palms */}
-              <g transform="translate(140, 44) scale(0.68)">
-                <path d="M 28 95 Q 24 45 36 0 Q 40 45 35 95 Z" fill="#04120B" />
-                <path d="M 36 0 C 10 -24 -20 -14 -42 6 C -18 -2 16 -12 36 0 Z" fill="#061B11" />
-                <path d="M 36 0 C 48 -28 85 -28 108 -8 C 84 -15 50 -15 36 0 Z" fill="#061B11" />
-                <path d="M 36 0 C 24 -34 50 -52 58 -68 C 45 -45 32 -28 36 0 Z" fill="#04120B" />
-              </g>
-
-              <g transform="translate(920, 38) scale(0.75)">
-                <path d="M 28 95 Q 24 45 36 0 Q 40 45 35 95 Z" fill="#04120B" />
-                <path d="M 36 0 C 10 -24 -20 -14 -42 6 C -18 -2 16 -12 36 0 Z" fill="#061B11" />
-                <path d="M 36 0 C 48 -28 85 -28 108 -8 C 84 -15 50 -15 36 0 Z" fill="#061B11" />
-                <path d="M 36 0 C 24 -34 50 -52 58 -68 C 45 -45 32 -28 36 0 Z" fill="#04120B" />
-              </g>
-
-              {/* Glowing Highway Lampposts */}
-              {[220, 600, 980, 1340].map((lx, i) => (
-                <g key={i} transform={`translate(${lx}, 68)`}>
-                  <line x1="0" y1="0" x2="0" y2="40" stroke="#475569" strokeWidth="1.8" />
-                  <path d="M 0 0 C 4 -6 12 -6 14 -2" stroke="#475569" strokeWidth="1.8" fill="none" />
-                  <circle cx="14" cy="-1" r="3" fill="#FEF08A" />
-                  <polygon points="14,0 4,45 24,45" fill="#FEF08A" opacity="0.12" />
-                </g>
-              ))}
-            </svg>
-          )}
-
-          {/* ═════════════════════════════════════════════════════════════
-              THEME 3: POLLACHI COCONUT HIGHWAY (Fresh Daylight Farm)
-          ═════════════════════════════════════════════════════════════ */}
-          {sceneryTheme === 'pollachi-express' && (
-            <svg className="scenery-svg" viewBox="0 0 1440 160" preserveAspectRatio="none" fill="none">
-              <defs>
-                <linearGradient id="pollachiSky" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#E0F2FE" />
-                  <stop offset="60%" stopColor="#F0F9FF" />
-                  <stop offset="100%" stopColor="#DCFCE7" />
-                </linearGradient>
-
-                <linearGradient id="pollachiGhats" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#94A3B8" stopOpacity="0.75" />
-                  <stop offset="100%" stopColor="#64748B" />
-                </linearGradient>
-
-                <linearGradient id="pollachiGroves" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#4ADE80" />
-                  <stop offset="100%" stopColor="#15803D" />
-                </linearGradient>
-              </defs>
-
-              <rect width="1440" height="160" fill="url(#pollachiSky)" />
-
-              {/* Distant Ghats Peaks */}
-              <path d="M 0 68 Q 200 32 460 56 T 940 38 Q 1200 22 1440 50 L 1440 160 L 0 160 Z" fill="url(#pollachiGhats)" />
-
-              {/* Midground Tea & Coconut Valley */}
-              <path d="M 0 90 Q 260 62 580 84 T 1140 68 Q 1310 80 1440 84 L 1440 160 L 0 160 Z" fill="url(#pollachiGroves)" />
-
-              {/* Realistic Pollachi Coconut Palms */}
-              {[120, 360, 680, 960, 1260].map((px, i) => (
-                <g key={i} transform={`translate(${px}, ${42 + (i % 2) * 6}) scale(${0.7 + (i % 3) * 0.05})`}>
-                  <path d="M 28 95 Q 24 45 36 0 Q 40 45 35 95 Z" fill="#5B4029" />
-                  <path d="M 36 0 C 10 -24 -20 -14 -42 6 C -18 -2 16 -12 36 0 Z" fill="#2D7A46" />
-                  <path d="M 36 0 C 48 -28 85 -28 108 -8 C 84 -15 50 -15 36 0 Z" fill="#2D7A46" />
-                  <path d="M 36 0 C 24 -34 50 -52 58 -68 C 45 -45 32 -28 36 0 Z" fill="#1B5E2F" />
-                  <path d="M 36 0 C 8 -38 -10 -50 -22 -68 C -4 -45 14 -28 36 0 Z" fill="#1B5E2F" />
-                </g>
-              ))}
-            </svg>
-          )}
-
-          {/* ═════════════════════════════════════════════════════════════
-              THEME 4: WARM AMBER SUNSET (Golden Hour Horizon)
-          ═════════════════════════════════════════════════════════════ */}
-          {sceneryTheme === 'golden-sunset' && (
-            <svg className="scenery-svg" viewBox="0 0 1440 160" preserveAspectRatio="none" fill="none">
-              <defs>
-                <linearGradient id="sunsetSky" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#FFF7ED" />
-                  <stop offset="40%" stopColor="#FED7AA" />
-                  <stop offset="80%" stopColor="#FDE68A" />
-                  <stop offset="100%" stopColor="#FDBA74" />
-                </linearGradient>
-
-                <linearGradient id="sunsetMountains" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#94A3B8" />
-                  <stop offset="100%" stopColor="#475569" />
-                </linearGradient>
-
-                <linearGradient id="sunsetHarvest" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#F59E0B" />
-                  <stop offset="100%" stopColor="#9A3412" />
-                </linearGradient>
-              </defs>
-
-              <rect width="1440" height="160" fill="url(#sunsetSky)" />
-
-              {/* Amber Sun */}
-              <circle cx="720" cy="50" r="30" fill="#FEF08A" opacity="0.9" />
-              <circle cx="720" cy="50" r="14" fill="#FFFBEB" />
-
-              {/* Mountains & Harvest Slopes */}
-              <path d="M 0 72 Q 220 36 480 58 T 980 40 Q 1220 24 1440 52 L 1440 160 L 0 160 Z" fill="url(#sunsetMountains)" opacity="0.8" />
-              <path d="M 0 94 Q 280 66 620 88 T 1180 72 Q 1330 84 1440 88 L 1440 160 L 0 160 Z" fill="url(#sunsetHarvest)" />
-
-              {/* Silhouette Date Palms */}
-              <g transform="translate(180, 48) scale(0.68)">
-                <path d="M 28 95 Q 24 45 36 0 Q 40 45 35 95 Z" fill="#334155" />
-                <path d="M 36 0 C 10 -24 -20 -14 -42 6 C -18 -2 16 -12 36 0 Z" fill="#1E293B" />
-                <path d="M 36 0 C 48 -28 85 -28 108 -8 C 84 -15 50 -15 36 0 Z" fill="#1E293B" />
-                <path d="M 36 0 C 24 -34 50 -52 58 -68 C 45 -45 32 -28 36 0 Z" fill="#0F172A" />
-              </g>
-
-              <g transform="translate(860, 42) scale(0.72)">
-                <path d="M 28 95 Q 24 45 36 0 Q 40 45 35 95 Z" fill="#334155" />
-                <path d="M 36 0 C 10 -24 -20 -14 -42 6 C -18 -2 16 -12 36 0 Z" fill="#1E293B" />
-                <path d="M 36 0 C 48 -28 85 -28 108 -8 C 84 -15 50 -15 36 0 Z" fill="#1E293B" />
-                <path d="M 36 0 C 24 -34 50 -52 58 -68 C 45 -45 32 -28 36 0 Z" fill="#0F172A" />
-              </g>
-            </svg>
-          )}
-
+            {/* Palm 4 */}
+            <g transform="translate(1180, 34) scale(1.15)">
+              <path d="M15 76 Q11 38 14 0" stroke="#5F2C0B" strokeWidth="3.2" fill="none" strokeLinecap="round" />
+              <circle cx="14" cy="0" r="3.2" fill="#381A05" />
+              <circle cx="12" cy="2.5" r="2.4" fill="#D97706" />
+              <circle cx="16" cy="2.5" r="2.4" fill="#D97706" />
+              <path d="M14 0 Q-17 -15 -28 7" stroke="#16A34A" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+              <path d="M14 0 Q-3 -22 -12 -24" stroke="#22C55E" strokeWidth="2.3" fill="none" strokeLinecap="round" />
+              <path d="M14 0 Q26 -24 38 -13" stroke="#16A34A" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+              <path d="M14 0 Q36 -9 46 15" stroke="#22C55E" strokeWidth="2.3" fill="none" strokeLinecap="round" />
+            </g>
+          </svg>
         </div>
 
-        {/* ── SMOOTH HIGHWAY ROADWAY ── */}
+        {/* Highway Asphalt Track */}
         <div className="anim-road-track">
           <div className="road-surface">
             <div className="road-dashed-lines" />
           </div>
+        </div>
 
-          {/* ─────────────────────────────────────────────────────────────
-              PREMIUM LUXURY WHITE & GOLD VENTHULIR EXPRESS TEMPO
-              (Clean, Minimal, High-Contrast & Smooth Glide)
-          ───────────────────────────────────────────────────────────── */}
-          <div className="anim-moving-vehicle van-vehicle">
-            {/* Minimal Floating Badge */}
-            <div className="vehicle-speech-bubble">
-              <span className="bubble-live-dot" />
-              <span className="bubble-text">Farm Fresh Direct Delivery</span>
-            </div>
+        {/* ── GLEAMING PEARL WHITE & GOLD LUXURY DELIVERY TRUCK ── */}
+        <div className="anim-moving-vehicle" title="Venthulir Express - Farm to Doorstep in 24 Hours">
+          <div className="vehicle-speech-bubble">
+            <span className="bubble-live-dot" />
+            <span>🚚 Farm Direct &bull; Pollachi Express &bull; Same Day Dispatch</span>
+          </div>
 
-            {/* Clean Vector Delivery Van */}
-            <svg className="vehicle-svg van-svg" viewBox="0 0 230 85" fill="none">
+          <div className="van-vehicle">
+            <svg viewBox="0 0 240 85" className="van-svg" fill="none">
               <defs>
-                {/* Crisp White Body */}
-                <linearGradient id="cleanWhiteBody" x1="0%" y1="0%" x2="0%" y2="100%">
+                {/* Pearl White Body Gradient */}
+                <linearGradient id="pearlWhiteBody" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#FFFFFF" />
-                  <stop offset="70%" stopColor="#FAF8F5" />
-                  <stop offset="100%" stopColor="#ECE5D8" />
+                  <stop offset="60%" stopColor="#F8FAFC" />
+                  <stop offset="100%" stopColor="#E2E8F0" />
                 </linearGradient>
 
-                {/* Royal Emerald Beltline */}
-                <linearGradient id="cleanEmeraldStripe" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#0F3D2A" />
-                  <stop offset="60%" stopColor="#15803D" />
-                  <stop offset="100%" stopColor="#0F3D2A" />
+                {/* Metallic Gold Accent Gradient */}
+                <linearGradient id="goldFoilGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#B45309" />
+                  <stop offset="35%" stopColor="#F59E0B" />
+                  <stop offset="65%" stopColor="#FDE68A" />
+                  <stop offset="100%" stopColor="#D97706" />
                 </linearGradient>
 
-                {/* Champagne Gold Ribbon */}
-                <linearGradient id="cleanGoldTrim" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#C59B27" />
-                  <stop offset="50%" stopColor="#F3DC87" />
-                  <stop offset="100%" stopColor="#C59B27" />
+                {/* Deep Forest Green Decal Gradient */}
+                <linearGradient id="greenDecalGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#062B19" />
+                  <stop offset="50%" stopColor="#0B331F" />
+                  <stop offset="100%" stopColor="#14532D" />
                 </linearGradient>
 
-                {/* Soft Tinted Cabin Glass */}
-                <linearGradient id="cleanGlass" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#EBF4F0" />
-                  <stop offset="100%" stopColor="#BDDCD0" />
+                {/* Headlight Beam Cone */}
+                <linearGradient id="headlightBeam" x1="0%" y1="50%" x2="100%" y2="50%">
+                  <stop offset="0%" stopColor="#FEF08A" stopOpacity="0.85" />
+                  <stop offset="40%" stopColor="#FEF08A" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#FEF08A" stopOpacity="0" />
+                </linearGradient>
+
+                {/* Crystal Sapphire Windshield Glass */}
+                <linearGradient id="sapphireGlass" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#0369A1" stopOpacity="0.75" />
                 </linearGradient>
               </defs>
 
-              {/* Aerodynamic Roof Deflector */}
-              <path
-                d="M 145 14 L 176 17 C 183 18 189 23 191 29 L 145 29 Z"
-                fill="#0F3D2A"
-              />
+              {/* Headlight Beam Cone Shining Ahead on Road */}
+              <polygon points="214,48 240,36 240,64 214,54" fill="url(#headlightBeam)" />
 
-              {/* Main Cargo Body */}
-              <rect x="15" y="14" width="135" height="49" rx="7" fill="url(#cleanWhiteBody)" stroke="#DDD4C2" strokeWidth="1.2" />
-              
-              {/* Subtle Door Seams */}
-              <line x1="58" y1="17" x2="58" y2="60" stroke="#DDD4C2" strokeWidth="1.2" />
-              <line x1="102" y1="17" x2="102" y2="60" stroke="#DDD4C2" strokeWidth="1.2" />
-              <rect x="14" y="24" width="2.5" height="7" fill="#C59B27" rx="1" />
-              <rect x="14" y="47" width="2.5" height="7" fill="#C59B27" rx="1" />
+              {/* Vehicle Ground Contact Shadow */}
+              <ellipse cx="115" cy="74" rx="98" ry="6" fill="#000000" fillOpacity="0.35" />
 
-              {/* Front Cabin Section */}
+              {/* Main Cargo Container Body (Crisp Pearl White) */}
+              <rect x="18" y="16" width="140" height="48" rx="4" fill="url(#pearlWhiteBody)" stroke="#CBD5E1" strokeWidth="1.2" />
+
+              {/* Cargo Side Luxury Emerald & Gold Banner */}
+              <rect x="22" y="24" width="132" height="24" rx="3" fill="url(#greenDecalGrad)" />
+
+              {/* Aerodynamic Front Driver Cabin */}
               <path
-                d="M 148 21 L 181 21 C 191 21 199 27 203 36 L 209 49 C 211 53 208 63 200 63 L 148 63 Z"
-                fill="url(#cleanWhiteBody)"
-                stroke="#DDD4C2"
+                d="M158 24 L185 24 Q198 24 206 35 L215 48 Q219 54 219 61 L219 64 L158 64 Z"
+                fill="url(#pearlWhiteBody)"
+                stroke="#CBD5E1"
                 strokeWidth="1.2"
               />
 
-              {/* Front Windshield with Driver Silhouette */}
+              {/* Front Sapphire Windshield Glass */}
               <path
-                d="M 152 25 L 177 25 C 183 25 188 29 191 35 L 197 46 L 152 46 Z"
-                fill="url(#cleanGlass)"
-                stroke="#0F3D2A"
+                d="M164 28 L182 28 Q192 28 198 37 L206 48 L164 48 Z"
+                fill="url(#sapphireGlass)"
+                stroke="#BAE6FD"
                 strokeWidth="0.8"
               />
-              <circle cx="167" cy="34" r="4.5" fill="#0F3D2A" opacity="0.75" />
-              <path d="M 163 32 Q 170 30 174 34" stroke="#C59B27" strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M 160 46 C 160 40 174 40 174 46 Z" fill="#0F3D2A" opacity="0.75" />
 
-              {/* Side Mirror */}
-              <rect x="179" y="33" width="4.5" height="8.5" rx="2" fill="#0F172A" />
-              <line x1="175" y1="37" x2="179" y2="37" stroke="#0F172A" strokeWidth="1.5" />
+              {/* Front Cabin Side Window */}
+              <path
+                d="M165 30 L178 30 Q185 30 190 38 L195 47 L165 47 Z"
+                fill="#E0F2FE"
+                opacity="0.3"
+              />
 
-              {/* Royal Emerald & Gold Belt Stripe */}
-              <rect x="15" y="48" width="193" height="6" fill="url(#cleanEmeraldStripe)" />
-              <rect x="15" y="45" width="193" height="2.5" fill="url(#cleanGoldTrim)" />
+              {/* Dual Gold Foil Luxury Accent Pinstripes */}
+              <rect x="18" y="50" width="201" height="3" fill="url(#goldFoilGrad)" />
+              <rect x="18" y="55" width="201" height="1.2" fill="#D97706" fillOpacity="0.8" />
 
-              {/* 🌟 VENTHULIR Clean Luxury Branding (Strictly Constrained inside Cargo Box) */}
-              <g transform="translate(20, 16)">
-                {/* Brand Emblem */}
-                <circle cx="12" cy="14" r="9.5" fill="#0F3D2A" stroke="#C59B27" strokeWidth="1.2" />
-                <path d="M 12 8 C 8.5 12 8.5 16 12 19 C 15.5 16 15.5 12 12 8 Z" fill="#F4DA90" />
-                
-                {/* Brand Name (Strictly bounded to 58px max) */}
-                <text 
-                  x="28" 
-                  y="13" 
-                  fill="#0F3D2A" 
-                  fontSize="11" 
-                  fontWeight="900" 
-                  fontFamily="'Cinzel', Georgia, serif" 
-                  letterSpacing="0.8"
-                  textLength="58"
-                  lengthAdjust="spacingAndGlyphs"
-                >
-                  VENTHULIR
-                </text>
-                
-                {/* Crisp Tagline (Strictly bounded to 54px max, 40px away from driver) */}
-                <text 
-                  x="28" 
-                  y="22" 
-                  fill="#8C5815" 
-                  fontSize="6" 
-                  fontWeight="800" 
-                  fontFamily="sans-serif" 
-                  letterSpacing="0.6"
-                  textLength="54"
-                  lengthAdjust="spacingAndGlyphs"
-                >
-                  COLD-PRESSED
-                </text>
+              {/* Lower Emerald Bumper Skirt */}
+              <rect x="18" y="58" width="201" height="4" fill="#062B19" />
+
+              {/* Venthulir Leaf Crest Emblem in Gold Circle */}
+              <circle cx="36" cy="36" r="7.5" fill="#0B331F" stroke="url(#goldFoilGrad)" strokeWidth="1.2" />
+              <path
+                d="M36 31 C33 34 32 37 36 41 C40 37 39 34 36 31 Z"
+                fill="#4ADE80"
+              />
+
+              {/* Brand Typography */}
+              <text
+                x="48"
+                y="35"
+                fill="#FFFFFF"
+                fontSize="9.5"
+                fontFamily="'Cinzel', serif"
+                fontWeight="800"
+                letterSpacing="1.8"
+              >
+                VENTHULIR
+              </text>
+              <text
+                x="48"
+                y="43"
+                fill="#FDE68A"
+                fontSize="5.5"
+                fontFamily="'Plus Jakarta Sans', sans-serif"
+                fontWeight="700"
+                letterSpacing="0.6"
+              >
+                MARACHEKKU &bull; FARM DIRECT
+              </text>
+
+              {/* Front Bright LED Headlight & Rear Red LED Taillight */}
+              <polygon points="215,50 219,50 219,56 215,56" fill="#FDE047" stroke="#CA8A04" strokeWidth="0.5" />
+              <polygon points="18,50 20,50 20,56 18,56" fill="#EF4444" />
+
+              {/* Wheel Well Arches */}
+              <path d="M40 64 A18 18 0 0 1 74 64 Z" fill="#0F172A" />
+              <path d="M168 64 A18 18 0 0 1 202 64 Z" fill="#0F172A" />
+
+              {/* Rear Wheel (High-Precision Rotating Alloy) */}
+              <g>
+                <animateTransform attributeName="transform" type="rotate" from="0 57 65" to="360 57 65" dur="0.55s" repeatCount="indefinite" />
+                <circle cx="57" cy="65" r="15" fill="#1E293B" stroke="#475569" strokeWidth="1.2" />
+                <circle cx="57" cy="65" r="9.5" fill="#F8FAFC" stroke="#94A3B8" strokeWidth="1.2" />
+                <circle cx="57" cy="65" r="4.5" fill="#0F172A" />
+                <circle cx="57" cy="65" r="2.5" fill="#D97706" />
+                <line x1="49" y1="65" x2="65" y2="65" stroke="#475569" strokeWidth="1.8" />
+                <line x1="57" y1="57" x2="57" y2="73" stroke="#475569" strokeWidth="1.8" />
+                <line x1="51.5" y1="59.5" x2="62.5" y2="70.5" stroke="#475569" strokeWidth="1.8" />
+                <line x1="51.5" y1="70.5" x2="62.5" y2="59.5" stroke="#475569" strokeWidth="1.8" />
               </g>
 
-              {/* Front Grille & Headlight */}
-              <rect x="199" y="52" width="10.5" height="10" rx="2" fill="#1E2A24" stroke="#8C7A5E" strokeWidth="1" />
-              <line x1="201" y1="55" x2="208" y2="55" stroke="#F4DA90" strokeWidth="1.2" />
-              <line x1="201" y1="58" x2="208" y2="58" stroke="#F4DA90" strokeWidth="1.2" />
-
-              <path d="M 207 47 L 214 47 C 215 47 216 48 216 49 L 216 52 C 216 53 215 54 214 54 L 207 54 Z" fill="#FEF08A" />
-              <polygon points="216,48 244,42 244,64 216,53" fill="#FEF08A" opacity="0.3" />
-
-              {/* Rear Tail Light */}
-              <rect x="12" y="26" width="3.5" height="15" rx="1.5" fill="#DC2626" />
-
-              {/* Mudguards */}
-              <path d="M 38 63 A 18 18 0 0 1 72 63 Z" fill="#1E2A24" />
-              <path d="M 160 63 A 18 18 0 0 1 194 63 Z" fill="#1E2A24" />
-
-              {/* Rear Wheel (Smooth Native Rotation) */}
+              {/* Front Wheel (High-Precision Rotating Alloy) */}
               <g>
-                <animateTransform attributeName="transform" type="rotate" from="0 55 63" to="360 55 63" dur="0.55s" repeatCount="indefinite" />
-                <circle cx="55" cy="63" r="15" fill="#1E2A24" stroke="#4B584E" strokeWidth="1.2" />
-                <circle cx="55" cy="63" r="9.5" fill="#FFFFFF" stroke="#8C7A5E" strokeWidth="1.2" />
-                <circle cx="55" cy="63" r="4.5" fill="#1E2A24" />
-                <circle cx="55" cy="63" r="2.5" fill="#C59B27" />
-                <line x1="47" y1="63" x2="63" y2="63" stroke="#4B584E" strokeWidth="1.8" />
-                <line x1="55" y1="55" x2="55" y2="71" stroke="#4B584E" strokeWidth="1.8" />
-                <line x1="49.5" y1="57.5" x2="60.5" y2="68.5" stroke="#4B584E" strokeWidth="1.8" />
-                <line x1="49.5" y1="68.5" x2="60.5" y2="57.5" stroke="#4B584E" strokeWidth="1.8" />
-              </g>
-
-              {/* Front Wheel (Smooth Native Rotation) */}
-              <g>
-                <animateTransform attributeName="transform" type="rotate" from="0 177 63" to="360 177 63" dur="0.55s" repeatCount="indefinite" />
-                <circle cx="177" cy="63" r="15" fill="#1E2A24" stroke="#4B584E" strokeWidth="1.2" />
-                <circle cx="177" cy="63" r="9.5" fill="#FFFFFF" stroke="#8C7A5E" strokeWidth="1.2" />
-                <circle cx="177" cy="63" r="4.5" fill="#1E2A24" />
-                <circle cx="177" cy="63" r="2.5" fill="#C59B27" />
-                <line x1="169" y1="63" x2="185" y2="63" stroke="#4B584E" strokeWidth="1.8" />
-                <line x1="177" y1="55" x2="177" y2="71" stroke="#4B584E" strokeWidth="1.8" />
-                <line x1="171.5" y1="57.5" x2="182.5" y2="68.5" stroke="#4B584E" strokeWidth="1.8" />
-                <line x1="171.5" y1="68.5" x2="182.5" y2="57.5" stroke="#4B584E" strokeWidth="1.8" />
+                <animateTransform attributeName="transform" type="rotate" from="0 185 65" to="360 185 65" dur="0.55s" repeatCount="indefinite" />
+                <circle cx="185" cy="65" r="15" fill="#1E293B" stroke="#475569" strokeWidth="1.2" />
+                <circle cx="185" cy="65" r="9.5" fill="#F8FAFC" stroke="#94A3B8" strokeWidth="1.2" />
+                <circle cx="185" cy="65" r="4.5" fill="#0F172A" />
+                <circle cx="185" cy="65" r="2.5" fill="#D97706" />
+                <line x1="177" y1="65" x2="193" y2="65" stroke="#475569" strokeWidth="1.8" />
+                <line x1="185" y1="57" x2="185" y2="73" stroke="#475569" strokeWidth="1.8" />
+                <line x1="179.5" y1="59.5" x2="190.5" y2="70.5" stroke="#475569" strokeWidth="1.8" />
+                <line x1="179.5" y1="70.5" x2="190.5" y2="59.5" stroke="#475569" strokeWidth="1.8" />
               </g>
             </svg>
           </div>

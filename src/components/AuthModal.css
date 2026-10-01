@@ -289,8 +289,8 @@
   font-size: 0.92rem;
   font-weight: 600;
   color: #ffffff;
-  background: #1B5E2F;
-  border: 1px solid #1B5E2F;
+  background: #0b331f;
+  border: 1px solid #0b331f;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -299,8 +299,8 @@
 }
 
 .auth-submit-btn:hover:not(:disabled) {
-  background: #000000;
-  border-color: #000000;
+  background: #064e26;
+  border-color: #064e26;
   color: #ffffff;
 }
 

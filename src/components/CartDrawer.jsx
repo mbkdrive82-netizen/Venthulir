@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
-import { X, Plus, Minus, ShoppingBag, Tag, Truck, Trash2, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
+import { X, Plus, Minus, ShoppingBag, Tag, Truck, Trash2, ArrowRight, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
 import { PRESET_COUPONS } from '@/data/constants';
 import './CartDrawer.css';
 
@@ -26,9 +27,42 @@ const getFallbackImage = (name = '', category = '') => {
 
 export default function CartDrawer({ onCheckout }) {
   const { cartItems, updateQty, removeFromCart, clearCart, cartTotal, isCartOpen, setIsCartOpen } = useCart();
+  const { t, isTamil } = useLanguage();
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError]   = useState('');
+  const [catalogProducts, setCatalogProducts] = useState([]);
+
+  useEffect(() => {
+    if (isCartOpen) {
+      fetch('/api/products?nocache=true&limit=100')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data?.products && Array.isArray(data.products)) {
+            setCatalogProducts(data.products);
+          } else if (Array.isArray(data)) {
+            setCatalogProducts(data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isCartOpen]);
+
+  const getStockInfo = (item) => {
+    const matchedProd = catalogProducts.find(p => 
+      (p._id && (p._id === item.productId || p._id === item.product || p._id === item._id || p._id === item.id)) ||
+      (p.id && (p.id === item.productId || p.id === item.product || p.id === item._id || p.id === item.id)) ||
+      (p.name && item.name && p.name.trim().toLowerCase() === item.name.trim().toLowerCase()) ||
+      (p.slug && item.slug && p.slug === item.slug)
+    );
+
+    const currentStock = matchedProd?.currentStock !== undefined 
+      ? matchedProd.currentStock 
+      : (item.currentStock !== undefined ? item.currentStock : 50);
+
+    const isOutOfStock = currentStock <= 0 || matchedProd?.inStock === false;
+    return { isOutOfStock, currentStock };
+  };
 
   // Lock background body scroll while CartDrawer is open
   useEffect(() => {
@@ -119,81 +153,94 @@ export default function CartDrawer({ onCheckout }) {
 
         {/* Items List */}
         <div 
-          className="cart-items" 
-          data-lenis-prevent
-          onWheel={(e) => e.stopPropagation()}
+          className="cart-items"
         >
           {cartItems.length === 0 ? (
             <div className="cart-empty">
               <div className="cart-empty-icon-wrap">
                 <ShoppingBag size={42} strokeWidth={1.5} />
               </div>
-              <h4>Your basket is empty</h4>
-              <p>Explore our organic stone-ground spices, wood cold-pressed oils, and traditional staples.</p>
+              <h4>{t('cartEmptyTitle', 'Your basket is empty')}</h4>
+              <p>{t('cartEmptySub', 'Explore our organic stone-ground spices, wood cold-pressed oils, and traditional staples.')}</p>
               <button className="btn-empty-shop" onClick={() => setIsCartOpen(false)}>
-                <span>Start Shopping</span>
+                <span>{isTamil ? 'பொருட்களை வாங்குக' : 'Start Shopping'}</span>
                 <ArrowRight size={15} />
               </button>
             </div>
           ) : (
-            cartItems.map(item => (
-              <div key={item.key} className="cart-item">
-                <div className="cart-item-img">
-                  <img 
-                    src={item.image || getFallbackImage(item.name, item.category)} 
-                    alt={item.name} 
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = getFallbackImage(item.name, item.category);
-                    }}
-                  />
-                </div>
-
-                <div className="cart-item-info">
-                  <div className="cart-item-title-row">
-                    <h5 className="cart-item-name" title={item.name}>{item.name}</h5>
-                    <button 
-                      className="remove-btn" 
-                      onClick={() => removeFromCart(item.key)}
-                      title="Remove item"
-                      aria-label="Remove item"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+            cartItems.map(item => {
+              const { isOutOfStock } = getStockInfo(item);
+              return (
+                <div key={item.key} className="cart-item">
+                  <div className="cart-item-img">
+                    <img 
+                      src={item.image || getFallbackImage(item.name, item.category)} 
+                      alt={item.name} 
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = getFallbackImage(item.name, item.category);
+                      }}
+                    />
                   </div>
 
-                  <div className="cart-item-submeta">
-                    {item.variant && (
-                      <span className="cart-item-variant">🌿 {item.variant.label}</span>
-                    )}
-                    {item.quantity > 1 && (
+                  <div className="cart-item-info">
+                    <div className="cart-item-title-row">
+                      <h5 className="cart-item-name" title={item.name}>{item.name}</h5>
+                      <button 
+                        className="remove-btn" 
+                        onClick={() => removeFromCart(item.key)}
+                        title="Remove item"
+                        aria-label="Remove item"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+
+                    <div className="cart-item-submeta">
+                      {item.variant && (
+                        <span className="cart-item-variant">{item.variant.label}</span>
+                      )}
                       <span className="cart-item-unit-price">₹{item.price} each</span>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="cart-item-bottom-row">
-                    <span className="cart-item-total-price">₹{item.price * item.quantity}</span>
-                    <div className="qty-control">
-                      <button 
-                        onClick={() => updateQty(item.key, item.quantity - 1)}
-                        title="Decrease quantity"
-                        aria-label="Decrease quantity"
-                      >
-                        <Minus size={12} />
-                      </button>
-                      <span>{item.quantity}</span>
-                      <button 
-                        onClick={() => updateQty(item.key, item.quantity + 1)}
-                        title="Increase quantity"
-                        aria-label="Increase quantity"
-                      >
-                        <Plus size={12} />
-                      </button>
+                    {/* Clean stock status line */}
+                    <div className="cart-item-stock-status">
+                      {isOutOfStock ? (
+                        <span className="cart-stock-tag oos">Out of Stock</span>
+                      ) : (
+                        <span className="cart-stock-tag in-stock">In Stock</span>
+                      )}
+                    </div>
+
+                    <div className="cart-item-bottom-row">
+                      <span className="cart-item-total-price">₹{item.price * item.quantity}</span>
+                      
+                      {isOutOfStock ? (
+                        <span className="cart-oos-action-hint">Currently unavailable</span>
+                      ) : (
+                        <div className="qty-control">
+                          <button 
+                            onClick={() => updateQty(item.key, item.quantity - 1)}
+                            title="Decrease quantity"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <span>{item.quantity}</span>
+                          <button 
+                            onClick={() => updateQty(item.key, item.quantity + 1)}
+                            title="Increase quantity"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -278,7 +325,7 @@ export default function CartDrawer({ onCheckout }) {
               className="checkout-cta" 
               onClick={() => onCheckout({ grandTotal, discount, appliedCoupon, shippingFee })}
             >
-              <span>Proceed to Checkout • ₹{grandTotal}</span>
+              <span>{isTamil ? `பணம் செலுத்த தொடரவும் • ₹${grandTotal}` : `Proceed to Checkout • ₹${grandTotal}`}</span>
               <ArrowRight size={17} />
             </button>
 

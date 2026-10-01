@@ -174,7 +174,8 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto !important;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
+  overscroll-behavior-y: auto;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   background: #fbfaf7;
@@ -244,9 +245,9 @@
 
 .btn-empty-shop {
   margin-top: 8px;
-  background: #1B5E2F !important;
+  background: #0b331f !important;
   color: #ffffff !important;
-  border: 1px solid #1B5E2F !important;
+  border: 1px solid #0b331f !important;
   padding: 10px 22px;
   border-radius: 9999px;
   font-size: 0.86rem;
@@ -256,12 +257,12 @@
   align-items: center;
   gap: 6px;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(27, 94, 47, 0.25);
+  box-shadow: 0 4px 14px rgba(11, 51, 31, 0.25);
 }
 
 .btn-empty-shop:hover {
-  background: #134522 !important;
-  border-color: #134522 !important;
+  background: #064e26 !important;
+  border-color: #064e26 !important;
   transform: translateY(-1px);
 }
 
@@ -473,9 +474,9 @@
 }
 
 .coupon-row button {
-  background: #1B5E2F !important;
+  background: #0b331f !important;
   color: #ffffff !important;
-  border: 1px solid #1B5E2F !important;
+  border: 1px solid #0b331f !important;
   padding: 6px 14px;
   border-radius: 9999px;
   font-size: 0.78rem;
@@ -485,8 +486,8 @@
 }
 
 .coupon-row button:hover {
-  background: #134522 !important;
-  border-color: #134522 !important;
+  background: #064e26 !important;
+  border-color: #064e26 !important;
 }
 
 .coupon-suggestion-row {
@@ -617,20 +618,20 @@
   padding: 12px 18px;
   font-size: 0.94rem;
   font-weight: 750;
-  background: linear-gradient(135deg, #1B5E2F 0%, #134522 100%) !important;
+  background: #0b331f !important;
   color: #ffffff !important;
-  border: 1px solid #1B5E2F !important;
+  border: 1px solid #0b331f !important;
   border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(27, 94, 47, 0.28);
+  box-shadow: 0 4px 14px rgba(11, 51, 31, 0.28);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .checkout-cta:hover {
-  background: linear-gradient(135deg, #134522 0%, #0F3D2A 100%) !important;
-  border-color: #134522 !important;
+  background: #064e26 !important;
+  border-color: #064e26 !important;
   color: #ffffff !important;
-  box-shadow: 0 6px 20px rgba(27, 94, 47, 0.38);
+  box-shadow: 0 6px 20px rgba(11, 51, 31, 0.38);
   transform: translateY(-1px);
 }
 
@@ -677,4 +678,35 @@
   gap: 4px;
   color: #166534;
   font-weight: 650;
+}
+
+/* ── Clean Stock Status Badges ── */
+.cart-item-stock-status {
+  margin-top: 3px;
+  margin-bottom: 5px;
+}
+
+.cart-stock-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+}
+
+.cart-stock-tag.in-stock {
+  color: #16a34a;
+}
+
+.cart-stock-tag.oos {
+  color: #dc2626;
+  font-weight: 750;
+}
+
+.cart-oos-action-hint {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 2px 8px;
+  border-radius: 4px;
 }

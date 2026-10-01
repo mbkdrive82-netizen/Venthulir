@@ -5,73 +5,135 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { 
   User, 
   Heart, 
   ShoppingCart, 
   Package, 
   HelpCircle, 
-  Wrench, 
-  ArrowLeft, 
   LogOut,
   MapPin,
-  Mail,
   Phone,
   Edit3,
-  Check,
-  X,
-  ShieldCheck,
-  Sparkles,
-  Award,
   Plus,
+  Minus,
   ChevronRight,
-  ExternalLink,
   Trash2,
-  Clock,
   MessageCircle,
-  Send,
-  ShoppingBag,
   Truck,
-  Leaf
+  Leaf,
+  Star,
+  Bell,
+  Search,
+  CheckCircle2,
+  Check,
+  AlertCircle,
+  FileText,
+  RotateCcw,
+  Building2,
+  Lock,
+  X
 } from 'lucide-react';
+import './ProfilePage.css';
 
 function ProfileContent() {
   const { user, logout, isAuthenticated, updateUser } = useAuth();
-  const { cartItems, updateQty, removeFromCart, cartTotal, clearCart } = useCart();
+  const { cartItems, updateQty, removeFromCart, cartTotal, addToCart, setIsCartOpen } = useCart();
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Active Tab: 'profile' | 'cart' | 'orders' | 'wishlist' | 'help' | 'custom'
+  // Active Tab from query param (defaults to 'profile')
   const initialTab = searchParams.get('tab') || 'profile';
   const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(true);
 
-  // Orders State
-  const [orders, setOrders] = useState([]);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-
-  // Profile Edit State
+  // ── Tab 1: Profile Information State ──
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({ name: '', phone: '' });
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    phone: '',
+    gender: 'Male',
+  });
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
   const [profileErrorMsg, setProfileErrorMsg] = useState('');
 
-  // Address Edit State
-  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  // Password Change
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirmPass: '' });
+  const [passwordMsg, setPasswordMsg] = useState({ type: '', text: '' });
+
+  // ── Tab 2: Manage Addresses State ──
+  const [addresses, setAddresses] = useState([]);
+  const [isAddressFormOpen, setIsAddressFormOpen] = useState(false);
+  const [editingAddressIndex, setEditingAddressIndex] = useState(null);
   const [addressForm, setAddressForm] = useState({
+    name: '',
+    phone: '',
     address: '',
-    city: '',
+    locality: '',
+    city: 'Chennai',
     state: 'Tamil Nadu',
-    zipCode: ''
+    zipCode: '',
+    type: 'Home',
+    isDefault: false
   });
   const [savingAddress, setSavingAddress] = useState(false);
   const [addressSuccessMsg, setAddressSuccessMsg] = useState('');
-  const [addressErrorMsg, setAddressErrorMsg] = useState('');
 
-  // Custom Order Inquiry State
-  const [customForm, setCustomForm] = useState({ name: '', phone: '', quantity: '', notes: '' });
+  // ── Tab 3: Orders State (Flipkart Style) ──
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [orderFilter, setOrderFilter] = useState('All');
+  const [orderSearch, setOrderSearch] = useState('');
+  const [selectedOrderForTracking, setSelectedOrderForTracking] = useState(null);
 
+  // ── Tab 4: Wishlist State ──
+  const [wishlistProducts, setWishlistProducts] = useState([
+    { id: '6aba0cd61452a8680653118f', name: 'Wood Cold-Pressed Gingelly Sesame Oil', price: 340, mrp: 399, rating: 4.8, reviews: 142, image: '/assets/hero/oil_gingelly.png', inStock: true },
+    { id: '6aba0cd61452a86806531192', name: 'High-Curcumin Pure Turmeric Powder', price: 140, mrp: 165, rating: 4.9, reviews: 89, image: '/assets/hero/turmeric.png', inStock: true },
+    { id: '6aba0cd61452a86806531196', name: 'Royal Chettinad Garam Masala Blend', price: 180, mrp: 210, rating: 4.7, reviews: 64, image: '/assets/hero/garam_masala.png', inStock: true }
+  ]);
+  const [catalogProducts, setCatalogProducts] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/products?nocache=true&limit=100')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.products && Array.isArray(data.products)) {
+          setCatalogProducts(data.products);
+        } else if (Array.isArray(data)) {
+          setCatalogProducts(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const getProductStock = (item) => {
+    const matched = catalogProducts.find(p => 
+      (p._id && (p._id === item.productId || p._id === item.product || p._id === item._id || p._id === item.id)) ||
+      (p.id && (p.id === item.productId || p.id === item.product || p.id === item._id || p.id === item.id)) ||
+      (p.name && item.name && p.name.trim().toLowerCase() === item.name.trim().toLowerCase()) ||
+      (p.slug && item.slug && p.slug === item.slug)
+    );
+    const stock = matched?.currentStock !== undefined 
+      ? matched.currentStock 
+      : (item.currentStock !== undefined ? item.currentStock : (item.inStock === false ? 0 : 50));
+    const isOutOfStock = stock <= 0 || matched?.inStock === false || item.inStock === false;
+    const isLowStock = !isOutOfStock && stock > 0 && stock <= 5;
+    return { stock, isOutOfStock, isLowStock };
+  };
+
+  // ── Tab 5: Support & FAQ State ──
+  const [openFaq, setOpenFaq] = useState(0);
+  const [callbackRequested, setCallbackRequested] = useState(false);
+
+  // ── Tab 6: Bulk Inquiries State ──
+  const [bulkForm, setBulkForm] = useState({ name: '', phone: '', item: 'Wood Cold-Pressed Oils (15L Tins)', qty: '5 Tins', notes: '' });
+  const [bulkSubmitted, setBulkSubmitted] = useState(false);
+
+  // Authentication check
   useEffect(() => {
     if (!isAuthenticated && typeof window !== 'undefined' && !localStorage.getItem('venthulir_token')) {
       router.push('/login?redirect=/profile');
@@ -80,33 +142,46 @@ function ProfileContent() {
     }
   }, [isAuthenticated, router]);
 
+  // Populate user data
   useEffect(() => {
     if (user) {
       setProfileForm({
         name: user.name || '',
-        phone: user.phone || ''
+        phone: user.phone || '',
+        gender: user.gender || 'Male',
       });
-      setAddressForm({
-        address: user.deliveryAddress?.address || '',
-        city: user.deliveryAddress?.city || '',
-        state: user.deliveryAddress?.state || 'Tamil Nadu',
-        zipCode: user.deliveryAddress?.zipCode || ''
-      });
-      setCustomForm(prev => ({
-        ...prev,
-        name: user.name || '',
-        phone: user.phone || ''
-      }));
+
+      const initialAddresses = [];
+      if (user.deliveryAddress?.address) {
+        initialAddresses.push({
+          name: user.name || 'Primary Delivery',
+          phone: user.phone || '',
+          address: user.deliveryAddress.address || '',
+          locality: '',
+          city: user.deliveryAddress.city || 'Chennai',
+          state: user.deliveryAddress.state || 'Tamil Nadu',
+          zipCode: user.deliveryAddress.zipCode || '600001',
+          type: 'Home',
+          isDefault: true
+        });
+      } else {
+        initialAddresses.push({
+          name: user.name || 'Valued Patron',
+          phone: user.phone || '+91 9876543210',
+          address: '42, Heritage Farm Road, Gandhipuram',
+          locality: 'Near Central Post Office',
+          city: 'Coimbatore',
+          state: 'Tamil Nadu',
+          zipCode: '641012',
+          type: 'Home',
+          isDefault: true
+        });
+      }
+      setAddresses(initialAddresses);
     }
   }, [user]);
 
-  // Fetch orders when orders tab becomes active
-  useEffect(() => {
-    if (activeTab === 'orders') {
-      fetchUserOrders();
-    }
-  }, [activeTab]);
-
+  // Fetch orders
   const fetchUserOrders = async () => {
     setLoadingOrders(true);
     try {
@@ -126,7 +201,16 @@ function ProfileContent() {
     }
   };
 
-  // Handle Profile Update
+  useEffect(() => {
+    fetchUserOrders();
+  }, []);
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    window.history.replaceState(null, '', `/profile?tab=${tabId}`);
+  };
+
+  // Profile Save
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setSavingProfile(true);
@@ -141,1206 +225,1444 @@ function ProfileContent() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(profileForm)
+        body: JSON.stringify({
+          name: profileForm.name,
+          phone: profileForm.phone
+        })
       });
 
-      const data = await res.json();
       if (res.ok) {
         updateUser({ name: profileForm.name, phone: profileForm.phone });
-        setProfileSuccessMsg('Profile updated successfully!');
-        setTimeout(() => {
-          setIsEditingProfile(false);
-          setProfileSuccessMsg('');
-        }, 1200);
+        setProfileSuccessMsg('Profile details updated successfully!');
+        setIsEditingProfile(false);
       } else {
-        setProfileErrorMsg(data.msg || 'Failed to update profile');
+        setProfileErrorMsg('Failed to update profile. Please try again.');
       }
     } catch {
-      setProfileErrorMsg('Server connection failed. Please try again.');
+      setProfileErrorMsg('Network error. Please try again.');
     } finally {
       setSavingProfile(false);
     }
   };
 
-  // Handle Address Update
+  // Address Save
   const handleSaveAddress = async (e) => {
     e.preventDefault();
     setSavingAddress(true);
-    setAddressSuccessMsg('');
-    setAddressErrorMsg('');
 
     try {
-      const token = localStorage.getItem('venthulir_token');
-      const res = await fetch('/api/auth/address', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(addressForm)
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        updateUser({ deliveryAddress: addressForm });
-        setAddressSuccessMsg('Address saved successfully!');
-        setTimeout(() => {
-          setIsEditingAddress(false);
-          setAddressSuccessMsg('');
-        }, 1200);
-      } else {
-        setAddressErrorMsg(data.msg || 'Failed to update address');
+      let updatedList = [...addresses];
+      if (addressForm.isDefault) {
+        updatedList = updatedList.map(a => ({ ...a, isDefault: false }));
       }
-    } catch {
-      setAddressErrorMsg('Server connection failed. Please try again.');
+
+      if (editingAddressIndex !== null) {
+        updatedList[editingAddressIndex] = addressForm;
+      } else {
+        updatedList.push(addressForm);
+      }
+
+      setAddresses(updatedList);
+
+      const primary = updatedList.find(a => a.isDefault) || updatedList[0];
+      if (primary) {
+        const token = localStorage.getItem('venthulir_token');
+        await fetch('/api/auth/address', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            address: primary.address + (primary.locality ? `, ${primary.locality}` : ''),
+            city: primary.city,
+            state: primary.state,
+            zipCode: primary.zipCode
+          })
+        });
+      }
+
+      setAddressSuccessMsg('Address saved successfully!');
+      setIsAddressFormOpen(false);
+      setEditingAddressIndex(null);
+    } catch (err) {
+      console.error(err);
     } finally {
       setSavingAddress(false);
     }
   };
 
-  // Send Custom Order WhatsApp message
-  const handleCustomOrderSubmit = (e) => {
-    e.preventDefault();
-    const text = `Hello Venthulir! I would like to make a Custom / Bulk Order:\n\nName: ${customForm.name}\nPhone: ${customForm.phone}\nQuantity: ${customForm.quantity}\nRequirements: ${customForm.notes}`;
-    const url = `https://wa.me/918778476414?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+  const handleDeleteAddress = (index) => {
+    if (confirm('Are you sure you want to remove this address?')) {
+      const updated = addresses.filter((_, i) => i !== index);
+      if (updated.length > 0 && !updated.some(a => a.isDefault)) {
+        updated[0].isDefault = true;
+      }
+      setAddresses(updated);
+    }
   };
+
+  const handleOpenAddAddress = () => {
+    setAddressForm({
+      name: user?.name || '',
+      phone: user?.phone || '',
+      address: '',
+      locality: '',
+      city: 'Chennai',
+      state: 'Tamil Nadu',
+      zipCode: '',
+      type: 'Home',
+      isDefault: addresses.length === 0
+    });
+    setEditingAddressIndex(null);
+    setIsAddressFormOpen(true);
+  };
+
+  const handleOpenEditAddress = (addr, index) => {
+    setAddressForm(addr);
+    setEditingAddressIndex(index);
+    setIsAddressFormOpen(true);
+  };
+
+  // Buy Again
+  const handleBuyAgain = (orderItem) => {
+    addToCart({
+      _id: orderItem.product || 'prod',
+      name: orderItem.name,
+      price: orderItem.price,
+      imageUrl: orderItem.imageUrl || '/assets/hero/turmeric.png',
+      images: [orderItem.imageUrl || '/assets/hero/turmeric.png'],
+      inStock: true
+    }, { label: orderItem.variant || 'Standard', price: orderItem.price });
+    setIsCartOpen(true);
+  };
+
+  // Move Wishlist item to Cart
+  const handleMoveWishlistToCart = (prod) => {
+    addToCart({
+      _id: prod.id,
+      name: prod.name,
+      price: prod.price,
+      imageUrl: prod.image,
+      images: [prod.image],
+      inStock: true
+    });
+    setWishlistProducts(prev => prev.filter(p => p.id !== prod.id));
+    setIsCartOpen(true);
+  };
+
+  // Filter Orders
+  const filteredOrders = orders.filter(o => {
+    const status = (o.orderStatus || o.status || 'Placed').toLowerCase();
+    const matchFilter = 
+      orderFilter === 'All' ||
+      (orderFilter === 'Delivered' && status.includes('deliver')) ||
+      (orderFilter === 'In Transit' && (status.includes('transit') || status.includes('ship'))) ||
+      (orderFilter === 'Processing' && (status.includes('process') || status.includes('placed'))) ||
+      (orderFilter === 'Cancelled' && status.includes('cancel'));
+
+    const search = orderSearch.trim().toLowerCase();
+    const matchSearch = !search || 
+      (o._id && o._id.toLowerCase().includes(search)) ||
+      (o.items && o.items.some(i => i.name?.toLowerCase().includes(search)));
+
+    return matchFilter && matchSearch;
+  });
+
+  const userInitial = (user?.name || user?.email || 'V').charAt(0).toUpperCase();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAF8]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 border-4 border-[#1A4B3A] border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-sm font-medium text-[#1A4B3A]">Loading your account...</span>
+      <div className="fk-account-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ margin: '0 auto 12px', width: '32px', height: '32px', border: '3px solid #e2e8f0', borderTopColor: '#1B5E2F', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <p style={{ color: '#555555', fontSize: '0.9rem', fontWeight: 600 }}>Loading account...</p>
         </div>
       </div>
     );
   }
 
-  const userInitial = user?.name ? user.name.trim().charAt(0).toUpperCase() : 'U';
-
   return (
-    <div className="min-h-screen bg-[#F8FAF8] flex flex-col md:flex-row font-sans text-gray-800">
-      
-      {/* ── DESKTOP LUXURY LEFT SIDEBAR (STICKY, FULL HEIGHT, COHESIVE DEEP FOREST) ── */}
-      <aside className="hidden md:flex md:w-[280px] lg:w-[300px] shrink-0 bg-gradient-to-b from-[#092217] via-[#0C2B1D] to-[#071911] text-white border-r border-[#123823] flex-col md:sticky md:top-0 md:h-screen md:overflow-y-auto z-20 shadow-xl select-none">
-        
-        {/* Brand Header - Height h-20 (80px) Aligned with Right Content Header */}
-        <div className="h-20 px-6 border-b border-white/10 flex items-center shrink-0">
-          <Link href="/home" className="inline-flex items-center gap-2.5 text-[#E6C98A] hover:text-white transition-colors group">
-            <div className="w-8 h-8 rounded-lg bg-[#1A4B3A] text-[#E6C98A] flex items-center justify-center border border-[#E6C98A]/30 group-hover:scale-105 transition-transform">
-              <Leaf size={16} />
-            </div>
-            <div>
-              <span className="font-brand font-bold text-sm tracking-widest block text-white leading-tight">VENTHULIR</span>
-              <span className="text-[10px] text-emerald-200/70 tracking-wider uppercase block leading-tight">Organic Harvests</span>
-            </div>
-          </Link>
-        </div>
+    <div className="fk-account-root">
+      <div className="fk-account-container">
 
-        {/* Navigation Section */}
-        <nav className="flex-1 p-4 flex flex-col justify-between space-y-5 overflow-y-auto">
-          <div className="space-y-4">
-            {/* User Profile Identity Card */}
-            <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#E6C98A] to-[#FFF3DC] text-[#092217] font-extrabold text-base flex items-center justify-center shadow-sm ring-2 ring-[#E6C98A]/40 shrink-0">
-                {userInitial}
-              </div>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-white text-xs font-bold truncate m-0 capitalize leading-tight">
-                  {user?.name || 'Customer'}
-                </h2>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-                  <span className="text-emerald-300 text-[10px] font-semibold tracking-wide">Verified Customer</span>
-                </div>
-                {user?.email && (
-                  <p className="text-emerald-200/60 text-[10px] truncate m-0 mt-0.5" title={user.email}>
-                    {user.email}
-                  </p>
-                )}
-              </div>
-            </div>
-            {/* Group 1: Main Menu */}
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[#E6C98A]/80 px-3 mb-2">
-                Account Menu
-              </div>
-              <div className="space-y-1">
-                {/* 1. Profile Tab */}
-                <button
-                  onClick={() => setActiveTab('profile')}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all cursor-pointer border-none text-left ${
-                    activeTab === 'profile'
-                      ? 'bg-[#1A4B3A] text-white shadow-sm border-l-4 border-[#E6C98A]'
-                      : 'text-[#B4C7BC] hover:text-white hover:bg-white/5 bg-transparent'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <User size={17} className={activeTab === 'profile' ? 'text-[#E6C98A]' : 'text-[#7E998B]'} />
-                    <span>Personal Details</span>
-                  </div>
-                  <ChevronRight size={15} className={activeTab === 'profile' ? 'text-[#E6C98A]' : 'text-white/20'} />
-                </button>
-
-                {/* 2. My Orders Tab */}
-                <button
-                  onClick={() => setActiveTab('orders')}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all cursor-pointer border-none text-left ${
-                    activeTab === 'orders'
-                      ? 'bg-[#1A4B3A] text-white shadow-sm border-l-4 border-[#E6C98A]'
-                      : 'text-[#B4C7BC] hover:text-white hover:bg-white/5 bg-transparent'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Package size={17} className={activeTab === 'orders' ? 'text-[#E6C98A]' : 'text-[#7E998B]'} />
-                    <span>My Orders</span>
-                  </div>
-                  {orders.length > 0 ? (
-                    <span className="text-[10px] bg-[#E6C98A] text-[#092217] px-2 py-0.5 rounded-full font-extrabold">
-                      {orders.length}
-                    </span>
-                  ) : (
-                    <ChevronRight size={15} className={activeTab === 'orders' ? 'text-[#E6C98A]' : 'text-white/20'} />
-                  )}
-                </button>
-
-                {/* 3. Cart Dashboard Tab */}
-                <button
-                  onClick={() => setActiveTab('cart')}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all cursor-pointer border-none text-left ${
-                    activeTab === 'cart'
-                      ? 'bg-[#1A4B3A] text-white shadow-sm border-l-4 border-[#E6C98A]'
-                      : 'text-[#B4C7BC] hover:text-white hover:bg-white/5 bg-transparent'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <ShoppingCart size={17} className={activeTab === 'cart' ? 'text-[#E6C98A]' : 'text-[#7E998B]'} />
-                    <span>Shopping Basket</span>
-                  </div>
-                  {cartItems.length > 0 ? (
-                    <span className="text-[10px] bg-[#E6C98A] text-[#092217] px-2 py-0.5 rounded-full font-extrabold">
-                      {cartItems.length}
-                    </span>
-                  ) : (
-                    <ChevronRight size={15} className={activeTab === 'cart' ? 'text-[#E6C98A]' : 'text-white/20'} />
-                  )}
-                </button>
-
-                {/* 4. Wishlist Tab */}
-                <button
-                  onClick={() => setActiveTab('wishlist')}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all cursor-pointer border-none text-left ${
-                    activeTab === 'wishlist'
-                      ? 'bg-[#1A4B3A] text-white shadow-sm border-l-4 border-[#E6C98A]'
-                      : 'text-[#B4C7BC] hover:text-white hover:bg-white/5 bg-transparent'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Heart size={17} className={activeTab === 'wishlist' ? 'text-[#E6C98A]' : 'text-[#7E998B]'} />
-                    <span>Wishlist</span>
-                  </div>
-                  <ChevronRight size={15} className={activeTab === 'wishlist' ? 'text-[#E6C98A]' : 'text-white/20'} />
-                </button>
-              </div>
-            </div>
-
-            {/* Group 2: Support & Services */}
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[#E6C98A]/80 px-3 mb-2">
-                Services & Support
-              </div>
-              <div className="space-y-1">
-                {/* 5. Help & Queries */}
-                <button
-                  onClick={() => setActiveTab('help')}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all cursor-pointer border-none text-left ${
-                    activeTab === 'help'
-                      ? 'bg-[#1A4B3A] text-white shadow-sm border-l-4 border-[#E6C98A]'
-                      : 'text-[#B4C7BC] hover:text-white hover:bg-white/5 bg-transparent'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <HelpCircle size={17} className={activeTab === 'help' ? 'text-[#E6C98A]' : 'text-[#7E998B]'} />
-                    <span>Help & Support</span>
-                  </div>
-                  <ChevronRight size={15} className={activeTab === 'help' ? 'text-[#E6C98A]' : 'text-white/20'} />
-                </button>
-
-                {/* 6. Custom Orders */}
-                <button
-                  onClick={() => setActiveTab('custom')}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all cursor-pointer border-none text-left ${
-                    activeTab === 'custom'
-                      ? 'bg-[#1A4B3A] text-white shadow-sm border-l-4 border-[#E6C98A]'
-                      : 'text-[#B4C7BC] hover:text-white hover:bg-white/5 bg-transparent'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Wrench size={17} className={activeTab === 'custom' ? 'text-[#E6C98A]' : 'text-[#7E998B]'} />
-                    <span>Custom & Bulk</span>
-                  </div>
-                  <ChevronRight size={15} className={activeTab === 'custom' ? 'text-[#E6C98A]' : 'text-white/20'} />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Actions */}
-          <div className="pt-4 border-t border-white/10 space-y-1.5">
-            <Link
-              href="/home"
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[#E6C98A] hover:bg-white/10 font-semibold text-xs transition-all"
-            >
-              <ArrowLeft size={16} />
-              <span>Back to Store</span>
-            </Link>
-
-            <button
-              onClick={() => { logout(); router.push('/home'); }}
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-red-300 hover:bg-red-500/20 hover:text-white font-semibold text-xs transition-all w-full text-left bg-transparent border-none cursor-pointer"
-            >
-              <LogOut size={16} />
-              <span>Sign Out</span>
-            </button>
-          </div>
-        </nav>
-      </aside>
-
-      {/* ── MOBILE COMPACT HEADER & SCROLLABLE TABS (< 768px ONLY) ── */}
-      <div className="block md:hidden bg-white text-gray-900 sticky top-0 z-30 border-b border-gray-200 shadow-xs">
-        {/* Compact User Bar */}
-        <div className="px-4 py-2.5 flex items-center justify-between border-b border-gray-100 bg-[#F8FAF8]">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-[#092217] text-[#E6C98A] font-extrabold text-xs flex items-center justify-center shadow-xs shrink-0 border border-[#E6C98A]/30">
+        {/* ══════════════════════════════════════════════════════
+            LEFT SIDEBAR (Flipkart Style)
+            ══════════════════════════════════════════════════════ */}
+        <aside className="fk-sidebar">
+          
+          {/* Hello User Card */}
+          <div className="fk-user-card">
+            <div className="fk-avatar">
               {userInitial}
             </div>
-            <div className="min-w-0">
-              <h2 className="text-gray-900 text-xs font-bold truncate m-0 capitalize leading-tight">
-                {user?.name || 'Customer'}
-              </h2>
-              <span className="text-emerald-700 text-[10px] font-semibold block leading-tight">
-                🌿 Verified Customer
-              </span>
+            <div className="fk-user-details">
+              <div className="fk-user-hello">Hello,</div>
+              <div className="fk-user-name">{user?.name || 'Valued Patron'}</div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={() => { logout(); router.push('/home'); }}
-              className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold flex items-center gap-1 cursor-pointer border border-red-200/60"
-              title="Sign Out"
+          {/* Navigation Card */}
+          <div className="fk-nav-card">
+            
+            {/* MY ORDERS Section */}
+            <button 
+              type="button" 
+              onClick={() => handleTabChange('orders')}
+              className={`fk-primary-item ${activeTab === 'orders' ? 'active' : ''}`}
             >
-              <LogOut size={12} />
-              <span>Exit</span>
+              <div className="fk-primary-item-left">
+                <Package size={20} />
+                <span>MY ORDERS</span>
+              </div>
+              <ChevronRight size={16} color="#878787" />
+            </button>
+
+            {/* ACCOUNT SETTINGS */}
+            <div className="fk-nav-section">
+              <div className="fk-section-title">
+                <User size={18} />
+                <span>ACCOUNT SETTINGS</span>
+              </div>
+
+              <button 
+                type="button" 
+                onClick={() => handleTabChange('profile')}
+                className={`fk-sub-item ${activeTab === 'profile' ? 'active' : ''}`}
+              >
+                <span>Profile Information</span>
+              </button>
+
+              <button 
+                type="button" 
+                onClick={() => handleTabChange('addresses')}
+                className={`fk-sub-item ${activeTab === 'addresses' ? 'active' : ''}`}
+              >
+                <span>Manage Addresses</span>
+                <span className="fk-badge-pill">{addresses.length}</span>
+              </button>
+
+              <button 
+                type="button" 
+                onClick={() => handleTabChange('pan')}
+                className={`fk-sub-item ${activeTab === 'pan' ? 'active' : ''}`}
+              >
+                <span>PAN Card Information</span>
+              </button>
+            </div>
+
+            {/* MY STUFF */}
+            <div className="fk-nav-section">
+              <div className="fk-section-title">
+                <Heart size={18} />
+                <span>MY STUFF</span>
+              </div>
+
+              <button 
+                type="button" 
+                onClick={() => handleTabChange('cart')}
+                className={`fk-sub-item ${activeTab === 'cart' ? 'active' : ''}`}
+              >
+                <span>My Cart</span>
+                <span className="fk-badge-pill" style={{ background: '#e0f2fe', color: '#0369a1' }}>{cartItems.length}</span>
+              </button>
+
+              <button 
+                type="button" 
+                onClick={() => handleTabChange('wishlist')}
+                className={`fk-sub-item ${activeTab === 'wishlist' ? 'active' : ''}`}
+              >
+                <span>My Wishlist</span>
+                <span className="fk-badge-pill">{wishlistProducts.length}</span>
+              </button>
+
+              <button 
+                type="button" 
+                onClick={() => handleTabChange('reviews')}
+                className={`fk-sub-item ${activeTab === 'reviews' ? 'active' : ''}`}
+              >
+                <span>My Reviews &amp; Ratings</span>
+              </button>
+
+              <button 
+                type="button" 
+                onClick={() => handleTabChange('notifications')}
+                className={`fk-sub-item ${activeTab === 'notifications' ? 'active' : ''}`}
+              >
+                <span>All Notifications</span>
+              </button>
+            </div>
+
+            {/* CUSTOMER SUPPORT */}
+            <div className="fk-nav-section">
+              <div className="fk-section-title">
+                <HelpCircle size={18} />
+                <span>CUSTOMER SUPPORT</span>
+              </div>
+
+              <button 
+                type="button" 
+                onClick={() => handleTabChange('help')}
+                className={`fk-sub-item ${activeTab === 'help' ? 'active' : ''}`}
+              >
+                <span>24x7 Help Center</span>
+              </button>
+
+              <button 
+                type="button" 
+                onClick={() => handleTabChange('bulk')}
+                className={`fk-sub-item ${activeTab === 'bulk' ? 'active' : ''}`}
+              >
+                <span>Bulk &amp; Wholesale</span>
+              </button>
+            </div>
+
+            {/* Desktop Log Out */}
+            <div style={{ borderTop: '1px solid #f0f0f0' }}>
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (confirm('Are you sure you want to log out from Venthulir?')) {
+                    logout();
+                    router.push('/login');
+                  }
+                }}
+                className="fk-logout-btn"
+              >
+                <LogOut size={18} />
+                <span>Logout</span>
+              </button>
+            </div>
+
+          </div>
+
+          {/* Quick Assurance Box */}
+          <div style={{ background: '#ffffff', boxShadow: '0 1px 3px 0 rgba(0,0,0,0.08)', borderRadius: '4px', padding: '14px 16px', fontSize: '0.8rem', color: '#555555', lineHeight: 1.4 }}>
+            <div style={{ fontWeight: 700, color: '#1B5E2F', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Leaf size={14} />
+              <span>100% Pure Organic Guarantee</span>
+            </div>
+            Direct traditional wood cold-pressed extraction with door express delivery across India.
+          </div>
+
+        </aside>
+
+        {/* ══════════════════════════════════════════════════════
+            MOBILE ACCOUNT HUB HEADER (Flipkart & Amazon App Style)
+            ══════════════════════════════════════════════════════ */}
+        <div className="fk-mobile-account-hub">
+          {/* User Banner */}
+          <div className="fk-mobile-user-card">
+            <div className="fk-avatar">
+              {userInitial}
+            </div>
+            <div className="fk-mobile-user-details">
+              <div className="fk-user-hello">Hello,</div>
+              <div className="fk-user-name">{user?.name || 'Valued Patron'}</div>
+              <div className="fk-mobile-user-email">{user?.email || user?.phone || 'customer@venthulir.com'}</div>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => {
+                if (confirm('Are you sure you want to log out?')) {
+                  logout();
+                  router.push('/login');
+                }
+              }}
+              className="fk-mobile-logout-btn"
+              title="Logout"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+
+          {/* 4-Card Quick Action Grid (Flipkart / Amazon Mobile Standard) */}
+          <div className="fk-mobile-quick-grid">
+            <button 
+              type="button"
+              onClick={() => handleTabChange('orders')}
+              className={`fk-quick-tile ${activeTab === 'orders' ? 'active' : ''}`}
+            >
+              <div className="fk-quick-tile-icon orders">
+                <Package size={20} />
+              </div>
+              <span className="fk-quick-tile-label">Orders</span>
+              {orders.length > 0 && <span className="fk-quick-tile-badge">{orders.length}</span>}
+            </button>
+
+            <button 
+              type="button"
+              onClick={() => handleTabChange('cart')}
+              className={`fk-quick-tile ${activeTab === 'cart' ? 'active' : ''}`}
+            >
+              <div className="fk-quick-tile-icon cart">
+                <ShoppingCart size={20} />
+              </div>
+              <span className="fk-quick-tile-label">My Cart</span>
+              {cartItems.length > 0 && <span className="fk-quick-tile-badge green">{cartItems.length}</span>}
+            </button>
+
+            <button 
+              type="button"
+              onClick={() => handleTabChange('wishlist')}
+              className={`fk-quick-tile ${activeTab === 'wishlist' ? 'active' : ''}`}
+            >
+              <div className="fk-quick-tile-icon wishlist">
+                <Heart size={20} />
+              </div>
+              <span className="fk-quick-tile-label">Wishlist</span>
+              {wishlistProducts.length > 0 && <span className="fk-quick-tile-badge red">{wishlistProducts.length}</span>}
+            </button>
+
+            <button 
+              type="button"
+              onClick={() => handleTabChange('help')}
+              className={`fk-quick-tile ${activeTab === 'help' ? 'active' : ''}`}
+            >
+              <div className="fk-quick-tile-icon help">
+                <HelpCircle size={20} />
+              </div>
+              <span className="fk-quick-tile-label">24x7 Help</span>
+            </button>
+          </div>
+
+          {/* Horizontal Scrollable Tabs Strip */}
+          <div className="fk-mobile-tabs-strip">
+            <button 
+              type="button" 
+              onClick={() => handleTabChange('profile')} 
+              className={`fk-mobile-tab-chip ${activeTab === 'profile' ? 'active' : ''}`}
+            >
+              <User size={13} />
+              <span>Personal Info</span>
+            </button>
+
+            <button 
+              type="button" 
+              onClick={() => handleTabChange('cart')} 
+              className={`fk-mobile-tab-chip ${activeTab === 'cart' ? 'active' : ''}`}
+            >
+              <ShoppingCart size={13} />
+              <span>My Cart ({cartItems.length})</span>
+            </button>
+
+            <button 
+              type="button" 
+              onClick={() => handleTabChange('orders')} 
+              className={`fk-mobile-tab-chip ${activeTab === 'orders' ? 'active' : ''}`}
+            >
+              <Package size={13} />
+              <span>Orders ({orders.length})</span>
+            </button>
+
+            <button 
+              type="button" 
+              onClick={() => handleTabChange('addresses')} 
+              className={`fk-mobile-tab-chip ${activeTab === 'addresses' ? 'active' : ''}`}
+            >
+              <MapPin size={13} />
+              <span>Addresses ({addresses.length})</span>
+            </button>
+
+            <button 
+              type="button" 
+              onClick={() => handleTabChange('wishlist')} 
+              className={`fk-mobile-tab-chip ${activeTab === 'wishlist' ? 'active' : ''}`}
+            >
+              <Heart size={13} />
+              <span>Wishlist ({wishlistProducts.length})</span>
+            </button>
+
+            <button 
+              type="button" 
+              onClick={() => handleTabChange('reviews')} 
+              className={`fk-mobile-tab-chip ${activeTab === 'reviews' ? 'active' : ''}`}
+            >
+              <Star size={13} />
+              <span>Reviews</span>
+            </button>
+
+            <button 
+              type="button" 
+              onClick={() => handleTabChange('notifications')} 
+              className={`fk-mobile-tab-chip ${activeTab === 'notifications' ? 'active' : ''}`}
+            >
+              <Bell size={13} />
+              <span>Alerts</span>
+            </button>
+
+            <button 
+              type="button" 
+              onClick={() => handleTabChange('bulk')} 
+              className={`fk-mobile-tab-chip ${activeTab === 'bulk' ? 'active' : ''}`}
+            >
+              <Building2 size={13} />
+              <span>Bulk Order</span>
             </button>
           </div>
         </div>
 
-        {/* Scrollable Horizontal Pill Tabs */}
-        <div className="flex items-center gap-1.5 px-3 py-2 overflow-x-auto no-scrollbar bg-white">
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border cursor-pointer ${
-              activeTab === 'profile' 
-                ? 'bg-[#092217] text-white border-[#092217] shadow-xs' 
-                : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
-            }`}
-          >
-            <User size={13} />
-            <span>Profile</span>
-          </button>
+        {/* ══════════════════════════════════════════════════════
+            RIGHT MAIN PANEL (Flipkart Style)
+            ══════════════════════════════════════════════════════ */}
+        <main className="fk-main-panel">
 
-          <button
-            onClick={() => setActiveTab('orders')}
-            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border cursor-pointer ${
-              activeTab === 'orders' 
-                ? 'bg-[#092217] text-white border-[#092217] shadow-xs' 
-                : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
-            }`}
-          >
-            <Package size={13} />
-            <span>Orders</span>
-            {orders.length > 0 && (
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                activeTab === 'orders' ? 'bg-[#E6C98A] text-[#092217]' : 'bg-[#092217] text-white'
-              }`}>
-                {orders.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('cart')}
-            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border cursor-pointer ${
-              activeTab === 'cart' 
-                ? 'bg-[#092217] text-white border-[#092217] shadow-xs' 
-                : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
-            }`}
-          >
-            <ShoppingCart size={13} />
-            <span>Cart</span>
-            {cartItems.length > 0 && (
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                activeTab === 'cart' ? 'bg-[#E6C98A] text-[#092217]' : 'bg-[#092217] text-white'
-              }`}>
-                {cartItems.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('wishlist')}
-            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border cursor-pointer ${
-              activeTab === 'wishlist' 
-                ? 'bg-[#092217] text-white border-[#092217] shadow-xs' 
-                : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
-            }`}
-          >
-            <Heart size={13} />
-            <span>Wishlist</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('help')}
-            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border cursor-pointer ${
-              activeTab === 'help' 
-                ? 'bg-[#092217] text-white border-[#092217] shadow-xs' 
-                : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
-            }`}
-          >
-            <HelpCircle size={13} />
-            <span>Help</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('custom')}
-            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border cursor-pointer ${
-              activeTab === 'custom' 
-                ? 'bg-[#092217] text-white border-[#092217] shadow-xs' 
-                : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
-            }`}
-          >
-            <Wrench size={13} />
-            <span>Custom</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ── RIGHT MAIN CONTENT AREA ── */}
-      <main className="flex-1 flex flex-col min-w-0 min-h-screen bg-[#F8FAF8]">
-        
-        {/* Top Header Bar (Desktop Only, Clean Breadcrumb & Context) */}
-        <div className="hidden md:flex h-20 bg-white border-b border-gray-200/90 px-6 lg:px-8 items-center justify-between gap-4 shadow-2xs shrink-0">
-          <div>
-            <div className="text-emerald-700 text-[11px] font-bold tracking-wider uppercase mb-0.5 flex items-center gap-1.5">
-              <span>Account</span>
-              <span className="text-gray-300">/</span>
-              <span>
-                {activeTab === 'profile' && 'Personal Details'}
-                {activeTab === 'orders' && 'Order History'}
-                {activeTab === 'cart' && 'Cart Dashboard'}
-                {activeTab === 'wishlist' && 'Wishlist'}
-                {activeTab === 'help' && 'Customer Support'}
-                {activeTab === 'custom' && 'Custom & Bulk'}
-              </span>
-            </div>
-            <h1 className="text-gray-900 text-2xl font-extrabold tracking-tight m-0">
-              {activeTab === 'profile' && 'Personal Details & Address'}
-              {activeTab === 'orders' && `My Order History (${orders.length})`}
-              {activeTab === 'cart' && `Shopping Basket (${cartItems.length})`}
-              {activeTab === 'wishlist' && 'My Saved Wishlist'}
-              {activeTab === 'help' && 'Help & Customer Support'}
-              {activeTab === 'custom' && 'Custom & Bulk Farm Orders'}
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="hidden lg:flex items-center gap-2 text-xs text-emerald-800 bg-emerald-50/80 border border-emerald-200/80 px-3.5 py-1.5 rounded-xl font-semibold">
-              <Truck size={15} className="text-[#1A4B3A]" />
-              <span>Free Delivery Above ₹499</span>
-            </div>
-            <Link
-              href="/home"
-              className="px-4 py-2 rounded-xl bg-[#1A4B3A] hover:bg-[#143d2f] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
-            >
-              <span>Explore Store</span>
-              <ChevronRight size={13} />
-            </Link>
-          </div>
-        </div>
-
-        {/* Content Container */}
-        <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full space-y-6 flex-1">
-          
-          {/* ======================================================== */}
-          {/* TAB 1: PROFILE TAB (SIDE-BY-SIDE EXECUTIVE DASHBOARD)    */}
-          {/* ======================================================== */}
+          {/* ── TAB 1: PROFILE INFORMATION ── */}
           {activeTab === 'profile' && (
-            <>
-              {/* Executive Mini Metric Strip */}
-              <div className="bg-white rounded-2xl border border-gray-200/80 p-3.5 px-5 shadow-xs flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-6 flex-wrap">
-                  <div className="flex items-center gap-2 text-xs">
-                    <ShieldCheck size={16} className="text-emerald-600" />
-                    <span className="text-gray-500 font-medium">Status:</span>
-                    <span className="font-bold text-gray-800">Verified Customer</span>
-                  </div>
-                  <div className="hidden sm:flex items-center gap-2 text-xs border-l border-gray-200 pl-6">
-                    <Truck size={16} className="text-[#1A4B3A]" />
-                    <span className="text-gray-500 font-medium">Delivery:</span>
-                    <span className="font-bold text-emerald-700">Free Above ₹499</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2.5">
-                  <button 
-                    onClick={() => setActiveTab('cart')}
-                    className="px-3.5 py-1.5 rounded-xl bg-[#F0F7F4] hover:bg-[#1A4B3A] hover:text-white text-[#1A4B3A] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-[#E2EFE7]"
-                  >
-                    <ShoppingCart size={13} />
-                    <span>Cart ({cartItems.length})</span>
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('orders')}
-                    className="px-3.5 py-1.5 rounded-xl bg-gray-50 hover:bg-[#1A4B3A] hover:text-white text-gray-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-gray-200"
-                  >
-                    <Package size={13} />
-                    <span>My Orders</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Side-by-Side 2-Column Cards Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-start">
-                {/* ── CARD 1: PERSONAL INFORMATION ── */}
-                <div className="bg-white rounded-2xl border border-gray-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 sm:p-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between pb-3.5 sm:pb-4 mb-3.5 sm:mb-4 border-b border-gray-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#F0F7F4] text-[#1A4B3A] flex items-center justify-center font-bold shrink-0">
-                        <User size={18} />
-                      </div>
-                      <div>
-                        <h3 className="text-gray-900 font-bold text-sm sm:text-base m-0 tracking-tight">Personal Information</h3>
-                        <p className="text-[11px] sm:text-xs text-gray-500 m-0 mt-0.5">Your identity & contact credentials</p>
-                      </div>
-                    </div>
-
-                    {!isEditingProfile ? (
-                      <button 
-                        onClick={() => setIsEditingProfile(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-lg font-semibold text-xs hover:border-[#1A4B3A] hover:text-[#1A4B3A] hover:bg-[#F0F7F4] transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Edit3 size={13} />
-                        <span>Edit</span>
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => setIsEditingProfile(false)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg font-semibold text-xs hover:bg-gray-200 transition-all cursor-pointer"
-                      >
-                        <X size={13} />
-                        <span>Cancel</span>
-                      </button>
-                    )}
-                  </div>
-
-                  {profileSuccessMsg && (
-                    <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 font-medium">
-                      <Check size={16} className="text-emerald-600" />
-                      <span>{profileSuccessMsg}</span>
-                    </div>
-                  )}
-                  {profileErrorMsg && (
-                    <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2 font-medium">
-                      <X size={16} className="text-red-600" />
-                      <span>{profileErrorMsg}</span>
-                    </div>
-                  )}
-
-                  {!isEditingProfile ? (
-                    <div className="divide-y divide-gray-100">
-                      {/* Full Name */}
-                      <div className="py-3 flex items-center justify-between first:pt-0">
-                        <div>
-                          <span className="text-xs text-gray-400 font-medium block mb-0.5">Full Name</span>
-                          <span className="text-sm font-semibold text-gray-900">{user?.name || '-'}</span>
-                        </div>
-                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                          Verified
-                        </span>
-                      </div>
-
-                      {/* Email Address */}
-                      <div className="py-3 flex items-center justify-between">
-                        <div className="min-w-0 flex-1 pr-3">
-                          <span className="text-xs text-gray-400 font-medium block mb-0.5">Email Address</span>
-                          <span className="text-sm font-semibold text-gray-900 truncate block">{user?.email || '-'}</span>
-                        </div>
-                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 shrink-0">
-                          Primary
-                        </span>
-                      </div>
-
-                      {/* Phone Number */}
-                      <div className="py-3 flex items-center justify-between last:pb-0">
-                        <div>
-                          <span className="text-xs text-gray-400 font-medium block mb-0.5">Mobile Number</span>
-                          <span className="text-sm font-semibold text-gray-900">
-                            {user?.phone ? `+91 ${user.phone}` : 'Not provided'}
-                          </span>
-                        </div>
-                        <span className="text-[11px] font-medium text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
-                          SMS Alerts
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleSaveProfile} className="space-y-3.5 pt-1">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                          Full Name
-                        </label>
-                        <input 
-                          type="text"
-                          required
-                          value={profileForm.name}
-                          onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1A4B3A] text-sm text-gray-900 font-medium"
-                          placeholder="Your full name"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                          Mobile Number
-                        </label>
-                        <input 
-                          type="tel"
-                          value={profileForm.phone}
-                          onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1A4B3A] text-sm text-gray-900 font-medium"
-                          placeholder="e.g. 9876543210"
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-2.5 pt-2">
-                        <button 
-                          type="submit"
-                          disabled={savingProfile}
-                          className="px-5 py-2.5 bg-[#1A4B3A] text-white rounded-lg font-semibold text-xs hover:bg-[#143d2f] transition-all shadow-xs cursor-pointer disabled:opacity-50"
-                        >
-                          {savingProfile ? 'Saving...' : 'Save Changes'}
-                        </button>
-                        <button 
-                          type="button"
-                          onClick={() => setIsEditingProfile(false)}
-                          className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg font-semibold text-xs hover:bg-gray-200 transition-all cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </form>
-                  )}
-                </div>
-
-                {/* ── CARD 2: DELIVERY ADDRESS ── */}
-                <div className="bg-white rounded-2xl border border-gray-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 sm:p-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between pb-3.5 sm:pb-4 mb-3.5 sm:mb-4 border-b border-gray-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-[#D97706] flex items-center justify-center font-bold shrink-0">
-                        <MapPin size={18} />
-                      </div>
-                      <div>
-                        <h3 className="text-gray-900 font-bold text-sm sm:text-base m-0 tracking-tight">Delivery Address</h3>
-                        <p className="text-[11px] sm:text-xs text-gray-500 m-0 mt-0.5">Saved for 1-click checkout</p>
-                      </div>
-                    </div>
-
-                    {!isEditingAddress ? (
-                      <button 
-                        onClick={() => setIsEditingAddress(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-lg font-semibold text-xs hover:border-[#D97706] hover:text-[#D97706] hover:bg-amber-50/50 transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Plus size={13} />
-                        <span>{user?.deliveryAddress?.address ? 'Edit' : 'Add'}</span>
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => setIsEditingAddress(false)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg font-semibold text-xs hover:bg-gray-200 transition-all cursor-pointer"
-                      >
-                        <X size={13} />
-                        <span>Cancel</span>
-                      </button>
-                    )}
-                  </div>
-
-                  {addressSuccessMsg && (
-                    <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 font-medium">
-                      <Check size={16} className="text-emerald-600" />
-                      <span>{addressSuccessMsg}</span>
-                    </div>
-                  )}
-                  {addressErrorMsg && (
-                    <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2 font-medium">
-                      <X size={16} className="text-red-600" />
-                      <span>{addressErrorMsg}</span>
-                    </div>
-                  )}
-
-                  {!isEditingAddress ? (
-                    user?.deliveryAddress?.address ? (
-                      <div className="space-y-3">
-                        <div className="p-3.5 sm:p-4 rounded-xl bg-gray-50/70 border border-gray-100 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-semibold text-[#1A4B3A] bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                              Default Shipping
-                            </span>
-                            <button 
-                              onClick={() => setIsEditingAddress(true)}
-                              className="text-xs font-semibold text-[#1A4B3A] hover:underline flex items-center gap-1 cursor-pointer"
-                            >
-                              <Edit3 size={12} /> Edit
-                            </button>
-                          </div>
-
-                          <div>
-                            <h4 className="font-bold text-gray-900 text-sm m-0">{user?.name}</h4>
-                            <p className="text-gray-600 text-xs leading-relaxed m-0 mt-1">{user.deliveryAddress.address}</p>
-                            <p className="text-gray-600 text-xs font-medium m-0 mt-0.5">
-                              {user.deliveryAddress.city}, {user.deliveryAddress.state} - <span className="font-bold text-gray-900">{user.deliveryAddress.zipCode}</span>
-                            </p>
-                          </div>
-
-                          {user?.phone && (
-                            <p className="text-gray-500 text-xs m-0 pt-2 border-t border-gray-200/60 flex items-center gap-1">
-                              <Phone size={11} /> Contact: +91 {user.phone}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Delivery Assurance */}
-                        <div className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-100 flex items-center gap-2 text-xs text-emerald-800 font-medium">
-                          <Truck size={14} className="text-emerald-600 shrink-0" />
-                          <span>Express delivery available to this address</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="py-8 px-4 border-2 border-dashed border-gray-200 rounded-xl text-center bg-gray-50/50 flex flex-col items-center justify-center">
-                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-[#D97706] flex items-center justify-center mb-2">
-                          <MapPin size={20} />
-                        </div>
-                        <h4 className="font-semibold text-gray-800 text-sm mb-1">No Address Added Yet</h4>
-                        <p className="text-gray-500 text-xs max-w-xs mb-3">
-                          Add your shipping address for fast, 1-click checkout.
-                        </p>
-                        <button 
-                          onClick={() => setIsEditingAddress(true)}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1A4B3A] text-white rounded-lg font-semibold text-xs hover:bg-[#143d2f] transition-all shadow-xs cursor-pointer"
-                        >
-                          <Plus size={13} />
-                          <span>Add Address</span>
-                        </button>
-                      </div>
-                    )
-                  ) : (
-                    <form onSubmit={handleSaveAddress} className="space-y-3 pt-1">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          Street / Door No
-                        </label>
-                        <input 
-                          type="text"
-                          required
-                          value={addressForm.address}
-                          onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
-                          className="w-full px-3 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1A4B3A] text-xs text-gray-900 font-medium"
-                          placeholder="e.g. 12, Anna Nagar 2nd Street"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5">
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            City
-                          </label>
-                          <input 
-                            type="text"
-                            required
-                            value={addressForm.city}
-                            onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
-                            className="w-full px-2.5 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1A4B3A] text-xs text-gray-900 font-medium"
-                            placeholder="City"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            State
-                          </label>
-                          <input 
-                            type="text"
-                            required
-                            value={addressForm.state}
-                            onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
-                            className="w-full px-2.5 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1A4B3A] text-xs text-gray-900 font-medium"
-                            placeholder="State"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            PIN Code
-                          </label>
-                          <input 
-                            type="text"
-                            required
-                            value={addressForm.zipCode}
-                            onChange={(e) => setAddressForm({ ...addressForm, zipCode: e.target.value })}
-                            className="w-full px-2.5 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1A4B3A] text-xs text-gray-900 font-medium"
-                            placeholder="600028"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2.5 pt-2">
-                        <button 
-                          type="submit"
-                          disabled={savingAddress}
-                          className="px-5 py-2.5 bg-[#1A4B3A] text-white rounded-lg font-semibold text-xs hover:bg-[#143d2f] transition-all shadow-xs cursor-pointer disabled:opacity-50"
-                        >
-                          {savingAddress ? 'Saving...' : 'Save Address'}
-                        </button>
-                        <button 
-                          type="button"
-                          onClick={() => setIsEditingAddress(false)}
-                          className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg font-semibold text-xs hover:bg-gray-200 transition-all cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </form>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* ======================================================== */}
-          {/* TAB 2: CART DASHBOARD TAB                                */}
-          {/* ======================================================== */}
-          {activeTab === 'cart' && (
-            <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-4 sm:p-6 md:p-8">
-              <div className="flex items-center justify-between pb-4 sm:pb-6 mb-4 sm:mb-6 border-b border-gray-100">
-                <div className="flex items-center gap-3 sm:gap-3.5">
-                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-emerald-50 text-[#1A4B3A] flex items-center justify-center font-bold shrink-0">
-                    <ShoppingCart size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-[#1A4B3A] text-lg sm:text-xl font-bold m-0">Your Shopping Basket</h3>
-                    <p className="text-[11px] sm:text-xs text-gray-500 m-0 mt-0.5">
-                      {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in your harvest cart
-                    </p>
-                  </div>
-                </div>
-
-                {cartItems.length > 0 && (
-                  <button 
-                    onClick={clearCart}
-                    className="text-xs text-red-500 hover:text-red-700 font-semibold cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Trash2 size={13} /> Clear
+            <div>
+              <div className="fk-panel-header">
+                <h3 className="fk-panel-heading">Personal Information</h3>
+                {!isEditingProfile && (
+                  <button type="button" onClick={() => setIsEditingProfile(true)} className="fk-link-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <Edit3 size={13} />
+                    <span>Edit</span>
                   </button>
                 )}
               </div>
 
-              {cartItems.length > 0 ? (
-                <div className="space-y-4 sm:space-y-6">
-                  {/* Cart Items List */}
-                  <div className="divide-y divide-gray-100">
-                    {cartItems.map((item) => (
-                      <div key={item.key} className="py-3.5 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-                        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                          <img 
-                            src={item.image || '/assets/hero/turmeric.png'} 
-                            alt={item.name} 
-                            className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-contain bg-[#F8FAF8] border border-gray-100 p-1 shrink-0"
+              {profileSuccessMsg && (
+                <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#047857', padding: '10px 14px', borderRadius: '6px', fontSize: '0.84rem', fontWeight: 700, marginBottom: '16px' }}>
+                  ✓ {profileSuccessMsg}
+                </div>
+              )}
+              {profileErrorMsg && (
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '10px 14px', borderRadius: '6px', fontSize: '0.84rem', fontWeight: 700, marginBottom: '16px' }}>
+                  ⚠️ {profileErrorMsg}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveProfile}>
+                
+                {/* Name & Gender */}
+                <div className="fk-section-block">
+                  <div className="fk-inputs-row">
+                    <div className="fk-input-group">
+                      <label>Full Name</label>
+                      <input 
+                        type="text" 
+                        required
+                        disabled={!isEditingProfile}
+                        className="fk-text-input"
+                        value={profileForm.name} 
+                        onChange={e => setProfileForm(p => ({ ...p, name: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '16px' }}>
+                    <label style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>Your Gender</label>
+                    <div className="fk-gender-group">
+                      {['Male', 'Female'].map((g) => (
+                        <label key={g} className="fk-radio-label">
+                          <input 
+                            type="radio" 
+                            name="gender" 
+                            disabled={!isEditingProfile}
+                            value={g} 
+                            checked={profileForm.gender === g}
+                            onChange={() => setProfileForm(p => ({ ...p, gender: g }))}
                           />
-                          <div className="min-w-0">
-                            <h4 className="font-bold text-gray-900 text-xs sm:text-sm m-0 truncate">{item.name}</h4>
-                            {item.variant && (
-                              <span className="text-[11px] sm:text-xs text-gray-500 block">{item.variant.label || item.variant.weight}</span>
+                          <span>{g}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {isEditingProfile && (
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                      <button type="submit" disabled={savingProfile} className="fk-btn-save">
+                        {savingProfile ? 'Saving...' : 'SAVE'}
+                      </button>
+                      <button type="button" onClick={() => setIsEditingProfile(false)} className="fk-btn-cancel">
+                        CANCEL
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Email Address Section */}
+                <div className="fk-section-block">
+                  <div className="fk-block-title">
+                    <span>Email Address</span>
+                    <span className="fk-badge-verified">
+                      <CheckCircle2 size={12} />
+                      <span>Verified</span>
+                    </span>
+                  </div>
+                  <div className="fk-inputs-row">
+                    <div className="fk-input-group">
+                      <input 
+                        type="email" 
+                        disabled
+                        className="fk-text-input"
+                        value={user?.email || 'customer@example.com'} 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile Number Section */}
+                <div className="fk-section-block">
+                  <div className="fk-block-title">
+                    <span>Mobile Number</span>
+                    <span className="fk-badge-verified">
+                      <CheckCircle2 size={12} />
+                      <span>Verified</span>
+                    </span>
+                  </div>
+                  <div className="fk-inputs-row">
+                    <div className="fk-input-group">
+                      <input 
+                        type="tel" 
+                        disabled={!isEditingProfile}
+                        className="fk-text-input"
+                        placeholder="+91 98765 43210"
+                        value={profileForm.phone} 
+                        onChange={e => setProfileForm(p => ({ ...p, phone: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </form>
+
+              {/* Password & Security Card */}
+              <div className="fk-security-card">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#edf7ee', color: '#1B5E2F', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Lock size={16} />
+                    </div>
+                    <div>
+                      <h5 style={{ margin: '0 0 2px', fontSize: '0.92rem', fontWeight: 800, color: '#0f3d2a' }}>Login &amp; Password</h5>
+                      <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>Keep your account secured with a strong password</p>
+                    </div>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPasswordChange(!showPasswordChange)}
+                    className="fk-link-btn"
+                  >
+                    {showPasswordChange ? 'Cancel' : 'Change Password'}
+                  </button>
+                </div>
+
+                {showPasswordChange && (
+                  <form style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }} onSubmit={(e) => {
+                    e.preventDefault();
+                    if (passwordForm.newPass !== passwordForm.confirmPass) {
+                      setPasswordMsg({ type: 'error', text: 'New passwords do not match.' });
+                      return;
+                    }
+                    setPasswordMsg({ type: 'success', text: 'Password updated successfully!' });
+                    setPasswordForm({ current: '', newPass: '', confirmPass: '' });
+                    setTimeout(() => setShowPasswordChange(false), 2000);
+                  }}>
+                    {passwordMsg.text && (
+                      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: passwordMsg.type === 'success' ? '#2e7d32' : '#d32f2f' }}>
+                        {passwordMsg.text}
+                      </div>
+                    )}
+                    <div className="fk-inputs-row">
+                      <div className="fk-input-group">
+                        <label>New Password</label>
+                        <input type="password" required className="fk-text-input" placeholder="Min 6 characters" value={passwordForm.newPass} onChange={e => setPasswordForm(p => ({ ...p, newPass: e.target.value }))} />
+                      </div>
+                      <div className="fk-input-group">
+                        <label>Confirm Password</label>
+                        <input type="password" required className="fk-text-input" placeholder="Re-type password" value={passwordForm.confirmPass} onChange={e => setPasswordForm(p => ({ ...p, confirmPass: e.target.value }))} />
+                      </div>
+                    </div>
+                    <button type="submit" className="fk-btn-save" style={{ width: 'fit-content', marginTop: '6px' }}>
+                      UPDATE PASSWORD
+                    </button>
+                  </form>
+                )}
+              </div>
+
+              {/* Flipkart Standard FAQ Help Block */}
+              <div className="fk-faq-section">
+                <h4>FAQS</h4>
+                <div className="fk-faq-item">
+                  <p className="fk-faq-q">What happens when I update my email address (or mobile number)?</p>
+                  <p className="fk-faq-a">Your login email id (or mobile number) changes, likewise. You will receive all your transactional and order tracking emails on the updated address.</p>
+                </div>
+                <div className="fk-faq-item">
+                  <p className="fk-faq-q">When will my Venthulir account be updated with the new details?</p>
+                  <p className="fk-faq-a">It happens immediately after you save your profile. Future farm shipment notices and invoices will be sent to the updated details.</p>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ── TAB 2: MANAGE ADDRESSES ── */}
+          {activeTab === 'addresses' && (
+            <div>
+              <div className="fk-panel-header">
+                <h3 className="fk-panel-heading">Manage Addresses</h3>
+              </div>
+
+              {addressSuccessMsg && (
+                <div style={{ background: '#e8f5e9', border: '1px solid #c8e6c9', color: '#2e7d32', padding: '8px 12px', borderRadius: '3px', fontSize: '0.84rem', fontWeight: 600, marginBottom: '16px' }}>
+                  ✓ {addressSuccessMsg}
+                </div>
+              )}
+
+              {/* Add New Address Bar */}
+              {!isAddressFormOpen && (
+                <div className="fk-add-address-bar" onClick={handleOpenAddAddress}>
+                  <Plus size={16} />
+                  <span>ADD A NEW ADDRESS</span>
+                </div>
+              )}
+
+              {/* Inline Address Form (Flipkart Style) */}
+              {isAddressFormOpen && (
+                <div className="fk-inline-form-card">
+                  <h4 style={{ margin: '0 0 16px', fontSize: '0.92rem', fontWeight: 700, color: '#1B5E2F' }}>
+                    {editingAddressIndex !== null ? 'EDIT ADDRESS' : 'ADD NEW ADDRESS'}
+                  </h4>
+
+                  <form onSubmit={handleSaveAddress}>
+                    <div className="fk-form-grid-2">
+                      <div className="fk-input-group">
+                        <label>Name *</label>
+                        <input type="text" required className="fk-text-input" value={addressForm.name} onChange={e => setAddressForm(a => ({ ...a, name: e.target.value }))} />
+                      </div>
+                      <div className="fk-input-group">
+                        <label>10-digit mobile number *</label>
+                        <input type="tel" required className="fk-text-input" placeholder="10-digit number" value={addressForm.phone} onChange={e => setAddressForm(a => ({ ...a, phone: e.target.value }))} />
+                      </div>
+                    </div>
+
+                    <div className="fk-form-grid-2">
+                      <div className="fk-input-group">
+                        <label>Pincode *</label>
+                        <input 
+                          type="text" 
+                          required 
+                          className="fk-text-input" 
+                          placeholder="6-digit pincode" 
+                          value={addressForm.zipCode} 
+                          onChange={e => {
+                            const val = e.target.value;
+                            setAddressForm(a => ({ ...a, zipCode: val }));
+                            if (val.length === 6 && val.startsWith('60')) setAddressForm(a => ({ ...a, city: 'Chennai', state: 'Tamil Nadu' }));
+                            else if (val.length === 6 && val.startsWith('64')) setAddressForm(a => ({ ...a, city: 'Coimbatore', state: 'Tamil Nadu' }));
+                            else if (val.length === 6 && val.startsWith('62')) setAddressForm(a => ({ ...a, city: 'Madurai', state: 'Tamil Nadu' }));
+                          }} 
+                        />
+                      </div>
+                      <div className="fk-input-group">
+                        <label>Locality</label>
+                        <input type="text" className="fk-text-input" placeholder="Locality" value={addressForm.locality} onChange={e => setAddressForm(a => ({ ...a, locality: e.target.value }))} />
+                      </div>
+                    </div>
+
+                    <div className="fk-input-group" style={{ marginBottom: '14px' }}>
+                      <label>Address (Area and Street) *</label>
+                      <textarea rows={2} required className="fk-text-input" style={{ resize: 'vertical' }} value={addressForm.address} onChange={e => setAddressForm(a => ({ ...a, address: e.target.value }))} />
+                    </div>
+
+                    <div className="fk-form-grid-2">
+                      <div className="fk-input-group">
+                        <label>City / District / Town *</label>
+                        <input type="text" required className="fk-text-input" value={addressForm.city} onChange={e => setAddressForm(a => ({ ...a, city: e.target.value }))} />
+                      </div>
+                      <div className="fk-input-group">
+                        <label>State *</label>
+                        <select className="fk-text-input" value={addressForm.state} onChange={e => setAddressForm(a => ({ ...a, state: e.target.value }))}>
+                          <option>Tamil Nadu</option>
+                          <option>Karnataka</option>
+                          <option>Kerala</option>
+                          <option>Andhra Pradesh</option>
+                          <option>Telangana</option>
+                          <option>Maharashtra</option>
+                          <option>Other</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={{ fontSize: '0.78rem', color: '#878787', fontWeight: 600 }}>Address Type</label>
+                      <div className="fk-gender-group">
+                        {['Home', 'Work'].map((t) => (
+                          <label key={t} className="fk-radio-label">
+                            <input 
+                              type="radio" 
+                              name="addrType" 
+                              value={t} 
+                              checked={addressForm.type === t}
+                              onChange={() => setAddressForm(a => ({ ...a, type: t }))}
+                            />
+                            <span>{t}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button type="submit" disabled={savingAddress} className="fk-btn-save">
+                        {savingAddress ? 'SAVING...' : 'SAVE'}
+                      </button>
+                      <button type="button" onClick={() => setIsAddressFormOpen(false)} className="fk-btn-cancel">
+                        CANCEL
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Saved Addresses List */}
+              <div className="fk-address-list">
+                {addresses.map((addr, idx) => (
+                  <div key={idx} className={`fk-address-card ${addr.isDefault ? 'is-default' : ''}`}>
+                    <div className="fk-addr-header">
+                      <span className={`fk-addr-badge ${addr.type.toLowerCase()}`}>
+                        {addr.type}
+                      </span>
+                      <div className="fk-addr-actions">
+                        <button type="button" onClick={() => handleOpenEditAddress(addr, idx)} className="fk-link-btn">
+                          Edit
+                        </button>
+                        {addresses.length > 1 && (
+                          <button type="button" onClick={() => handleDeleteAddress(idx)} className="fk-link-btn" style={{ color: '#d32f2f' }}>
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <strong style={{ fontSize: '0.94rem', color: '#212121' }}>{addr.name}</strong>
+                      <strong style={{ fontSize: '0.9rem', color: '#212121' }}>{addr.phone}</strong>
+                    </div>
+
+                    <p className="fk-addr-text">
+                      {addr.address}{addr.locality ? `, ${addr.locality}` : ''}, {addr.city}, {addr.state} - <strong style={{ color: '#212121' }}>{addr.zipCode}</strong>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB 3: MY ORDERS ── */}
+          {activeTab === 'orders' && (
+            <div>
+              <div className="fk-panel-header">
+                <h3 className="fk-panel-heading">My Orders</h3>
+              </div>
+
+              {/* Search bar */}
+              <div className="fk-orders-search-row">
+                <div className="fk-orders-search-box">
+                  <Search size={16} color="#878787" />
+                  <input 
+                    type="text" 
+                    placeholder="Search your orders here..." 
+                    value={orderSearch}
+                    onChange={e => setOrderSearch(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Filter Chips */}
+              <div className="fk-orders-filter-chips">
+                {['All', 'Delivered', 'In Transit', 'Processing', 'Cancelled'].map(f => (
+                  <button 
+                    key={f}
+                    type="button"
+                    onClick={() => setOrderFilter(f)}
+                    className={`fk-chip-btn ${orderFilter === f ? 'active' : ''}`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+
+              {/* Orders List */}
+              {loadingOrders ? (
+                <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                  <div style={{ margin: '0 auto 10px', width: '28px', height: '28px', border: '3px solid #e2e8f0', borderTopColor: '#1B5E2F', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  <p style={{ color: '#878787', fontSize: '0.86rem' }}>Fetching your orders...</p>
+                </div>
+              ) : filteredOrders.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '60px 20px', border: '1px dashed #e0e0e0', borderRadius: '4px' }}>
+                  <Package size={42} color="#878787" style={{ margin: '0 auto 10px' }} />
+                  <h4 style={{ margin: '0 0 6px', fontSize: '1rem', color: '#212121' }}>No orders found</h4>
+                  <p style={{ margin: '0 0 16px', fontSize: '0.84rem', color: '#878787' }}>Looks like you haven&apos;t placed any order in this category.</p>
+                  <Link href="/products" className="fk-btn-save" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                    EXPLORE FRESH PRODUCTS
+                  </Link>
+                </div>
+              ) : (
+                filteredOrders.map((order) => {
+                  const status = order.orderStatus || order.status || 'Placed';
+                  const statusLower = status.toLowerCase();
+                  const isDelivered = statusLower.includes('deliver');
+                  const isCancelled = statusLower.includes('cancel');
+                  const dateStr = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Recent';
+
+                  return (
+                    <div key={order._id || order.id} className="fk-order-row-card">
+                      
+                      {/* Product Thumbnail */}
+                      <img 
+                        src={order.items?.[0]?.imageUrl || '/assets/hero/turmeric.png'} 
+                        alt={order.items?.[0]?.name || 'Product'} 
+                        className="fk-order-thumb"
+                        onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = '/assets/hero/turmeric.png'; }}
+                      />
+
+                      {/* Product Info */}
+                      <div className="fk-order-info">
+                        <h5>{order.items?.[0]?.name || 'Organic Harvest Staple'}</h5>
+                        <p>{order.items?.length > 1 ? `+ ${order.items.length - 1} more item(s)` : (order.items?.[0]?.variant || 'Pure Grade')}</p>
+                        <div style={{ fontSize: '0.74rem', color: '#878787', marginTop: '4px' }}>
+                          Order ID: #{String(order._id || order.id).slice(-8).toUpperCase()}
+                        </div>
+                      </div>
+
+                      {/* Price */}
+                      <div className="fk-order-price">
+                        ₹{order.totalAmount || 0}
+                      </div>
+
+                      {/* Status & Actions */}
+                      <div className="fk-order-status-block">
+                        <div className="fk-status-dot-row">
+                          <div className={`fk-dot ${isDelivered ? 'green' : isCancelled ? 'red' : 'orange'}`} />
+                          <span style={{ color: isDelivered ? '#26a541' : isCancelled ? '#d32f2f' : '#212121' }}>
+                            {isDelivered ? `Delivered on ${dateStr}` : isCancelled ? `Cancelled` : `In Transit`}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: '#878787' }}>
+                          Your item has been {isDelivered ? 'delivered' : 'dispatched'}
+                        </div>
+
+                        <div className="fk-order-actions-bar">
+                          <button 
+                            type="button" 
+                            onClick={() => setSelectedOrderForTracking(order)}
+                            className="fk-link-btn"
+                            style={{ fontSize: '0.8rem' }}
+                          >
+                            Track Package
+                          </button>
+                          {order.items?.[0] && (
+                            <button 
+                              type="button" 
+                              onClick={() => handleBuyAgain(order.items[0])}
+                              className="fk-link-btn"
+                              style={{ fontSize: '0.8rem' }}
+                            >
+                              Buy Again
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {/* ── TAB 4: MY CART / BASKET ── */}
+          {activeTab === 'cart' && (
+            <div>
+              <div className="fk-panel-header">
+                <h3 className="fk-panel-heading">My Cart ({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})</h3>
+                {cartItems.length > 0 && (
+                  <button type="button" onClick={() => setIsCartOpen(true)} className="fk-link-btn">
+                    <ShoppingCart size={14} />
+                    <span>Open Cart Drawer</span>
+                  </button>
+                )}
+              </div>
+
+              {cartItems.length === 0 ? (
+                <div className="fk-empty-box">
+                  <div className="fk-empty-icon-circle">
+                    <ShoppingCart size={28} />
+                  </div>
+                  <h4 style={{ margin: '0 0 6px', fontSize: '1.05rem', fontWeight: 800, color: '#0f3d2a' }}>Your Cart is Empty</h4>
+                  <p style={{ margin: '0 0 18px', fontSize: '0.86rem', color: '#64748b', maxWidth: '320px', marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
+                    Explore our authentic wood cold-pressed oils and organic single-origin spices.
+                  </p>
+                  <Link href="/products" className="fk-btn-save" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                    SHOP FRESH HARVEST
+                  </Link>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {cartItems.map((item) => {
+                      const { isOutOfStock, isLowStock, stock } = getProductStock(item);
+
+                      return (
+                        <div key={item.key || item._id} className="fk-cart-item-card">
+                          <div className="fk-cart-item-main">
+                            <div className="fk-cart-thumb-box">
+                              <img 
+                                src={item.image || item.imageUrl || '/assets/hero/turmeric.png'} 
+                                alt={item.name} 
+                                onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = '/assets/hero/turmeric.png'; }}
+                              />
+                            </div>
+
+                            <div className="fk-cart-item-info">
+                              <h5 className="fk-cart-item-title" title={item.name}>
+                                {item.name}
+                              </h5>
+                              <div className="fk-cart-item-meta">
+                                <span style={{ fontWeight: 700, color: '#0f3d2a' }}>₹{item.price} each</span>
+                                {item.variant?.label && (
+                                  <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '0.7rem', fontWeight: 750, padding: '1px 6px', borderRadius: '4px' }}>
+                                    {item.variant.label}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* In-Place Real-World Stock Notification */}
+                              {isOutOfStock ? (
+                                <div className="fk-stock-pill out-of-stock">
+                                  <X size={11} strokeWidth={3} />
+                                  <span>Out of Stock</span>
+                                </div>
+                              ) : isLowStock ? (
+                                <div className="fk-stock-pill low-stock">
+                                  <AlertCircle size={11} />
+                                  <span>Only {stock} left</span>
+                                </div>
+                              ) : (
+                                <div className="fk-stock-pill in-stock">
+                                  <Check size={11} strokeWidth={3} />
+                                  <span>In Stock</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="fk-cart-item-actions">
+                            <div className="fk-cart-item-actions-left">
+                              <div className="fk-cart-stepper">
+                                <button 
+                                  type="button" 
+                                  onClick={() => updateQty(item.key, item.quantity - 1)}
+                                  disabled={isOutOfStock}
+                                  title="Decrease quantity"
+                                  aria-label="Decrease quantity"
+                                >
+                                  <Minus size={12} />
+                                </button>
+                                <span>{item.quantity}</span>
+                                <button 
+                                  type="button" 
+                                  onClick={() => updateQty(item.key, item.quantity + 1)}
+                                  disabled={isOutOfStock || (isLowStock && item.quantity >= stock)}
+                                  title="Increase quantity"
+                                  aria-label="Increase quantity"
+                                >
+                                  <Plus size={12} />
+                                </button>
+                              </div>
+
+                              <button 
+                                type="button" 
+                                onClick={() => removeFromCart(item.key)}
+                                className="fk-cart-remove-btn"
+                                title="Remove item"
+                                aria-label="Remove item"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+
+                            <div className="fk-cart-item-price">
+                              <strong>₹{item.price * item.quantity}</strong>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Cart Total & Checkout Bar */}
+                  <div className="fk-cart-bottom-bar">
+                    <div className="fk-cart-bottom-info">
+                      <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 750, letterSpacing: '0.5px' }}>
+                        Total Basket Amount
+                      </div>
+                      <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#1B5E2F' }}>
+                        ₹{cartTotal}
+                      </div>
+                    </div>
+
+                    <Link 
+                      href="/checkout"
+                      className="fk-btn-save fk-cart-checkout-btn"
+                      style={{ textDecoration: 'none', padding: '12px 28px', fontSize: '0.94rem', letterSpacing: '0.3px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <span>PROCEED TO CHECKOUT</span>
+                      <ChevronRight size={16} />
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── TAB 5: MY WISHLIST ── */}
+          {activeTab === 'wishlist' && (
+            <div>
+              <div className="fk-panel-header">
+                <h3 className="fk-panel-heading">My Wishlist ({wishlistProducts.length})</h3>
+              </div>
+
+              {wishlistProducts.length === 0 ? (
+                <div className="fk-empty-box">
+                  <div className="fk-empty-icon-circle">
+                    <Heart size={28} />
+                  </div>
+                  <h4 style={{ margin: '0 0 6px', fontSize: '1.05rem', fontWeight: 800, color: '#0f3d2a' }}>Your Wishlist is Empty</h4>
+                  <p style={{ margin: '0 0 18px', fontSize: '0.86rem', color: '#64748b', maxWidth: '320px', marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
+                    Explore our authentic range of cold-pressed oils and single-origin spices.
+                  </p>
+                  <Link href="/products" className="fk-btn-save" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                    BROWSE CATALOG
+                  </Link>
+                </div>
+              ) : (
+                <div>
+                  {wishlistProducts.map((prod) => {
+                    const { isOutOfStock, isLowStock, stock } = getProductStock(prod);
+
+                    return (
+                      <div key={prod.id} className="fk-wishlist-item">
+                        <div className="fk-wishlist-left">
+                          <img src={prod.image} alt={prod.name} className="fk-wishlist-thumb" />
+                          <div className="fk-wishlist-details">
+                            <h5>{prod.name}</h5>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: '#878787', marginBottom: '4px' }}>
+                              <span style={{ background: '#388e3c', color: '#ffffff', padding: '1px 6px', borderRadius: '4px', fontWeight: 700, fontSize: '0.7rem' }}>
+                                {prod.rating} ★
+                              </span>
+                              <span>({prod.reviews} reviews)</span>
+                            </div>
+                            <div className="fk-wishlist-price-row">
+                              <span className="fk-wishlist-price">₹{prod.price}</span>
+                              <span className="fk-wishlist-mrp">₹{prod.mrp}</span>
+                              <span className="fk-wishlist-discount">15% off</span>
+                            </div>
+
+                            {/* In-Place Real-World Stock Notification */}
+                            {isOutOfStock ? (
+                              <div className="fk-stock-pill out-of-stock">
+                                <X size={11} strokeWidth={3} />
+                                <span>Out of Stock (0 units left)</span>
+                              </div>
+                            ) : isLowStock ? (
+                              <div className="fk-stock-pill low-stock">
+                                <AlertCircle size={11} />
+                                <span>Only {stock} units left in stock</span>
+                              </div>
+                            ) : (
+                              <div className="fk-stock-pill in-stock">
+                                <Check size={11} strokeWidth={3} />
+                                <span>In Stock</span>
+                              </div>
                             )}
-                            <div className="text-xs sm:text-sm font-bold text-[#1A4B3A] mt-0.5">₹{item.price}</div>
                           </div>
                         </div>
 
-                        {/* Qty & Total Controls */}
-                        <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-between sm:justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-50">
-                          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {isOutOfStock ? (
                             <button 
-                              onClick={() => updateQty(item.key, item.quantity - 1)}
-                              className="px-2.5 sm:px-3 py-1 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-xs sm:text-sm cursor-pointer"
+                              type="button" 
+                              disabled
+                              className="fk-btn-save fk-btn-disabled"
+                              style={{ padding: '8px 16px', fontSize: '0.84rem' }}
                             >
-                              -
+                              OUT OF STOCK
                             </button>
-                            <span className="px-2.5 sm:px-3 py-1 text-xs font-bold text-gray-800 min-w-[24px] sm:min-w-[28px] text-center">
-                              {item.quantity}
-                            </span>
+                          ) : (
                             <button 
-                              onClick={() => updateQty(item.key, item.quantity + 1)}
-                              className="px-2.5 sm:px-3 py-1 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-xs sm:text-sm cursor-pointer"
+                              type="button" 
+                              onClick={() => handleMoveWishlistToCart(prod)}
+                              className="fk-btn-save"
+                              style={{ padding: '8px 16px', fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: '6px' }}
                             >
-                              +
+                              <ShoppingCart size={14} />
+                              <span>MOVE TO CART</span>
                             </button>
-                          </div>
-
-                          <div className="text-sm sm:text-base font-bold text-gray-900 min-w-[65px] sm:min-w-[80px] text-right">
-                            ₹{item.price * item.quantity}
-                          </div>
-
+                          )}
                           <button 
-                            onClick={() => removeFromCart(item.key)}
-                            className="text-gray-400 hover:text-red-600 p-1.5 cursor-pointer transition-colors"
-                            title="Remove Item"
+                            type="button" 
+                            onClick={() => setWishlistProducts(prev => prev.filter(p => p.id !== prod.id))}
+                            style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '6px', padding: '6px', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            title="Remove from wishlist"
                           >
                             <Trash2 size={16} />
                           </button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Summary & Checkout Button */}
-                  <div className="pt-4 sm:pt-6 border-t border-gray-100 bg-[#F8FAF8] p-4 sm:p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="w-full sm:w-auto text-left">
-                      <span className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider font-semibold block">Total Cart Value</span>
-                      <span className="text-xl sm:text-2xl font-bold text-[#1A4B3A]">₹{cartTotal}</span>
-                      <span className="text-[11px] sm:text-xs text-emerald-600 block mt-0.5">Free Delivery on Orders Above ₹499</span>
-                    </div>
-
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                      <Link 
-                        href="/checkout"
-                        className="w-full sm:w-auto px-6 sm:px-8 py-3.5 bg-[#1A4B3A] text-white rounded-xl font-bold text-xs sm:text-sm uppercase tracking-wider hover:bg-[#143d2f] transition-all shadow-md text-center"
-                      >
-                        Proceed to Checkout →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                /* Empty Cart State */
-                <div className="py-12 sm:py-14 px-4 sm:px-6 text-center flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full border-2 border-dashed border-emerald-300 bg-emerald-50/50 flex items-center justify-center mb-4 text-[#1A4B3A]">
-                    <ShoppingBag size={28} />
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-[#1A4B3A] mb-2">Your Basket is Empty</h3>
-                  <p className="text-gray-500 text-xs sm:text-sm max-w-md mb-6 leading-relaxed">
-                    Looks like you haven&apos;t added any single-origin stone ground spices, wooden chekku oils, or heirloom staples to your cart yet.
-                  </p>
-                  <Link 
-                    href="/home"
-                    className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-[#1A4B3A] text-white rounded-xl font-bold text-xs sm:text-sm uppercase tracking-wider hover:bg-[#143d2f] transition-all shadow-sm"
-                  >
-                    <span>Explore Organic Catalog</span>
-                    <ArrowLeft size={16} className="rotate-180" />
-                  </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 3: MY ORDERS TAB                                     */}
-          {/* ======================================================== */}
-          {activeTab === 'orders' && (
-            <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-4 sm:p-6 md:p-8">
-              <div className="flex items-center justify-between pb-4 sm:pb-6 mb-4 sm:mb-6 border-b border-gray-100">
-                <div className="flex items-center gap-3 sm:gap-3.5">
-                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-emerald-50 text-[#1A4B3A] flex items-center justify-center font-bold shrink-0">
-                    <Package size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-[#1A4B3A] text-lg sm:text-xl font-bold m-0">My Order History</h3>
-                    <p className="text-[11px] sm:text-xs text-gray-500 m-0 mt-0.5">Track your shipments and view past receipts</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={fetchUserOrders}
-                  className="text-xs font-bold text-[#1A4B3A] hover:underline cursor-pointer"
-                >
-                  Refresh
-                </button>
+          {/* ── TAB 6: PAN & GST INFO ── */}
+          {activeTab === 'pan' && (
+            <div>
+              <div className="fk-panel-header">
+                <h3 className="fk-panel-heading">PAN Card Information</h3>
               </div>
 
-              {loadingOrders ? (
-                <div className="py-12 flex justify-center items-center">
-                  <div className="w-8 h-8 border-3 border-[#1A4B3A] border-t-transparent rounded-full animate-spin"></div>
+              <form onSubmit={(e) => { e.preventDefault(); alert('PAN Card details updated successfully!'); }} style={{ maxWidth: '440px' }}>
+                <div className="fk-input-group" style={{ marginBottom: '14px', maxWidth: '100%' }}>
+                  <label>PAN Card Number *</label>
+                  <input type="text" required placeholder="e.g. ABCDE1234F" className="fk-text-input" style={{ textTransform: 'uppercase' }} />
                 </div>
-              ) : orders.length > 0 ? (
-                <div className="space-y-3.5 sm:space-y-4">
-                  {orders.map((ord) => (
-                    <div key={ord._id || ord.id} className="p-4 sm:p-5 rounded-2xl border border-gray-200 bg-[#FAFCFA] space-y-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100">
-                        <div>
-                          <span className="text-[10px] text-gray-400 block font-semibold uppercase">Order ID</span>
-                          <span className="font-bold text-gray-800 text-xs sm:text-sm font-mono">#{ord._id?.slice(-8) || ord.id}</span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-gray-400 block font-semibold uppercase">Date</span>
-                          <span className="text-[11px] sm:text-xs text-gray-700 font-medium">
-                            {new Date(ord.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-gray-400 block font-semibold uppercase">Total</span>
-                          <span className="font-bold text-[#1A4B3A] text-sm sm:text-base">₹{ord.totalAmount}</span>
-                        </div>
-                        <div>
-                          <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800">
-                            {ord.orderStatus || ord.status || 'Confirmed'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Items Preview */}
-                      <div className="text-xs text-gray-600 space-y-1">
-                        {ord.items?.map((item, idx) => (
-                          <div key={idx} className="flex justify-between">
-                            <span className="truncate pr-2">{item.name || item.product?.name} x {item.quantity}</span>
-                            <span className="font-semibold text-gray-800 shrink-0">₹{item.price * item.quantity}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                <div className="fk-input-group" style={{ marginBottom: '14px', maxWidth: '100%' }}>
+                  <label>Full Name on PAN Card *</label>
+                  <input type="text" required placeholder="Full Name as in PAN" className="fk-text-input" />
                 </div>
-              ) : (
-                <div className="py-12 px-4 sm:px-6 text-center flex flex-col items-center justify-center">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center mb-3">
-                    <Package size={26} />
-                  </div>
-                  <h4 className="font-bold text-gray-800 text-base mb-1">No Orders Found</h4>
-                  <p className="text-gray-500 text-xs max-w-sm mb-5">
-                    You haven&apos;t placed any orders yet with this account. Start exploring our traditional wood cold-pressed oils and heritage spices!
-                  </p>
-                  <Link 
-                    href="/home"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#1A4B3A] text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-[#143d2f] transition-all"
-                  >
-                    Start Shopping
-                  </Link>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ======================================================== */}
-          {/* TAB 4: WISHLIST TAB                                      */}
-          {/* ======================================================== */}
-          {activeTab === 'wishlist' && (
-            <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-4 sm:p-6 md:p-8">
-              <div className="flex items-center gap-3 sm:gap-3.5 pb-4 sm:pb-6 mb-4 sm:mb-6 border-b border-gray-100">
-                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center font-bold shrink-0">
-                  <Heart size={20} />
-                </div>
-                <div>
-                  <h3 className="text-[#1A4B3A] text-lg sm:text-xl font-bold m-0">My Wishlist</h3>
-                  <p className="text-[11px] sm:text-xs text-gray-500 m-0 mt-0.5">Save your favorite organic staples for later</p>
-                </div>
-              </div>
-
-              <div className="py-12 px-4 sm:px-6 text-center flex flex-col items-center justify-center">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-pink-50 text-pink-400 flex items-center justify-center mb-3">
-                  <Heart size={26} />
-                </div>
-                <h4 className="font-bold text-gray-800 text-base mb-1">Your Wishlist is Empty</h4>
-                <p className="text-gray-500 text-xs max-w-sm mb-5">
-                  Save your favorite items here while browsing so you can easily purchase them whenever you&apos;re ready.
-                </p>
-                <Link 
-                  href="/home"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#1A4B3A] text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-[#143d2f] transition-all"
-                >
-                  Browse Products
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {/* ======================================================== */}
-          {/* TAB 5: HELP & QUERIES TAB                                */}
-          {/* ======================================================== */}
-          {activeTab === 'help' && (
-            <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6">
-              <div className="flex items-center gap-3 sm:gap-3.5 pb-4 sm:pb-6 border-b border-gray-100">
-                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-emerald-50 text-[#1A4B3A] flex items-center justify-center font-bold shrink-0">
-                  <HelpCircle size={20} />
-                </div>
-                <div>
-                  <h3 className="text-[#1A4B3A] text-lg sm:text-xl font-bold m-0">Customer Support & Queries</h3>
-                  <p className="text-[11px] sm:text-xs text-gray-500 m-0 mt-0.5">We are here to assist you with your orders and products</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-4">
-                <a 
-                  href="https://wa.me/918778476414?text=Hello%20Venthulir%20Team,%20I%20need%20help%20with%20my%20order" 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="p-4 sm:p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200 flex flex-col items-center text-center hover:shadow-md transition-all group"
-                >
-                  <MessageCircle size={26} className="text-emerald-600 mb-2 group-hover:scale-110 transition-transform" />
-                  <span className="font-bold text-gray-900 text-sm">WhatsApp Support</span>
-                  <span className="text-xs text-gray-500 mt-1">Instant chat with our farm team</span>
-                  <span className="mt-3 text-xs font-bold text-emerald-700 bg-white px-3 py-1 rounded-full shadow-xs">
-                    +91 87784 76414
-                  </span>
-                </a>
-
-                <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/70 border border-blue-200 flex flex-col items-center text-center">
-                  <Mail size={26} className="text-blue-600 mb-2" />
-                  <span className="font-bold text-gray-900 text-sm">Email Inquiries</span>
-                  <span className="text-xs text-gray-500 mt-1">Response within 24 hours</span>
-                  <span className="mt-3 text-xs font-bold text-blue-700 bg-white px-3 py-1 rounded-full shadow-xs">
-                    theventhulir@gmail.com
-                  </span>
+                <div className="fk-input-group" style={{ marginBottom: '18px', maxWidth: '100%' }}>
+                  <label>GSTIN (Optional for Business Invoice)</label>
+                  <input type="text" placeholder="e.g. 33AAAAA0000A1Z5" className="fk-text-input" style={{ textTransform: 'uppercase' }} />
                 </div>
 
-                <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/70 border border-amber-200 flex flex-col items-center text-center sm:col-span-2 md:col-span-1">
-                  <Phone size={26} className="text-amber-600 mb-2" />
-                  <span className="font-bold text-gray-900 text-sm">Direct Hotline</span>
-                  <span className="text-xs text-gray-500 mt-1">Mon - Sat: 9 AM to 7 PM</span>
-                  <span className="mt-3 text-xs font-bold text-amber-700 bg-white px-3 py-1 rounded-full shadow-xs">
-                    +91 87784 76414
-                  </span>
-                </div>
-              </div>
-
-              {/* FAQ Accordions */}
-              <div className="pt-2 sm:pt-4 space-y-3">
-                <h4 className="font-bold text-gray-800 text-sm sm:text-base">Frequently Asked Questions</h4>
-                
-                <div className="p-3.5 sm:p-4 rounded-xl bg-gray-50 border border-gray-100">
-                  <h5 className="font-bold text-xs text-[#1A4B3A] uppercase tracking-wide mb-1">
-                    How are Venthulir oils extracted?
-                  </h5>
-                  <p className="text-xs text-gray-600 m-0 leading-relaxed">
-                    Our oils are 100% cold-pressed in traditional wooden churns (Mara Chekku) below 40°C, ensuring zero chemical refining, no additives, and full nutrient preservation.
-                  </p>
-                </div>
-
-                <div className="p-3.5 sm:p-4 rounded-xl bg-gray-50 border border-gray-100">
-                  <h5 className="font-bold text-xs text-[#1A4B3A] uppercase tracking-wide mb-1">
-                    What is the delivery time across India?
-                  </h5>
-                  <p className="text-xs text-gray-600 m-0 leading-relaxed">
-                    Orders in Tamil Nadu are delivered within 24–48 hours. Across other states in India, delivery typically takes 3–5 business days via express courier.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ======================================================== */}
-          {/* TAB 6: CUSTOM & BULK ORDERS TAB                          */}
-          {/* ======================================================== */}
-          {activeTab === 'custom' && (
-            <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6">
-              <div className="flex items-center gap-3 sm:gap-3.5 pb-4 sm:pb-6 border-b border-gray-100">
-                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-amber-50 text-[#D97706] flex items-center justify-center font-bold shrink-0">
-                  <Wrench size={20} />
-                </div>
-                <div>
-                  <h3 className="text-[#1A4B3A] text-lg sm:text-xl font-bold m-0">Custom & Heritage Bulk Orders</h3>
-                  <p className="text-[11px] sm:text-xs text-gray-500 m-0 mt-0.5">Special packaging, wedding gifts, and wholesale farm orders</p>
-                </div>
-              </div>
-
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed m-0">
-                Looking for cold-pressed oils in bulk tins (5L / 15L), custom spice gift boxes for weddings and festivals, or institutional supply? Fill in your request below and our team will get in touch instantly.
-              </p>
-
-              <form onSubmit={handleCustomOrderSubmit} className="space-y-3.5 sm:space-y-4 pt-1 sm:pt-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
-                      Your Name
-                    </label>
-                    <input 
-                      type="text"
-                      required
-                      value={customForm.name}
-                      onChange={(e) => setCustomForm({ ...customForm, name: e.target.value })}
-                      className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1A4B3A] text-sm text-gray-900"
-                      placeholder="Your full name"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
-                      Phone Number
-                    </label>
-                    <input 
-                      type="tel"
-                      required
-                      value={customForm.phone}
-                      onChange={(e) => setCustomForm({ ...customForm, phone: e.target.value })}
-                      className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1A4B3A] text-sm text-gray-900"
-                      placeholder="e.g. 9876543210"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
-                    Estimated Quantity / Tin Size
-                  </label>
-                  <input 
-                    type="text"
-                    required
-                    value={customForm.quantity}
-                    onChange={(e) => setCustomForm({ ...customForm, quantity: e.target.value })}
-                    className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1A4B3A] text-sm text-gray-900"
-                    placeholder="e.g. 5 Tins of 5L Gingelly Oil / 50 Spice gift boxes"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
-                    Additional Requirements / Delivery Location
-                  </label>
-                  <textarea 
-                    rows={3}
-                    value={customForm.notes}
-                    onChange={(e) => setCustomForm({ ...customForm, notes: e.target.value })}
-                    className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1A4B3A] text-sm text-gray-900"
-                    placeholder="Provide any specific requests or delivery address..."
-                  ></textarea>
-                </div>
-
-                <button 
-                  type="submit"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-[#1A4B3A] text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-[#143d2f] transition-all shadow-sm cursor-pointer"
-                >
-                  <Send size={14} />
-                  <span>Send Inquiry via WhatsApp</span>
+                <button type="submit" className="fk-btn-save">
+                  SAVE DETAILS
                 </button>
               </form>
             </div>
           )}
 
+          {/* ── TAB 7: 24X7 HELP CENTER ── */}
+          {activeTab === 'help' && (
+            <div>
+              <div className="fk-panel-header">
+                <h3 className="fk-panel-heading">24x7 Customer Care &amp; Help Desk</h3>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ border: '1.5px solid #e2e8f0', padding: '18px', borderRadius: '12px', background: '#fbfdfc' }}>
+                  <h4 style={{ margin: '0 0 6px', fontSize: '0.94rem', color: '#1B5E2F', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <MessageCircle size={18} color="#25d366" />
+                    <span>WhatsApp Support</span>
+                  </h4>
+                  <p style={{ margin: '0 0 14px', fontSize: '0.82rem', color: '#555555', lineHeight: 1.4 }}>
+                    Get fast assistance with order dispatch, payments, and product inquiries.
+                  </p>
+                  <a 
+                    href="https://wa.me/918778476414?text=Hello%20Venthulir%20Team%2C%20I%20need%20help%20with%20my%20order." 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="fk-btn-save"
+                    style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem', padding: '9px 18px' }}
+                  >
+                    <MessageCircle size={14} />
+                    <span>CHAT ON WHATSAPP</span>
+                  </a>
+                </div>
+
+                <div style={{ border: '1.5px solid #e2e8f0', padding: '18px', borderRadius: '12px', background: '#fbfdfc' }}>
+                  <h4 style={{ margin: '0 0 6px', fontSize: '0.94rem', color: '#212121', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Phone size={18} color="#1B5E2F" />
+                    <span>Instant Callback</span>
+                  </h4>
+                  <p style={{ margin: '0 0 14px', fontSize: '0.82rem', color: '#555555', lineHeight: 1.4 }}>
+                    Our customer care team in Tamil Nadu will call you within 30 minutes.
+                  </p>
+                  {callbackRequested ? (
+                    <span style={{ fontSize: '0.84rem', color: '#2e7d32', fontWeight: 750 }}>✓ Callback request recorded!</span>
+                  ) : (
+                    <button 
+                      type="button" 
+                      onClick={() => setCallbackRequested(true)}
+                      className="fk-btn-save"
+                      style={{ fontSize: '0.84rem', padding: '9px 18px' }}
+                    >
+                      REQUEST CALLBACK
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* FAQ Accordion */}
+              <div className="fk-faq-section">
+                <h4>Frequently Asked Questions</h4>
+                {[
+                  { q: 'How long does delivery take across India?', a: 'Dispatched in 24 hours. Takes 1-2 days across Tamil Nadu & Bangalore, and 3-5 days nationwide.' },
+                  { q: 'Are your cold-pressed oils 100% heat-free?', a: 'Yes, cold-pressed in traditional Vaagai wood mortars below 40°C with zero chemicals.' },
+                  { q: 'What is your replacement policy?', a: '100% replacement guarantee if any bottle arrives leaked or damaged in transit.' }
+                ].map((faq, idx) => (
+                  <div key={idx} className="fk-faq-item">
+                    <p className="fk-faq-q">{faq.q}</p>
+                    <p className="fk-faq-a">{faq.a}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB 8: BULK & WHOLESALE ── */}
+          {activeTab === 'bulk' && (
+            <div>
+              <div className="fk-panel-header">
+                <h3 className="fk-panel-heading">Bulk &amp; Wholesale Orders</h3>
+              </div>
+
+              {bulkSubmitted ? (
+                <div style={{ background: '#ecfdf5', border: '1.5px solid #a7f3d0', color: '#047857', padding: '24px', borderRadius: '12px', textAlign: 'center' }}>
+                  <CheckCircle2 size={40} style={{ margin: '0 auto 8px', color: '#059669' }} />
+                  <h4 style={{ margin: '0 0 4px', fontSize: '1.05rem', fontWeight: 800 }}>Inquiry Submitted Successfully!</h4>
+                  <p style={{ margin: 0, fontSize: '0.86rem' }}>Our farm production manager will reach out with wholesale pricing within 2 hours.</p>
+                </div>
+              ) : (
+                <form onSubmit={(e) => { e.preventDefault(); setBulkSubmitted(true); }} style={{ maxWidth: '520px' }}>
+                  <div className="fk-input-group" style={{ marginBottom: '14px', maxWidth: '100%' }}>
+                    <label>Contact Name *</label>
+                    <input type="text" required className="fk-text-input" value={bulkForm.name} onChange={e => setBulkForm(b => ({ ...b, name: e.target.value }))} />
+                  </div>
+                  <div className="fk-input-group" style={{ marginBottom: '14px', maxWidth: '100%' }}>
+                    <label>Phone Number *</label>
+                    <input type="tel" required className="fk-text-input" value={bulkForm.phone} onChange={e => setBulkForm(b => ({ ...b, phone: e.target.value }))} />
+                  </div>
+                  <div className="fk-input-group" style={{ marginBottom: '14px', maxWidth: '100%' }}>
+                    <label>Product Category Required</label>
+                    <select className="fk-text-input" value={bulkForm.item} onChange={e => setBulkForm(b => ({ ...b, item: e.target.value }))}>
+                      <option>Wood Cold-Pressed Oils (15L Tins)</option>
+                      <option>Stone Ground Turmeric / Chilli (25kg Sacks)</option>
+                      <option>Chettinad Masala Blends (Institutional Packs)</option>
+                    </select>
+                  </div>
+                  <div className="fk-input-group" style={{ marginBottom: '14px', maxWidth: '100%' }}>
+                    <label>Estimated Quantity</label>
+                    <input type="text" placeholder="e.g. 10 Tins or 50kg" className="fk-text-input" value={bulkForm.qty} onChange={e => setBulkForm(b => ({ ...b, qty: e.target.value }))} />
+                  </div>
+                  <div className="fk-input-group" style={{ marginBottom: '18px', maxWidth: '100%' }}>
+                    <label>Special Instructions / Destination City</label>
+                    <textarea rows={3} className="fk-text-input" style={{ resize: 'vertical' }} placeholder="Specify delivery city or requirements..." value={bulkForm.notes} onChange={e => setBulkForm(b => ({ ...b, notes: e.target.value }))} />
+                  </div>
+                  <button type="submit" className="fk-btn-save">
+                    SUBMIT INQUIRY
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+
+          {/* ── TAB 9: REVIEWS & RATINGS ── */}
+          {activeTab === 'reviews' && (
+            <div>
+              <div className="fk-panel-header">
+                <h3 className="fk-panel-heading">My Reviews &amp; Ratings</h3>
+              </div>
+              <div className="fk-empty-box">
+                <div className="fk-empty-icon-circle">
+                  <Star size={28} />
+                </div>
+                <h4 style={{ margin: '0 0 6px', fontSize: '1.05rem', fontWeight: 800, color: '#0f3d2a' }}>No reviews submitted yet</h4>
+                <p style={{ margin: '0 0 18px', fontSize: '0.86rem', color: '#64748b', maxWidth: '340px', marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
+                  Share your experience with your delivered farm products directly from your delivered orders.
+                </p>
+                <button type="button" onClick={() => handleTabChange('orders')} className="fk-btn-save">
+                  VIEW DELIVERED ORDERS
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB 10: NOTIFICATIONS ── */}
+          {activeTab === 'notifications' && (
+            <div>
+              <div className="fk-panel-header">
+                <h3 className="fk-panel-heading">All Notifications (2)</h3>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ border: '1.5px solid #e2e8f0', padding: '16px 18px', borderRadius: '10px', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <Bell size={16} color="#1B5E2F" />
+                    <strong style={{ fontSize: '0.92rem', color: '#1B5E2F' }}>Harvest Season Dispatch Alert</strong>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: '#475569', lineHeight: 1.45 }}>
+                    New batch of wood-pressed Chekku Gingelly Oil freshly extracted and ready for delivery to your doorstep.
+                  </p>
+                </div>
+                <div style={{ border: '1.5px solid #e2e8f0', padding: '16px 18px', borderRadius: '10px', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <Leaf size={16} color="#1B5E2F" />
+                    <strong style={{ fontSize: '0.92rem', color: '#1B5E2F' }}>Welcome to Venthulir Patron Program</strong>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: '#475569', lineHeight: 1.45 }}>
+                    Thank you for ordering direct farm products. Enjoy free express shipping on all orders over ₹499.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </main>
+
+      </div>
+
+      {/* ── Order Tracking Modal ── */}
+      {selectedOrderForTracking && (
+        <div className="fk-modal-overlay" onClick={() => setSelectedOrderForTracking(null)}>
+          <div className="fk-modal-content" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f0f0f0', paddingBottom: '12px', marginBottom: '16px' }}>
+              <h4 style={{ margin: 0, fontSize: '1rem', color: '#212121' }}>Live Shipment Tracking</h4>
+              <button type="button" onClick={() => setSelectedOrderForTracking(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#878787' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ fontSize: '0.84rem', color: '#555555', marginBottom: '14px' }}>
+              <div>Order ID: <strong style={{ color: '#212121' }}>#{String(selectedOrderForTracking._id || selectedOrderForTracking.id).slice(-8).toUpperCase()}</strong></div>
+              <div>Courier Partner: <strong style={{ color: '#1B5E2F' }}>Venthulir Direct Express</strong></div>
+            </div>
+
+            <div style={{ borderLeft: '2px solid #1B5E2F', paddingLeft: '14px', display: 'flex', flexDirection: 'column', gap: '12px', margin: '14px 0 20px 6px' }}>
+              <div>
+                <strong style={{ fontSize: '0.86rem', color: '#212121' }}>📦 Packed &amp; Certified</strong>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: '#878787' }}>Batch sealed at Tamil Nadu facility.</p>
+              </div>
+              <div>
+                <strong style={{ fontSize: '0.86rem', color: '#212121' }}>🚚 In Transit</strong>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: '#878787' }}>Dispatched via express logistics hub.</p>
+              </div>
+              <div>
+                <strong style={{ fontSize: '0.86rem', color: '#26a541' }}>🏠 Expected Delivery</strong>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: '#878787' }}>Within 24 to 48 hours to your doorstep.</p>
+              </div>
+            </div>
+
+            <button type="button" onClick={() => setSelectedOrderForTracking(null)} className="fk-btn-save" style={{ width: '100%' }}>
+              CLOSE
+            </button>
+          </div>
         </div>
-      </main>
+      )}
+
     </div>
   );
 }
 
 export default function ProfilePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-500 font-medium">Loading Profile...</div>}>
+    <Suspense fallback={
+      <div className="fk-account-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div style={{ width: '32px', height: '32px', border: '3px solid #e2e8f0', borderTopColor: '#1B5E2F', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      </div>
+    }>
       <ProfileContent />
     </Suspense>
   );

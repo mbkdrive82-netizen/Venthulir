@@ -31,6 +31,36 @@ function CartPageContent() {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponMsg, setCouponMsg] = useState({ type: '', text: '' });
+  const [catalogProducts, setCatalogProducts] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/products?nocache=true&limit=100')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.products && Array.isArray(data.products)) {
+          setCatalogProducts(data.products);
+        } else if (Array.isArray(data)) {
+          setCatalogProducts(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const getStockInfo = (item) => {
+    const matchedProd = catalogProducts.find(p => 
+      (p._id && (p._id === item.productId || p._id === item.product || p._id === item._id || p._id === item.id)) ||
+      (p.id && (p.id === item.productId || p.id === item.product || p.id === item._id || p.id === item.id)) ||
+      (p.name && item.name && p.name.trim().toLowerCase() === item.name.trim().toLowerCase()) ||
+      (p.slug && item.slug && p.slug === item.slug)
+    );
+
+    const currentStock = matchedProd?.currentStock !== undefined 
+      ? matchedProd.currentStock 
+      : (item.currentStock !== undefined ? item.currentStock : 50);
+
+    const isOutOfStock = currentStock <= 0 || matchedProd?.inStock === false;
+    return { isOutOfStock, currentStock };
+  };
 
   // Coupon application
   const handleApplyCoupon = async (e) => {
@@ -170,9 +200,10 @@ function CartPageContent() {
                 {cartItems.map((item) => {
                   const itemPrice = item.price || 0;
                   const itemSubtotal = itemPrice * (item.quantity || 1);
+                  const { isOutOfStock } = getStockInfo(item);
 
                   return (
-                    <div key={item.key} className="cart-item-table-row">
+                    <div key={item.key} className={`cart-item-table-row ${isOutOfStock ? 'is-out-of-stock-row' : ''}`}>
                       
                       {/* 1. Product Info */}
                       <div className="cart-row-product">
@@ -188,12 +219,31 @@ function CartPageContent() {
                         </div>
                         <div className="cart-row-details">
                           <h4>{item.name}</h4>
-                          {item.variant && (
-                            <span className="cart-row-variant-tag">{item.variant.label}</span>
-                          )}
-                          {item.category && (
-                            <span style={{ fontSize: '0.74rem', color: '#64748b' }}>{item.category}</span>
-                          )}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '3px' }}>
+                            {item.variant && (
+                              <span className="cart-row-variant-tag">{item.variant.label}</span>
+                            )}
+                            {item.category && (
+                              <span style={{ fontSize: '0.74rem', color: '#64748b' }}>{item.category}</span>
+                            )}
+                            {isOutOfStock ? (
+                              <span style={{
+                                color: '#dc2626',
+                                fontSize: '0.72rem',
+                                fontWeight: 750
+                              }}>
+                                Out of Stock
+                              </span>
+                            ) : (
+                              <span style={{
+                                color: '#16a34a',
+                                fontSize: '0.72rem',
+                                fontWeight: 700
+                              }}>
+                                In Stock
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -204,31 +254,35 @@ function CartPageContent() {
 
                       {/* 3. Quantity Controls */}
                       <div>
-                        <div className="cart-row-qty-wrap">
-                          <button
-                            type="button"
-                            className="cart-qty-btn"
-                            onClick={() => updateQty(item.key, item.quantity - 1)}
-                            disabled={item.quantity <= 1}
-                            aria-label="Decrease quantity"
-                          >
-                            <Minus size={13} />
-                          </button>
-                          <span className="cart-qty-num">{item.quantity}</span>
-                          <button
-                            type="button"
-                            className="cart-qty-btn"
-                            onClick={() => updateQty(item.key, item.quantity + 1)}
-                            aria-label="Increase quantity"
-                          >
-                            <Plus size={13} />
-                          </button>
-                        </div>
+                        {isOutOfStock ? (
+                          <span style={{ color: '#dc2626', fontWeight: 800, fontSize: '0.78rem' }}>Unavailable</span>
+                        ) : (
+                          <div className="cart-row-qty-wrap">
+                            <button
+                              type="button"
+                              className="cart-qty-btn"
+                              onClick={() => updateQty(item.key, item.quantity - 1)}
+                              disabled={item.quantity <= 1}
+                              aria-label="Decrease quantity"
+                            >
+                              <Minus size={13} />
+                            </button>
+                            <span className="cart-qty-num">{item.quantity}</span>
+                            <button
+                              type="button"
+                              className="cart-qty-btn"
+                              onClick={() => updateQty(item.key, item.quantity + 1)}
+                              aria-label="Increase quantity"
+                            >
+                              <Plus size={13} />
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {/* 4. Subtotal */}
                       <div className="cart-row-subtotal">
-                        <span>₹{itemSubtotal}</span>
+                        <span style={isOutOfStock ? { color: '#94a3b8', textDecoration: 'line-through' } : {}}>₹{itemSubtotal}</span>
                       </div>
 
                       {/* 5. Remove Button */}

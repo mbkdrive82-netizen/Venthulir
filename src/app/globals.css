@@ -85,15 +85,15 @@
   --white:                 #ffffff;
   --black:                 #1B5E2F;
 
-  /* Modern D2C Button Tokens — Brand Forest Green System */
-  --btn-primary-bg:        #1B5E2F;
-  --btn-primary-hover:     #134522;
+  /* Modern D2C Button Tokens — Exact Deep Forest Green #0b331f System */
+  --btn-primary-bg:        #0b331f;
+  --btn-primary-hover:     #064e26;
   --btn-primary-text:      #ffffff;
   --btn-secondary-bg:      #E8F5E9;
-  --btn-secondary-text:    #1B5E2F;
-  --btn-secondary-border:  #C8E6C9;
-  --btn-accent-bg:         #1B5E2F;
-  --btn-accent-hover:      #134522;
+  --btn-secondary-text:    #0b331f;
+  --btn-secondary-border:  #0b331f;
+  --btn-accent-bg:         #0b331f;
+  --btn-accent-hover:      #064e26;
   --btn-accent-text:       #ffffff;
 
   /* Secondary Earthy Warm Borders & Surfaces */
@@ -277,16 +277,16 @@ img {
   line-height: 1.65;
 }
 
-/* Modern D2C Buttons — Brand Emerald & Leaf Green System */
+/* Modern D2C Buttons — Exact Deep Forest Green #0b331f System */
 /* Primary Action Buttons */
 .btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #1B5E2F !important;
+  background: #0b331f !important;
   color: #ffffff !important;
-  border: 1px solid #1B5E2F !important;
+  border: 1px solid #0b331f !important;
   border-radius: 10px;
   padding: 10px 18px;
   font-weight: 600;
@@ -297,8 +297,8 @@ img {
 }
 
 .btn-primary:hover {
-  background: #134522 !important;
-  border-color: #134522 !important;
+  background: #064e26 !important;
+  border-color: #064e26 !important;
   color: #ffffff !important;
 }
 
@@ -308,8 +308,8 @@ img {
   justify-content: center;
   gap: 8px;
   background: #E8F5E9;
-  color: #1B5E2F;
-  border: 1px solid #C8E6C9;
+  color: #0b331f;
+  border: 1px solid #0b331f;
   border-radius: 10px;
   padding: 10px 18px;
   font-weight: 600;
@@ -320,8 +320,8 @@ img {
 }
 
 .btn-secondary:hover {
-  background: #1B5E2F;
-  border-color: #1B5E2F;
+  background: #0b331f;
+  border-color: #0b331f;
   color: #ffffff;
 }
 
@@ -331,9 +331,9 @@ img {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #1B5E2F !important;
+  background: #0b331f !important;
   color: #ffffff !important;
-  border: 1px solid #1B5E2F !important;
+  border: 1px solid #0b331f !important;
   border-radius: 10px;
   padding: 10px 18px;
   font-weight: 600;
@@ -344,8 +344,8 @@ img {
 }
 
 .btn-gold:hover {
-  background: #134522 !important;
-  border-color: #134522 !important;
+  background: #064e26 !important;
+  border-color: #064e26 !important;
   color: #ffffff !important;
 }
 
@@ -355,10 +355,10 @@ img {
   justify-content: center;
   gap: 8px;
   padding: 9px 18px;
-  border: 1px solid #1B5E2F;
-  color: #1B5E2F;
+  border: 1.5px solid #0b331f;
+  color: #0b331f;
   border-radius: 10px;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.92rem;
   background: #ffffff;
   transition: all 0.2s ease;
@@ -368,18 +368,18 @@ img {
 
 .btn-outline:hover {
   background: #E8F5EC;
-  border-color: #1B5E2F;
-  color: #134522;
+  border-color: #0b331f;
+  color: #0b331f;
 }
-/* 10% Accent CTA Buttons — Fresh Leaf Green */
+/* 10% Accent CTA Buttons — Deep Forest Green */
 .btn-accent {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #1B5E2F !important;
+  background: #0b331f !important;
   color: #ffffff !important;
-  border: 1px solid #1B5E2F !important;
+  border: 1px solid #0b331f !important;
   border-radius: 10px;
   padding: 10px 18px;
   font-weight: 600;
@@ -390,10 +390,10 @@ img {
 }
 
 .btn-accent:hover {
-  background: #134522 !important;
-  border-color: #134522 !important;
+  background: #064e26 !important;
+  border-color: #064e26 !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(27, 94, 47, 0.25);
+  box-shadow: 0 4px 12px rgba(11, 51, 31, 0.25);
 }
 
 /* Smooth Utility Transitions & Animations */
@@ -415,4 +415,50 @@ img {
   border-radius: var(--radius-md) !important; 
   font-family: 'Plus Jakarta Sans', sans-serif !important; 
   box-shadow: var(--shadow-lg) !important;
+}
+
+/* Botanical Corner Leaf Decorations — Keep behind content & hide on mobile */
+.botanical-corner-leaves {
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+
+.container,
+.faq-contact-grid,
+.contact-column,
+.faq-column,
+.contact-card-box {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .botanical-corner-leaves {
+    display: none !important;
+  }
+}
+
+/* Global E-Commerce Product Grids — 3 Products per Row Layout */
+.products-catalog-grid,
+.catalog-products-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+@media (max-width: 860px) {
+  .products-catalog-grid,
+  .catalog-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .products-catalog-grid,
+  .catalog-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
 }

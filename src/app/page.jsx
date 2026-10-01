@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import { BotanicalCorner } from '@/components/BotanicalOrnament';
+import { useLanguage } from '@/context/LanguageContext';
 import './HomePage.css';
 
 if (typeof window !== 'undefined') {
@@ -196,7 +197,7 @@ const HERO_POWDERS = [
     id: 'turmeric-powder',
     title: 'Salem Pure Turmeric Powder',
     subtitle: 'High Curcumin (5.2%) • Sun-Dried & Stone-Ground',
-    badge: '100% Certified Organic',
+    badge: '100% Organic',
     image: imgTurmeric,
     tag: 'Authentic Ground Turmeric Roots',
     price: 'From ₹140',
@@ -209,7 +210,7 @@ const HERO_POWDERS = [
     id: 'chilli-powder',
     title: 'Guntur Red Chilli Powder',
     subtitle: 'Sun-Dried Chillies • Vibrant Natural Red Color',
-    badge: 'Stone-Ground Purity',
+    badge: 'Stone-Ground',
     image: imgChilli,
     tag: 'Rich Heat & Zero Added Colors',
     price: 'From ₹150',
@@ -222,7 +223,7 @@ const HERO_POWDERS = [
     id: 'coriander-powder',
     title: 'Native Coriander Powder',
     subtitle: 'Slowly Roasted Tamil Nadu Heirloom Seeds',
-    badge: 'Single-Origin Farm Harvest',
+    badge: 'Single-Origin',
     image: imgCoriander,
     tag: 'Essential Daily Kitchen Aroma',
     price: 'From ₹130',
@@ -235,7 +236,7 @@ const HERO_POWDERS = [
     id: 'garam-masala',
     title: 'Heritage Garam Masala',
     subtitle: '12 Whole Spices Roasted & Hand-Blended',
-    badge: 'Traditional Recipe',
+    badge: 'Heritage Recipe',
     image: imgGaramMasala,
     tag: 'Cardamom, Cinnamon, Cloves & Star Anise',
     price: 'From ₹180',
@@ -248,7 +249,7 @@ const HERO_POWDERS = [
     id: 'sambar-powder',
     title: 'Traditional Sambar Powder',
     subtitle: 'Authentic South Indian Generational Recipe',
-    badge: 'Generational Recipe',
+    badge: 'Chettinad Recipe',
     image: imgSambar,
     tag: 'Rich Aroma & Perfect Homestyle Flavor',
     price: 'From ₹160',
@@ -264,7 +265,7 @@ const HERO_OILS = [
     id: 'coconut-oil',
     title: 'Wood Cold-Pressed Coconut Oil',
     subtitle: '100% Pure Chekku • Unrefined & Virgin Extracted',
-    badge: 'Wood Cold-Pressed',
+    badge: 'Wood Chekku',
     image: imgOilCoconut,
     tag: 'Fresh Sun-Dried Copra Extraction',
     price: 'From ₹280',
@@ -277,7 +278,7 @@ const HERO_OILS = [
     id: 'groundnut-oil',
     title: 'Wood Cold-Pressed Groundnut Oil',
     subtitle: 'Selected Native Peanuts • Nutty Aroma & Rich Smoke Point',
-    badge: '100% Pure & Natural',
+    badge: 'Cold-Pressed',
     image: imgOilGroundnut,
     tag: 'Slow Chekku Pressed Under 40°C',
     price: 'From ₹260',
@@ -290,7 +291,7 @@ const HERO_OILS = [
     id: 'gingelly-oil',
     title: 'Wood Cold-Pressed Gingelly Oil',
     subtitle: 'First-Grade Black Sesame Seeds & Palm Jaggery Blend',
-    badge: 'Traditional Chekku',
+    badge: 'Black Sesame',
     image: imgOilGingelly,
     tag: 'Generations of Authentic Flavour',
     price: 'From ₹340',
@@ -303,7 +304,7 @@ const HERO_OILS = [
     id: 'sunflower-oil',
     title: 'Wood Cold-Pressed Sunflower Oil',
     subtitle: '100% Pure & Natural • Rich in Vitamin E & Healthy Fats',
-    badge: 'Cold-Pressed Purity',
+    badge: 'Cold-Pressed',
     image: imgOilSunflower,
     tag: 'Fresh Seed Cold Extraction',
     price: 'From ₹240',
@@ -316,142 +317,196 @@ const HERO_OILS = [
 
 const INITIAL_CATALOG_PRODUCTS = [
   {
-    _id: 'prod-turmeric',
-    name: 'Salem Pure Turmeric Powder',
+    _id: '6aba0cd61452a86806531192',
+    slug: 'high-curcumin-pure-turmeric-powder',
+    productCode: 'VEN-SP-TUR',
+    name: 'High-Curcumin Pure Turmeric Powder',
     category: 'Spice Powders',
     badge: '100% Pure',
     price: 140,
+    originalPrice: 185,
+    discountPercent: 24,
+    rating: 4.9,
+    reviewsCount: 348,
     imageUrl: imgTurmeric,
     images: [imgTurmeric],
     description: 'High curcumin content authentic Salem turmeric roots, sun-dried and stone ground to retain natural color, aroma, and medicinal healing properties.',
     variants: [
-      { label: '100g', price: 140 },
-      { label: '250g', price: 320 },
-      { label: '500g', price: 590 }
+      { label: '100g', price: 140, originalPrice: 185 },
+      { label: '250g', price: 320, originalPrice: 420 },
+      { label: '500g', price: 590, originalPrice: 780 }
     ],
     inStock: true
   },
   {
-    _id: 'prod-chilli',
-    name: 'Guntur Red Chilli Powder',
+    _id: '6aba0cd61452a86806531193',
+    slug: 'authentic-guntur-red-chilli-powder',
+    productCode: 'VEN-SP-CHL',
+    name: 'Authentic Guntur Red Chilli Powder',
     category: 'Spice Powders',
     badge: 'Stone Ground',
     price: 150,
+    originalPrice: 195,
+    discountPercent: 23,
+    rating: 4.8,
+    reviewsCount: 512,
     imageUrl: imgChilli,
     images: [imgChilli],
     description: 'Sun-dried premium red chillies stone-ground at low temperatures. Delivers deep natural red color, balanced piquant heat, and zero artificial dyes.',
     variants: [
-      { label: '100g', price: 150 },
-      { label: '250g', price: 340 },
-      { label: '500g', price: 620 }
+      { label: '100g', price: 150, originalPrice: 195 },
+      { label: '250g', price: 340, originalPrice: 440 },
+      { label: '500g', price: 620, originalPrice: 800 }
     ],
     inStock: true
   },
   {
-    _id: 'prod-coriander',
-    name: 'Native Coriander Powder',
+    _id: '6aba0cd61452a86806531194',
+    slug: 'single-origin-stone-ground-coriander-powder',
+    productCode: 'VEN-SP-COR',
+    name: 'Single-Origin Stone Ground Coriander Powder',
     category: 'Spice Powders',
     badge: 'Single Origin',
     price: 130,
+    originalPrice: 165,
+    discountPercent: 21,
+    rating: 4.9,
+    reviewsCount: 289,
     imageUrl: imgCoriander,
     images: [imgCoriander],
     description: 'Slow roasted Tamil Nadu heirloom coriander seeds ground to fragrant perfection. An essential heart of daily South Indian curries and gravies.',
     variants: [
-      { label: '100g', price: 130 },
-      { label: '250g', price: 290 },
-      { label: '500g', price: 540 }
+      { label: '100g', price: 130, originalPrice: 165 },
+      { label: '250g', price: 290, originalPrice: 380 },
+      { label: '500g', price: 540, originalPrice: 700 }
     ],
     inStock: true
   },
   {
-    _id: 'prod-garam-masala',
-    name: 'Heritage Garam Masala',
+    _id: '6aba0cd61452a86806531196',
+    slug: 'royal-chettinad-garam-masala-blend',
+    productCode: 'VEN-MS-GAR',
+    name: 'Royal Chettinad Garam Masala Blend',
     category: 'Masala Blends',
     badge: 'Traditional Recipe',
     price: 180,
+    originalPrice: 230,
+    discountPercent: 22,
+    rating: 5.0,
+    reviewsCount: 417,
     imageUrl: imgGaramMasala,
     images: [imgGaramMasala],
     description: 'A master blend of 12 hand-roasted whole spices: green cardamom, royal cinnamon, cloves, star anise, and mace. Unrivaled fragrant depth.',
     variants: [
-      { label: '100g', price: 180 },
-      { label: '200g', price: 340 }
+      { label: '100g', price: 180, originalPrice: 230 },
+      { label: '200g', price: 340, originalPrice: 440 }
     ],
     inStock: true
   },
   {
-    _id: 'prod-sambar-powder',
-    name: 'Traditional Sambar Powder',
+    _id: '6aba0cd61452a86806531195',
+    slug: 'heritage-grandmothers-sambar-powder',
+    productCode: 'VEN-MS-SAM',
+    name: 'Heritage Grandmothers Sambar Powder',
     category: 'Masala Blends',
     badge: 'Bestseller',
     price: 160,
+    originalPrice: 210,
+    discountPercent: 24,
+    rating: 4.9,
+    reviewsCount: 628,
     imageUrl: imgSambar,
     images: [imgSambar],
     description: 'Handcrafted with an authentic generational recipe of roasted dals, whole red chillies, coriander, fenugreek, and aromatic spices.',
     variants: [
-      { label: '100g', price: 160 },
-      { label: '250g', price: 360 },
-      { label: '500g', price: 680 }
+      { label: '100g', price: 160, originalPrice: 210 },
+      { label: '250g', price: 360, originalPrice: 470 },
+      { label: '500g', price: 680, originalPrice: 890 }
     ],
     inStock: true
   },
   {
-    _id: 'prod-coconut-oil',
-    name: 'Wood Cold-Pressed Coconut Oil',
+    _id: '6aba0cd61452a86806531190',
+    slug: 'wood-cold-pressed-virgin-coconut-oil',
+    productCode: 'VEN-OIL-COC',
+    name: 'Wood Cold-Pressed Virgin Coconut Oil',
     category: 'Cold-Pressed Oils',
     badge: 'Chekku Pressed',
     price: 280,
+    originalPrice: 350,
+    discountPercent: 20,
+    rating: 4.8,
+    reviewsCount: 381,
     imageUrl: imgOilCoconut,
     images: [imgOilCoconut],
     description: 'Extracted from sun-dried sulfur-free copra using traditional Vaagai wood pestles below 40°C. Raw, unrefined, virgin quality.',
     variants: [
-      { label: '500ml', price: 280 },
-      { label: '1 Litre', price: 520 }
+      { label: '500ml', price: 280, originalPrice: 350 },
+      { label: '1 Litre', price: 520, originalPrice: 650 }
     ],
     inStock: true
   },
   {
-    _id: 'prod-groundnut-oil',
-    name: 'Wood Cold-Pressed Groundnut Oil',
+    _id: '6aba0cd61452a8680653118e',
+    slug: 'wood-cold-pressed-groundnut-oil',
+    productCode: 'VEN-OIL-GND',
+    name: 'Wood Cold-Pressed Groundnut Oil (Marachekku)',
     category: 'Cold-Pressed Oils',
     badge: 'Rich Aroma',
     price: 260,
+    originalPrice: 335,
+    discountPercent: 22,
+    rating: 4.9,
+    reviewsCount: 463,
     imageUrl: imgOilGroundnut,
     images: [imgOilGroundnut],
     description: 'Pressed from selected native peanuts. High smoke point, rich nutty aroma, and heart-healthy monounsaturated fats.',
     variants: [
-      { label: '500ml', price: 260 },
-      { label: '1 Litre', price: 490 },
-      { label: '5 Litres', price: 2350 }
+      { label: '500ml', price: 260, originalPrice: 335 },
+      { label: '1 Litre', price: 490, originalPrice: 630 },
+      { label: '5 Litres', price: 2350, originalPrice: 2990 }
     ],
     inStock: true
   },
   {
-    _id: 'prod-gingelly-oil',
-    name: 'Wood Cold-Pressed Gingelly (Sesame) Oil',
+    _id: '6aba0cd61452a8680653118f',
+    slug: 'wood-cold-pressed-gingelly-sesame-oil',
+    productCode: 'VEN-OIL-GIN',
+    name: 'Wood Cold-Pressed Gingelly Sesame Oil',
     category: 'Cold-Pressed Oils',
     badge: 'Palm Jaggery Blend',
     price: 340,
+    originalPrice: 430,
+    discountPercent: 21,
+    rating: 4.9,
+    reviewsCount: 580,
     imageUrl: imgOilGingelly,
     images: [imgOilGingelly],
     description: 'First-grade black sesame seeds slow-pressed with authentic Palm Jaggery (Karupatti). Rich in calcium and live antioxidants.',
     variants: [
-      { label: '500ml', price: 340 },
-      { label: '1 Litre', price: 650 }
+      { label: '500ml', price: 340, originalPrice: 430 },
+      { label: '1 Litre', price: 650, originalPrice: 820 }
     ],
     inStock: true
   },
   {
-    _id: 'prod-sunflower-oil',
-    name: 'Wood Cold-Pressed Sunflower Oil',
+    _id: '6aba0cd61452a86806531191',
+    slug: 'wood-cold-pressed-pure-sunflower-oil',
+    productCode: 'VEN-OIL-SUN',
+    name: 'Wood Cold-Pressed Pure Sunflower Oil',
     category: 'Cold-Pressed Oils',
     badge: '100% Unrefined',
     price: 240,
+    originalPrice: 300,
+    discountPercent: 20,
+    rating: 4.7,
+    reviewsCount: 275,
     imageUrl: imgOilSunflower,
     images: [imgOilSunflower],
     description: 'Cold-extracted from high-grade sunflower seeds. Light golden hue, neutral pleasant flavour, and packed with natural Vitamin E.',
     variants: [
-      { label: '500ml', price: 240 },
-      { label: '1 Litre', price: 460 }
+      { label: '500ml', price: 240, originalPrice: 300 },
+      { label: '1 Litre', price: 460, originalPrice: 580 }
     ],
     inStock: true
   }
@@ -474,15 +529,32 @@ const StarRating = ({ count = 5 }) => (
 
 export default function HomePage({ onCheckout }) {
   const { addToCart, setIsCartOpen } = useCart();
+  const { language, setLanguage, toggleLanguage, t, isTamil } = useLanguage();
   const router = useRouter();
   const uiModal = useUIModal();
   const handleCheckout = onCheckout || uiModal?.openCheckout;
 
   const homeRootRef = useRef(null);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(INITIAL_CATALOG_PRODUCTS);
+  const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Fetch live products asynchronously on mount
+  useEffect(() => {
+    let mounted = true;
+    fetch('/api/products?limit=60')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (mounted && data?.products && Array.isArray(data.products) && data.products.length > 0) {
+          setProducts(data.products);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Hero Showcase Category Tab & Slideshow State
   const [heroTab, setHeroTab] = useState('powders'); // 'powders' | 'oils'
@@ -578,16 +650,16 @@ export default function HomePage({ onCheckout }) {
 
   // Load products from API (Fresh live fetch + newest first sort)
   const fetchFreshProducts = useCallback(() => {
-    setLoading(true);
     fetch(`${API}/products?limit=100&sort=newest&t=${Date.now()}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         const list = Array.isArray(data) ? data : (data?.products || []);
-        setProducts(sortNewestFirst(list));
+        if (list.length > 0) {
+          setProducts(sortNewestFirst(list));
+        }
       })
       .catch((err) => {
         console.error('API load failed:', err);
-        setProducts([]);
       })
       .finally(() => {
         setLoading(false);
@@ -725,18 +797,20 @@ export default function HomePage({ onCheckout }) {
             {/* Left Column: Brand Story, Headline & CTAs */}
             <div className="hero-text-col">
               <div className="hero-badge-capsule">
-                <span className="badge-pulsing-dot" />
-                <Sparkles size={13} className="badge-sparkle-icon" />
-                <span>100% PURE • TRADITIONAL • FARM-SOURCED</span>
+                <Leaf size={14} className="badge-leaf-icon" />
+                <span>{isTamil ? '🌿 100% தூயது • பாரம்பரியம் • பண்ணை நேரடி' : '100% Pure • Traditional • Farm Sourced'}</span>
               </div>
 
               <h1 className="hero-main-heading">
-                <span className="heading-line-1">Taste the Purity of Nature.</span>
-                <span className="heading-accent">From Tamil Nadu Farms to Your Kitchen.</span>
+                <span className="heading-italic-lead">{isTamil ? 'சுவையான பாரம்பரிய' : 'Taste the Purity of'}</span>
+                <span className="heading-nature-bold">{isTamil ? 'இயற்கை நல்வாழ்வு.' : 'Nature.'}</span>
+                <span className="heading-farm-sub">{isTamil ? 'பண்ணையிலிருந்து உங்கள் சமையலறைக்கு.' : 'From Tamil Nadu Farms to Your Kitchen.'}</span>
               </h1>
 
               <p className="hero-description">
-                Authentic stone-ground spices &amp; wood cold-pressed virgin oils, traditionally crafted from single-origin harvest to preserve natural aroma, rich flavour and timeless taste.
+                {isTamil 
+                  ? 'தூய்மையான பாரம்பரிய இயற்கை விளைபொருட்கள் உங்கள் இல்லத்திற்கு நேரடியாக.' 
+                  : 'Pure. Natural. Authentic. Our spices bring the true flavour of Tamil Nadu straight to your home.'}
               </p>
 
               {/* Action Buttons */}
@@ -746,65 +820,41 @@ export default function HomePage({ onCheckout }) {
                   className="btn-hero-primary" 
                   onClick={() => router.push('/products')}
                 >
-                  <Leaf size={16} className="btn-leaf-icon" />
-                  <span>Shop Pure Harvest</span>
+                  <ShoppingCart size={17} className="btn-cart-icon" />
+                  <span>{t('shopFreshHarvest', 'Shop Fresh Harvest')}</span>
                   <ArrowRight size={17} className="btn-arrow-icon" />
                 </button>
                 <button 
                   type="button"
                   className="btn-hero-secondary" 
-                  onClick={() => scrollToSection('story')}
+                  onClick={() => router.push('/products')}
                 >
-                  <span>Discover Our Story</span>
-                  <Sparkles size={14} className="btn-sparkle-subtle" />
+                  <span>{isTamil ? 'மசாலா & எண்ணெய்களைப் பார்க்க' : 'Explore Spices & Oils'}</span>
+                  <ArrowRight size={17} className="btn-arrow-icon" />
                 </button>
               </div>
 
-              {/* 3 Luxury Micro-Trust Cards */}
-              <div className="hero-trust-cards-row">
-                <div className="trust-card-mini">
-                  <div className="trust-card-icon bg-green">
-                    <Leaf size={16} color="#15803d" />
+              {/* Luxury Micro Trust Metric Row */}
+              <div className="hero-trust-row">
+                <div className="hero-trust-item">
+                  <div className="hero-trust-stars">
+                    <Star size={13} fill="#eab308" color="#eab308" />
+                    <Star size={13} fill="#eab308" color="#eab308" />
+                    <Star size={13} fill="#eab308" color="#eab308" />
+                    <Star size={13} fill="#eab308" color="#eab308" />
+                    <Star size={13} fill="#eab308" color="#eab308" />
                   </div>
-                  <div className="trust-card-info">
-                    <strong>Farm Sourced</strong>
-                    <span>Direct Tamil Farms</span>
-                  </div>
+                  <span className="hero-trust-text"><strong>4.9/5</strong> ({isTamil ? '2,500+ திருப்திகரமான குடும்பங்கள்' : '2,500+ Happy Families'})</span>
                 </div>
-                <div className="trust-card-mini">
-                  <div className="trust-card-icon bg-amber">
-                    <Droplets size={16} color="#b45309" />
-                  </div>
-                  <div className="trust-card-info">
-                    <strong>Traditional Craft</strong>
-                    <span>Stone-Ground &amp; Chekku</span>
-                  </div>
+                <div className="hero-trust-divider" />
+                <div className="hero-trust-item">
+                  <ShieldCheck size={15} className="hero-trust-icon" />
+                  <span className="hero-trust-text">{isTamil ? '100% அசல் நேரடி விளைச்சல்' : '100% Single-Origin Direct'}</span>
                 </div>
-                <div className="trust-card-mini">
-                  <div className="trust-card-icon bg-emerald">
-                    <ShieldCheck size={16} color="#047857" />
-                  </div>
-                  <div className="trust-card-info">
-                    <strong>100% Pure</strong>
-                    <span>Zero Chemicals &amp; Tested</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Enhanced Social Proof Avatar Cluster */}
-              <div className="hero-social-proof-bar">
-                <div className="avatar-stack">
-                  <span className="avatar-chip av-1">🌿</span>
-                  <span className="avatar-chip av-2">🥥</span>
-                  <span className="avatar-chip av-3">✨</span>
-                  <span className="avatar-chip av-4">🌾</span>
-                </div>
-                <div className="social-proof-text">
-                  <div className="proof-rating-line">
-                    <span className="star-icons">★★★★★</span>
-                    <strong>4.9 / 5.0 Rated</strong>
-                  </div>
-                  <span className="proof-sub">Trusted by <strong>5,000+ Happy Families</strong> across India</span>
+                <div className="hero-trust-divider" />
+                <div className="hero-trust-item">
+                  <Truck size={15} className="hero-trust-icon" />
+                  <span className="hero-trust-text">{isTamil ? 'விரைவு பண்ணை டெலிவரி' : 'Express Farm Dispatch'}</span>
                 </div>
               </div>
             </div>
@@ -998,8 +1048,8 @@ export default function HomePage({ onCheckout }) {
                 <Leaf size={22} />
               </div>
               <div className="feature-content">
-                <h4 className="feature-title">100% Certified Organic</h4>
-                <p className="feature-desc">Cultivated without synthetic pesticides or harmful chemicals.</p>
+                <h4 className="feature-title">{isTamil ? '100% இயற்கை விளைச்சல்' : '100% Certified Organic'}</h4>
+                <p className="feature-desc">{isTamil ? 'ரசாயனம் மற்றும் பூச்சிக்கொல்லி இல்லாத உழவு முறை.' : 'Cultivated without synthetic pesticides or harmful chemicals.'}</p>
               </div>
             </div>
 
@@ -1008,8 +1058,8 @@ export default function HomePage({ onCheckout }) {
                 <Droplets size={22} />
               </div>
               <div className="feature-content">
-                <h4 className="feature-title">Traditional Chekku</h4>
-                <p className="feature-desc">Wooden press extraction under 40°C to lock in nutrients.</p>
+                <h4 className="feature-title">{isTamil ? 'பாரம்பரிய மரச்செக்கு' : 'Traditional Chekku'}</h4>
+                <p className="feature-desc">{isTamil ? '40°C க்கும் குறைவான வெப்பநிலையில் ஊட்டச்சத்து காக்கப்பட்டு பிழிதல்.' : 'Wooden press extraction under 40°C to lock in nutrients.'}</p>
               </div>
             </div>
 
@@ -1018,8 +1068,8 @@ export default function HomePage({ onCheckout }) {
                 <Truck size={22} />
               </div>
               <div className="feature-content">
-                <h4 className="feature-title">Direct Farm Dispatch</h4>
-                <p className="feature-desc">Swift pan-India delivery with eco-friendly packaging.</p>
+                <h4 className="feature-title">{isTamil ? 'பண்ணை நேரடி விநியோகம்' : 'Direct Farm Dispatch'}</h4>
+                <p className="feature-desc">{isTamil ? 'பாதுகாப்பான பேக்கிங் முறையில் இந்தியா முழுவதும் துரித டெலிவரி.' : 'Swift pan-India delivery with eco-friendly packaging.'}</p>
               </div>
             </div>
 
@@ -1028,8 +1078,8 @@ export default function HomePage({ onCheckout }) {
                 <ShieldCheck size={22} />
               </div>
               <div className="feature-content">
-                <h4 className="feature-title">Lab Tested &amp; FSSAI</h4>
-                <p className="feature-desc">Rigorous multi-point testing for complete batch purity.</p>
+                <h4 className="feature-title">{isTamil ? 'FSSAI தர பரிசோதனை' : 'Lab Tested & FSSAI'}</h4>
+                <p className="feature-desc">{isTamil ? 'ஒவ்வொரு தயாரிப்பும் தீவிர தர பரிசோதனைக்கு உட்படுத்தப்படுகிறது.' : 'Rigorous multi-point testing for complete batch purity.'}</p>
               </div>
             </div>
           </div>
@@ -1046,10 +1096,12 @@ export default function HomePage({ onCheckout }) {
           
           <div className="products-top-bar">
             <div>
-              <span className="section-eyebrow">Our Farm Catalog</span>
-              <h2 className="section-headline">Pure Organic Staples</h2>
+              <span className="section-eyebrow">{isTamil ? 'எங்கள் பண்ணை விளைபொருட்கள்' : 'Our Farm Catalog'}</span>
+              <h2 className="section-headline">{isTamil ? 'தூய இயற்கை விளைபொருட்கள்' : 'Pure Organic Staples'}</h2>
               <p className="products-section-sub">
-                Hand-pressed virgin oils &amp; stone-ground spices directly from Tamil Nadu farms
+                {isTamil 
+                  ? 'தமிழக இயற்கை பண்ணைகளிலிருந்து நேரடியாக பெறப்பட்ட மரச்செக்கு எண்ணெய்கள் & மசாலா பொடிகள்'
+                  : 'Hand-pressed virgin oils & stone-ground spices directly from Tamil Nadu farms'}
               </p>
             </div>
 
@@ -1059,7 +1111,7 @@ export default function HomePage({ onCheckout }) {
                 <Search size={18} className="search-icon" />
                 <input
                   type="text"
-                  placeholder="Search oils, spices..."
+                  placeholder={t('searchProductsPlaceholder', 'Search oils, spices...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -1079,7 +1131,7 @@ export default function HomePage({ onCheckout }) {
                 className="btn-view-all-header"
                 onClick={() => router.push('/products')}
               >
-                <span>View All ({products.length})</span>
+                <span>{t('viewAllResults', 'View All')} ({products.length})</span>
                 <ArrowRight size={15} />
               </button>
             </div>
@@ -1093,7 +1145,7 @@ export default function HomePage({ onCheckout }) {
                 className={`filter-pill-btn ${activeCategory === tab ? 'active' : ''}`}
                 onClick={() => setActiveCategory(tab)}
               >
-                {tab}
+                {tab === 'All' ? t('allFilter', 'All Products') : tab}
               </button>
             ))}
           </div>
@@ -1150,18 +1202,17 @@ export default function HomePage({ onCheckout }) {
           <div className="section-header text-center cat-showcase-header">
             <div className="cat-eyebrow-pill">
               <Sparkles size={14} className="cat-pill-sparkle" />
-              <span>HANDCRAFTED HERITAGE COLLECTIONS</span>
+              <span>{t('catSectionEyebrow', 'HANDCRAFTED HERITAGE COLLECTIONS')}</span>
             </div>
-            <h2 className="section-headline">Shop By Category</h2>
+            <h2 className="section-headline">{t('catSectionHeading', 'Shop By Category')}</h2>
             <p className="section-subtitle">
-              From aromatic stone-ground spices and pure single-origin powders to traditional wood cold-pressed oils and native heirloom grains, 
-              discover pure staples crafted for wholesome living.
+              {t('catSectionSub', 'From aromatic stone-ground spices and pure single-origin powders to traditional wood cold-pressed oils and native heirloom grains, discover pure staples crafted for wholesome living.')}
             </p>
             <div className="cat-header-badges">
-              <span className="cat-header-tag">✨ Stone-Ground Spices</span>
-              <span className="cat-header-tag">🪵 Wood-Pressed &lt;40°C</span>
-              <span className="cat-header-tag">🌱 100% Farm-Direct</span>
-              <span className="cat-header-tag">🛡️ Zero Additives</span>
+              <span className="cat-header-tag">{isTamil ? '✨ பாரம்பரிய கல் அரைப்பு' : '✨ Stone-Ground Spices'}</span>
+              <span className="cat-header-tag">{isTamil ? '🪵 மரச்செக்கு <40°C' : '🪵 Wood-Pressed <40°C'}</span>
+              <span className="cat-header-tag">{isTamil ? '🌱 100% பண்ணை நேரடி' : '🌱 100% Farm-Direct'}</span>
+              <span className="cat-header-tag">{isTamil ? '🛡️ கலப்படம் அற்றது' : '🛡️ Zero Additives'}</span>
             </div>
           </div>
 
@@ -1189,7 +1240,7 @@ export default function HomePage({ onCheckout }) {
 
                     <div className="cat-grande-titles">
                       <span className="cat-tamil-title">{cat.tamilName}</span>
-                      <h3 className="cat-grande-heading">{cat.name}</h3>
+                      <h3 className="cat-grande-heading">{isTamil && cat.tamilName ? cat.tamilName : cat.name}</h3>
                     </div>
 
                     <p className="cat-grande-desc">{cat.desc}</p>
@@ -1213,7 +1264,7 @@ export default function HomePage({ onCheckout }) {
                           scrollToSection('products');
                         }}
                       >
-                        <span>Explore Collection</span>
+                        <span>{t('exploreCollection', 'Explore Collection')}</span>
                         <ArrowRight size={15} />
                       </button>
                     </div>
@@ -1240,7 +1291,7 @@ export default function HomePage({ onCheckout }) {
                     </div>
                     <div className="cat-floating-micro-badge">
                       <ShieldCheck size={14} />
-                      <span>{cat.id === 'oils' ? 'Vaagai Chekku Extracted' : 'Stone-Ground at 120 RPM'}</span>
+                      <span>{cat.id === 'oils' ? (isTamil ? 'வாகை மரச்செக்கு தயாரிப்பு' : 'Vaagai Chekku Extracted') : (isTamil ? 'குறைந்த வேகத்தில் கல் அரைப்பு' : 'Stone-Ground at 120 RPM')}</span>
                     </div>
                   </div>
                 </div>
@@ -1266,7 +1317,7 @@ export default function HomePage({ onCheckout }) {
                       {cat.iconType === 'leaf' && <Leaf size={20} />}
                     </div>
                     <div className="cat-compact-meta-pill">
-                      <span className="cat-compact-meta-dot" />
+                      <span className="cat-compact-meta-sparkle">✦</span>
                       <span>{cat.badge}</span>
                     </div>
                   </div>
@@ -1274,7 +1325,7 @@ export default function HomePage({ onCheckout }) {
                   <div className="cat-compact-body">
                     <div className="cat-compact-title-wrap">
                       <span className="cat-compact-tamil-label">{cat.tamilName}</span>
-                      <h4 className="cat-compact-heading">{cat.name}</h4>
+                      <h4 className="cat-compact-heading">{isTamil && cat.tamilName ? cat.tamilName : cat.name}</h4>
                       <div className="cat-compact-divider" />
                     </div>
                     <p className="cat-compact-desc">{cat.desc}</p>
@@ -1297,8 +1348,10 @@ export default function HomePage({ onCheckout }) {
                         scrollToSection('products');
                       }}
                     >
-                      <span>Shop Now</span>
-                      <ArrowRight size={13} />
+                      <span>{t('shopNow', 'Shop Now')}</span>
+                      <span className="cat-compact-arrow-bubble">
+                        <ArrowRight size={13} />
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -1316,11 +1369,10 @@ export default function HomePage({ onCheckout }) {
         <BotanicalCorner position="bottom-right" variant="spice" opacity={0.9} size={92} />
         <div className="container">
           <div className="section-header text-center">
-            <span className="section-eyebrow">Our Core Principles</span>
-            <h2 className="section-headline">Why Choose Venthulir?</h2>
+            <span className="section-eyebrow">{t('whyEyebrow', 'Our Core Principles')}</span>
+            <h2 className="section-headline">{t('whyHeading', 'Why Choose Venthulir?')}</h2>
             <p className="section-subtitle">
-              Every drop of oil, grain of rice, and pinch of spice reflects our commitment to 
-              uncompromised purity and ethical farming.
+              {t('whySub', 'Every drop of oil, grain of rice, and pinch of spice reflects our commitment to uncompromised purity and ethical farming.')}
             </p>
           </div>
 
@@ -1332,15 +1384,14 @@ export default function HomePage({ onCheckout }) {
                 </div>
                 <span className="why-number">01</span>
               </div>
-              <span className="why-card-tag">Ethical Agriculture</span>
-              <h3 className="why-title">Direct Farm Sourcing</h3>
+              <span className="why-card-tag">{isTamil ? 'இயற்கை விவசாயம்' : 'Ethical Agriculture'}</span>
+              <h3 className="why-title">{t('why3Title', 'Direct Farm Sourcing')}</h3>
               <p className="why-desc">
-                We work directly with 50+ certified organic farmers across Tamil Nadu, 
-                eliminating middlemen and ensuring fair livelihoods.
+                {t('why3Desc', 'We work directly with 50+ certified organic farmers across Tamil Nadu, eliminating middlemen and ensuring fair livelihoods.')}
               </p>
               <div className="why-card-highlight">
                 <CheckCircle2 size={13} />
-                <span>50+ Partner Native Farms</span>
+                <span>{isTamil ? '50+ தமிழக இயற்கை உழவர்கள்' : '50+ Partner Native Farms'}</span>
               </div>
             </div>
 
@@ -1351,15 +1402,14 @@ export default function HomePage({ onCheckout }) {
                 </div>
                 <span className="why-number">02</span>
               </div>
-              <span className="why-card-tag">Artisan Extraction</span>
-              <h3 className="why-title">Traditional Chekku Press</h3>
+              <span className="why-card-tag">{isTamil ? 'மரபு பிழிதல்' : 'Artisan Extraction'}</span>
+              <h3 className="why-title">{t('why1Title', 'Traditional Chekku Press')}</h3>
               <p className="why-desc">
-                Extracted using native Vaagai wood mortars under 40°C. 
-                Natural enzymes, vitamins, and authentic aroma remain untouched.
+                {t('why1Desc', 'Extracted using native Vaagai wood mortars under 40°C. Natural enzymes, vitamins, and authentic aroma remain untouched.')}
               </p>
               <div className="why-card-highlight">
                 <CheckCircle2 size={13} />
-                <span>Zero Heat &bull; Native Vaagai Wood</span>
+                <span>{isTamil ? 'சூடாக்கப்படாத மரச்செக்கு' : 'Zero Heat • Native Vaagai Wood'}</span>
               </div>
             </div>
 
@@ -1370,15 +1420,14 @@ export default function HomePage({ onCheckout }) {
                 </div>
                 <span className="why-number">03</span>
               </div>
-              <span className="why-card-tag">Clean Label Purity</span>
-              <h3 className="why-title">Zero Chemicals &amp; Additives</h3>
+              <span className="why-card-tag">{isTamil ? '100% தூய்மை' : 'Clean Label Purity'}</span>
+              <h3 className="why-title">{t('why4Title', 'Zero Chemicals & Additives')}</h3>
               <p className="why-desc">
-                No chemical refining, bleaching, artificial fragrances, or paraffin. 
-                100% single-origin natural goodness in every batch.
+                {t('why4Desc', 'No chemical refining, bleaching, artificial fragrances, or paraffin. 100% single-origin natural goodness in every batch.')}
               </p>
               <div className="why-card-highlight">
                 <CheckCircle2 size={13} />
-                <span>Lab-Tested Zero Contaminants</span>
+                <span>{isTamil ? 'ஆய்வகப் பரிசோதனை செய்யப்பட்டது' : 'Lab-Tested Zero Contaminants'}</span>
               </div>
             </div>
 
@@ -1389,83 +1438,23 @@ export default function HomePage({ onCheckout }) {
                 </div>
                 <span className="why-number">04</span>
               </div>
-              <span className="why-card-tag">Peak Freshness</span>
-              <h3 className="why-title">Fresh Small-Batch Packing</h3>
+              <span className="why-card-tag">{isTamil ? 'புதிய பேக்கிங்' : 'Peak Freshness'}</span>
+              <h3 className="why-title">{isTamil ? 'சிறிய அளவிலான பிரஷ் பேக்கிங்' : 'Fresh Small-Batch Packing'}</h3>
               <p className="why-desc">
-                Bottled and packed fresh to order in food-grade, leak-proof containers 
-                to preserve peak nutritional potency.
+                {isTamil 
+                  ? 'ஊட்டச்சத்துக்களின் வீரியம் குறையாமல் உணவுப் பாதுகாப்புத் தரம் வாய்ந்த பாட்டில்கள் மற்றும் பைகளில் பேக் செய்யப்படுகிறது.' 
+                  : 'Bottled and packed fresh to order in food-grade, leak-proof containers to preserve peak nutritional potency.'}
               </p>
               <div className="why-card-highlight">
                 <CheckCircle2 size={13} />
-                <span>Food-Grade UV-Safe Seal</span>
+                <span>{isTamil ? 'பாதுகாப்பான காற்றுப்புகா பேக்கிங்' : 'Food-Grade UV-Safe Seal'}</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ─────────────────────────────────────────────────────────────
-          6. FROM FARM TO HOME (4-Step Process)
-      ───────────────────────────────────────────────────────────── */}
-      <section className="section-process">
-        <BotanicalCorner position="top-left" variant="wheat" opacity={0.9} size={92} />
-        <BotanicalCorner position="bottom-right" variant="wheat" opacity={0.9} size={92} />
-        <div className="container">
-          <div className="section-header text-center">
-            <span className="section-eyebrow">The Journey of Purity</span>
-            <h2 className="section-headline">From Farm to Your Kitchen</h2>
-            <p className="section-subtitle">
-              A transparent, traditional journey from South Indian soil to your family dining table.
-            </p>
-          </div>
 
-          <div className="process-timeline-grid">
-            <div className="process-step-card">
-              <div className="step-badge">Step 01</div>
-              <div className="step-icon-wrap">
-                <Sun size={24} />
-              </div>
-              <h4 className="step-title">Heirloom Cultivation</h4>
-              <p className="step-desc">
-                Non-GMO heirloom seeds nurtured organically in sun-drenched fertile soil.
-              </p>
-            </div>
-
-            <div className="process-step-card">
-              <div className="step-badge">Step 02</div>
-              <div className="step-icon-wrap">
-                <Droplets size={24} />
-              </div>
-              <h4 className="step-title">Slow Wood Pressing</h4>
-              <p className="step-desc">
-                Chekku wooden pestles crush oilseeds at low speeds without frictional heat.
-              </p>
-            </div>
-
-            <div className="process-step-card">
-              <div className="step-badge">Step 03</div>
-              <div className="step-icon-wrap">
-                <Award size={24} />
-              </div>
-              <h4 className="step-title">Lab-Tested Purity</h4>
-              <p className="step-desc">
-                Every batch is certified for zero chemical residues and authentic nutritional value.
-              </p>
-            </div>
-
-            <div className="process-step-card">
-              <div className="step-badge">Step 04</div>
-              <div className="step-icon-wrap">
-                <Truck size={24} />
-              </div>
-              <h4 className="step-title">Doorstep Dispatch</h4>
-              <p className="step-desc">
-                Carefully cushioned and swiftly delivered anywhere across India within 3–5 days.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ─────────────────────────────────────────────────────────────
           7. BRAND STORY & HERITAGE (Editorial 2-Column on Warm Ivory)

@@ -5,11 +5,12 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import {
   Star, ShieldCheck, Heart, ShoppingBag, ArrowRight,
   Truck, CheckCircle2, ChevronRight, Plus, Minus,
   Sparkles, Award, Droplets, Leaf, MessageCircle,
-  HelpCircle, Check, ZoomIn, ArrowLeft, ChevronLeft
+  HelpCircle, Check, ZoomIn, ArrowLeft, ChevronLeft, Zap
 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import { toast } from 'react-toastify';
@@ -49,6 +50,7 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const { addToCart, setIsCartOpen } = useCart();
   const { user, isAuthenticated } = useAuth();
+  const { t, isTamil, getProductName, getProductDesc, getCategory } = useLanguage();
 
   const [product, setProduct] = useState(null);
   const [allProducts, setAllProducts] = useState([]);
@@ -181,12 +183,14 @@ export default function ProductDetailPage() {
 
   const subtotalPrice = unitPrice * quantity;
 
-  // Zoom Handler
+  // Zoom Handler (Desktop Only)
   const handleMouseMove = (e) => {
-    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - left) / width) * 100;
-    const y = ((e.clientY - top) / height) * 100;
-    setZoomOrigin({ x, y });
+    if (typeof window !== 'undefined' && window.innerWidth >= 992) {
+      const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+      const x = ((e.clientX - left) / width) * 100;
+      const y = ((e.clientY - top) / height) * 100;
+      setZoomOrigin({ x, y });
+    }
   };
 
   // Review logic
@@ -267,10 +271,32 @@ export default function ProductDetailPage() {
       if (!aMatch && bMatch) return 1;
       return 0;
     })
+    .slice(0, 10);
+
+  // Other Products row (cross-category explore)
+  const otherProducts = allProducts
+    .filter(p => {
+      const pId = (p._id || p.id || '').toString();
+      if (pId === currentProdId) return false;
+      const isAlreadyInTopRelated = relatedProducts.slice(0, 4).some(r => (r._id || r.id || '').toString() === pId);
+      return !isAlreadyInTopRelated;
+    })
     .slice(0, 12);
+
+  const finalOtherProducts = otherProducts.length >= 2 
+    ? otherProducts 
+    : allProducts.filter(p => (p._id || p.id || '').toString() !== currentProdId).slice(0, 10);
 
   const scrollRelated = (dir) => {
     const el = document.getElementById('relatedProductsGrid');
+    if (el) {
+      const scrollAmount = window.innerWidth < 768 ? 240 : 300;
+      el.scrollBy({ left: dir === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  const scrollOther = (dir) => {
+    const el = document.getElementById('otherProductsGrid');
     if (el) {
       const scrollAmount = window.innerWidth < 768 ? 240 : 300;
       el.scrollBy({ left: dir === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
@@ -284,13 +310,13 @@ export default function ProductDetailPage() {
         
         {/* ── Breadcrumbs ── */}
         <nav className="pdp-breadcrumbs" aria-label="Breadcrumb">
-          <Link href="/home">Home</Link>
+          <Link href="/home">{t('pdpBreadcrumbsHome', 'Home')}</Link>
           <span className="breadcrumb-sep">/</span>
-          <Link href="/products">Products</Link>
+          <Link href="/products">{t('pdpBreadcrumbsProducts', 'Products')}</Link>
           <span className="breadcrumb-sep">/</span>
-          <span className="breadcrumb-cat">{product.category || 'Store'}</span>
+          <span className="breadcrumb-cat">{getCategory(product.category) || t('categories', 'Store')}</span>
           <span className="breadcrumb-sep">/</span>
-          <span className="breadcrumb-current">{product.name}</span>
+          <span className="breadcrumb-current">{getProductName(product)}</span>
         </nav>
 
         {/* ── Main Product Stage (2-Column Grid) ── */}
@@ -313,7 +339,7 @@ export default function ProductDetailPage() {
                     onMouseEnter={() => setActiveImgIndex(idx)}
                     aria-label={`View Image ${idx + 1}`}
                   >
-                    <img src={imgUrl} alt={`${product.name} angle ${idx + 1}`} />
+                    <img src={imgUrl} alt={`${getProductName(product)} angle ${idx + 1}`} />
                   </button>
                 ))}
               </div>
@@ -327,11 +353,11 @@ export default function ProductDetailPage() {
                 {product.badge && (
                   <span className="pdp-badge-organic">
                     <Leaf size={12} />
-                    <span>{product.badge}</span>
+                    <span>{isTamil ? (product.tamilBadge || '100% இயற்கை') : product.badge}</span>
                   </span>
                 )}
                 {discountPercent > 0 && (
-                  <span className="pdp-badge-discount">{discountPercent}% OFF</span>
+                  <span className="pdp-badge-discount">{discountPercent}% {isTamil ? 'தள்ளுபடி' : 'OFF'}</span>
                 )}
               </div>
 
@@ -340,8 +366,8 @@ export default function ProductDetailPage() {
                 type="button"
                 className={`pdp-wishlist-btn ${liked ? 'active' : ''}`}
                 onClick={() => setLiked(!liked)}
-                title="Save to Wishlist"
-                aria-label="Save to Wishlist"
+                title={t('wishlist', 'Save to Wishlist')}
+                aria-label={t('wishlist', 'Save to Wishlist')}
               >
                 <Heart size={18} fill={liked ? '#ef4444' : 'none'} color={liked ? '#ef4444' : '#475569'} />
               </button>
@@ -349,17 +375,21 @@ export default function ProductDetailPage() {
               {/* Interactive Zoom Box */}
               <div
                 className="pdp-image-zoom-box"
-                onMouseEnter={() => setIsZoomed(true)}
+                onMouseEnter={() => {
+                  if (typeof window !== 'undefined' && window.innerWidth >= 992) {
+                    setIsZoomed(true);
+                  }
+                }}
                 onMouseLeave={() => setIsZoomed(false)}
                 onMouseMove={handleMouseMove}
               >
                 <img
                   src={currentImageUrl}
-                  alt={product.name}
+                  alt={getProductName(product)}
                   className="pdp-main-img"
                   style={{
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
-                    transform: isZoomed ? 'scale(1.85)' : 'scale(1)'
+                    transform: isZoomed ? 'scale(1.85)' : 'none'
                   }}
                   onError={(e) => {
                     e.currentTarget.onerror = null;
@@ -369,10 +399,25 @@ export default function ProductDetailPage() {
                 {!isZoomed && (
                   <div className="pdp-zoom-hint">
                     <ZoomIn size={12} />
-                    <span>Hover to Zoom</span>
+                    <span>{t('pdpHoverZoom', 'Hover to Zoom')}</span>
                   </div>
                 )}
               </div>
+
+              {/* Mobile Swipe Pagination Dots */}
+              {hasMultipleImages && (
+                <div className="pdp-mobile-dots">
+                  {productImages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`pdp-mobile-dot ${activeImgIndex === idx ? 'active' : ''}`}
+                      onClick={() => setActiveImgIndex(idx)}
+                      aria-label={`Slide ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
 
             </div>
 
@@ -383,39 +428,30 @@ export default function ProductDetailPage() {
               ════════════════════════════════════════════════════════════ */}
           <div className="pdp-details-wrap">
             
-            {/* Category & Ratings */}
+            {/* Category & Ratings & Stock */}
             <div className="pdp-header-meta">
-              <span className="pdp-category-tag">{product.category || 'General'}</span>
+              <span className="pdp-category-tag">{getCategory(product.category) || 'General'}</span>
               
               <div className="pdp-rating-strip">
-                <div className="pdp-stars">
-                  <Star size={13} fill="#eab308" color="#eab308" />
-                  <Star size={13} fill="#eab308" color="#eab308" />
-                  <Star size={13} fill="#eab308" color="#eab308" />
-                  <Star size={13} fill="#eab308" color="#eab308" />
-                  <Star size={13} fill="#eab308" color="#eab308" />
+                <div className="pdp-rating-pill">
+                  <span>{product.rating ? Number(product.rating).toFixed(1) : '4.9'}</span>
+                  <Star size={10} fill="#ffffff" color="#ffffff" />
                 </div>
-                <span>4.9 (520+ verified ratings)</span>
+                <span className="pdp-rating-count">({product.reviewsCount || 480}+ {isTamil ? 'மதிப்பீடுகள்' : 'ratings'})</span>
+                <span className="pdp-stock-status">
+                  <CheckCircle2 size={12} />
+                  <span>{t('pdpInStock', 'In Stock')}</span>
+                </span>
               </div>
             </div>
 
             {/* Product Title */}
-            <h1 className="pdp-title">{product.name}</h1>
+            <h1 className="pdp-title">{getProductName(product)}</h1>
             <p className="pdp-subtitle">
-              {product.description || 'Pure unadulterated quality produced with highest care and standards.'}
+              {getProductDesc(product) || (isTamil ? 'உயர்ந்த அக்கறையுடனும் தரத்துடனும் தயாரிக்கப்பட்ட தூய இயற்கை தயாரிப்பு.' : 'Pure unadulterated quality produced with highest care and standards.')}
             </p>
 
-            {/* SKU & Stock Availability */}
-            <div className="pdp-sku-row">
-              <span>SKU: <strong>{product.productCode || 'VNT-PROD'}</strong></span>
-              <span>•</span>
-              <span className="pdp-stock-status">
-                <CheckCircle2 size={13} />
-                <span>In Stock</span>
-              </span>
-            </div>
-
-            {/* Pricing Card */}
+            {/* Flipkart-Style Pricing Box */}
             <div className="pdp-pricing-card">
               <div className="pdp-price-row">
                 <span className="pdp-current-price">₹{unitPrice}</span>
@@ -423,11 +459,13 @@ export default function ProductDetailPage() {
                   <span className="pdp-strike-price">₹{originalPrice}</span>
                 )}
                 {savingsPerUnit > 0 && (
-                  <span className="pdp-save-pill">Save ₹{savingsPerUnit} ({discountPercent}% OFF)</span>
+                  <span className="pdp-save-pill">
+                    {isTamil ? `சேமிப்பு ₹${savingsPerUnit} (${discountPercent}% தள்ளுபடி)` : `Save ₹${savingsPerUnit} (${discountPercent}% OFF)`}
+                  </span>
                 )}
               </div>
               <p className="pdp-tax-notice">
-                Inclusive of all taxes • 🚚 <strong>Free Delivery</strong> on orders above ₹499
+                {t('pdpTaxNotice', 'Inclusive of all taxes • 🚚 Free Delivery on orders above ₹499')}
               </p>
             </div>
 
@@ -435,7 +473,7 @@ export default function ProductDetailPage() {
             {product.variants?.length > 0 && (
               <div className="pdp-section-block">
                 <div className="pdp-block-label">
-                  <span>Select Size / Quantity:</span>
+                  <span>{t('pdpSelectSize', 'Select Size / Quantity:')}</span>
                   {selectedVariant && <span style={{ color: '#1B5E2F' }}>{selectedVariant.label}</span>}
                 </div>
                 <div className="pdp-variants-list">
@@ -481,11 +519,11 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="pdp-subtotal-preview">
-                Total Amount: <strong>₹{subtotalPrice}</strong>
+                {t('pdpTotalAmount', 'Total Amount:')} <strong>₹{subtotalPrice}</strong>
               </div>
             </div>
 
-            {/* Dual Action Buttons (Standard 10px Rounded) */}
+            {/* Dual Action Buttons (Desktop Inline, Mobile Sticky) */}
             <div className="pdp-action-cluster">
               <button
                 type="button"
@@ -495,12 +533,12 @@ export default function ProductDetailPage() {
                 {added ? (
                   <>
                     <Check size={18} />
-                    <span>Added To Cart</span>
+                    <span>{t('pdpAddedToCart', 'Added To Cart')}</span>
                   </>
                 ) : (
                   <>
                     <ShoppingBag size={18} />
-                    <span>Add to Cart</span>
+                    <span>{t('pdpAddToCart', 'Add to Cart')}</span>
                   </>
                 )}
               </button>
@@ -510,45 +548,45 @@ export default function ProductDetailPage() {
                 className="pdp-btn-buy"
                 onClick={handleBuyNow}
               >
-                <span>Buy Now</span>
-                <ArrowRight size={18} />
+                <div className="pdp-buy-btn-content">
+                  <Zap size={16} className="pdp-bolt-icon" fill="#facc15" color="#facc15" />
+                  <span>{t('pdpBuyNow', 'Buy Now')}</span>
+                </div>
+                <div className="pdp-buy-arrow-circle">
+                  <ArrowRight size={14} />
+                </div>
               </button>
             </div>
-
-            {/* WhatsApp Support Button */}
-            <a
-              href={`https://wa.me/918778476414?text=${encodeURIComponent(`Hello, I would like to enquire about ${product.name} (₹${unitPrice}).`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="pdp-wa-assist"
-            >
-              <MessageCircle size={16} />
-              <span>Need help ordering? Chat on WhatsApp</span>
-            </a>
 
             {/* Pincode Delivery Estimator */}
             <div className="pdp-pincode-card">
               <div className="pdp-pincode-label">
                 <Truck size={15} color="#1B5E2F" />
-                <span>Delivery Availability:</span>
+                <span>{t('pdpDeliveryAvailability', 'Delivery Availability:')}</span>
               </div>
               <form onSubmit={handlePincodeCheck} className="pdp-pincode-form">
                 <input
                   type="text"
                   maxLength={6}
-                  placeholder="Enter 6-digit Pincode"
+                  placeholder={t('pdpEnterPincode', 'Enter 6-digit Pincode')}
                   value={pincode}
                   onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
                   className="pdp-pincode-input"
                 />
                 <button type="submit" className="pdp-pincode-check-btn">
-                  Check
+                  {t('pdpCheck', 'Check')}
                 </button>
               </form>
               {pincodeStatus && (
                 <div className={`pdp-pincode-result ${!pincodeStatus.success ? 'error' : ''}`} style={{ color: pincodeStatus.success ? '#15803d' : '#dc2626' }}>
                   {pincodeStatus.success ? <CheckCircle2 size={13} /> : <HelpCircle size={13} />}
-                  <span>{pincodeStatus.msg}</span>
+                  <span>
+                    {!pincodeStatus.success 
+                      ? (isTamil ? 'சரியான 6 இலக்க அஞ்சல் குறியீட்டை உள்ளிடவும்.' : pincodeStatus.msg)
+                      : (isTamil 
+                          ? (pincode.startsWith('6') ? 'தமிழ்நாடு முழுவதும் 24-48 மணிநேர விரைவு டெலிவரி கிடைக்கும்! இலவச ஷிப்பிங் உண்டு.' : 'இந்தியா முழுவதும் 2-4 நாட்களில் விரைவு டெஸ்பாட்ச். ₹499-க்கு மேல் இலவச டெலிவரி.')
+                          : pincodeStatus.msg)}
+                  </span>
                 </div>
               )}
             </div>
@@ -558,32 +596,32 @@ export default function ProductDetailPage() {
               <div className="pdp-pillar-item">
                 <div className="pdp-pillar-icon"><Droplets size={18} /></div>
                 <div className="pdp-pillar-text">
-                  <h4>100% Pure & Authentic</h4>
-                  <p>Extracted naturally to preserve maximum nutrients</p>
+                  <h4>{t('pdpPurePillar1', '100% Pure & Authentic')}</h4>
+                  <p>{t('pdpPurePillar1Desc', 'Extracted naturally to preserve maximum nutrients')}</p>
                 </div>
               </div>
 
               <div className="pdp-pillar-item">
                 <div className="pdp-pillar-icon"><Leaf size={18} /></div>
                 <div className="pdp-pillar-text">
-                  <h4>Chemical & Preservative Free</h4>
-                  <p>Zero artificial colors, flavors, or adulterants</p>
+                  <h4>{t('pdpPurePillar2', 'Chemical & Preservative Free')}</h4>
+                  <p>{t('pdpPurePillar2Desc', 'Zero artificial colors, flavors, or adulterants')}</p>
                 </div>
               </div>
 
               <div className="pdp-pillar-item">
                 <div className="pdp-pillar-icon"><ShieldCheck size={18} /></div>
                 <div className="pdp-pillar-text">
-                  <h4>Quality & Lab Tested</h4>
-                  <p>Tested for highest food safety and purity standards</p>
+                  <h4>{t('pdpPurePillar3', 'Quality & Lab Tested')}</h4>
+                  <p>{t('pdpPurePillar3Desc', 'Tested for highest food safety and purity standards')}</p>
                 </div>
               </div>
 
               <div className="pdp-pillar-item">
                 <div className="pdp-pillar-icon"><Sparkles size={18} /></div>
                 <div className="pdp-pillar-text">
-                  <h4>Direct From Source</h4>
-                  <p>Farm fresh produce delivered straight to your home</p>
+                  <h4>{t('pdpPurePillar4', 'Direct From Source')}</h4>
+                  <p>{t('pdpPurePillar4Desc', 'Farm fresh produce delivered straight to your home')}</p>
                 </div>
               </div>
             </div>
@@ -598,13 +636,13 @@ export default function ProductDetailPage() {
                   className="pdp-accordion-header"
                   onClick={() => setActiveAccordion(activeAccordion === 'heritage' ? '' : 'heritage')}
                 >
-                  <span>Product Information & Details</span>
+                  <span>{t('pdpAccordionInfo', 'Product Information & Details')}</span>
                   <span>{activeAccordion === 'heritage' ? '−' : '+'}</span>
                 </button>
                 {activeAccordion === 'heritage' && (
                   <div className="pdp-accordion-body">
                     <p>
-                      {product.description || 'Produced using traditional processing methods to retain raw goodness, authentic aroma, and essential natural qualities.'}
+                      {getProductDesc(product) || (isTamil ? 'இயற்கை நன்மைகள், அசல் நறுமணம் மற்றும் ஊட்டச்சத்துக்கள் குறையாமல் பாரம்பரிய தயாரிப்பு முறையில் தயாரிக்கப்பட்டது.' : 'Produced using traditional processing methods to retain raw goodness, authentic aroma, and essential natural qualities.')}
                     </p>
                   </div>
                 )}
@@ -617,15 +655,24 @@ export default function ProductDetailPage() {
                   className="pdp-accordion-header"
                   onClick={() => setActiveAccordion(activeAccordion === 'benefits' ? '' : 'benefits')}
                 >
-                  <span>Key Benefits & Uses</span>
+                  <span>{t('pdpAccordionBenefits', 'Key Benefits & Uses')}</span>
                   <span>{activeAccordion === 'benefits' ? '−' : '+'}</span>
                 </button>
                 {activeAccordion === 'benefits' && (
                   <div className="pdp-accordion-body">
                     <ul className="pdp-benefits-list">
-                      <li><CheckCircle2 size={14} /> <strong>Nutrient-Dense:</strong> Retains active natural goodness and vitamins.</li>
-                      <li><CheckCircle2 size={14} /> <strong>Natural & Pure:</strong> No chemical refining, bleaching, or deodorizing.</li>
-                      <li><CheckCircle2 size={14} /> <strong>Great Flavor:</strong> Imparts authentic taste and rich aroma to daily dishes.</li>
+                      <li>
+                        <CheckCircle2 size={14} /> 
+                        <strong>{isTamil ? 'ஊட்டச்சத்து நிறைந்தது:' : 'Nutrient-Dense:'}</strong> {isTamil ? 'இயற்கையான வைட்டமின்கள் மற்றும் தாதுக்கள் காக்கப்படுகின்றன.' : 'Retains active natural goodness and vitamins.'}
+                      </li>
+                      <li>
+                        <CheckCircle2 size={14} /> 
+                        <strong>{isTamil ? 'இயற்கையானது & தூய்மையானது:' : 'Natural & Pure:'}</strong> {isTamil ? 'எந்தவித ரசாயன சுத்திகரிப்பு மற்றும் நிறமூட்டல் இல்லை.' : 'No chemical refining, bleaching, or deodorizing.'}
+                      </li>
+                      <li>
+                        <CheckCircle2 size={14} /> 
+                        <strong>{isTamil ? 'சிறந்த சுவை & மணம்:' : 'Great Flavor:'}</strong> {isTamil ? 'பாரம்பரிய சுவையையும் நறுமணத்தையும் சமையலுக்கு வழங்குகிறது.' : 'Imparts authentic taste and rich aroma to daily dishes.'}
+                      </li>
                     </ul>
                   </div>
                 )}
@@ -638,13 +685,15 @@ export default function ProductDetailPage() {
                   className="pdp-accordion-header"
                   onClick={() => setActiveAccordion(activeAccordion === 'usage' ? '' : 'usage')}
                 >
-                  <span>Storage & Shelf Life</span>
+                  <span>{t('pdpAccordionStorage', 'Storage & Shelf Life')}</span>
                   <span>{activeAccordion === 'usage' ? '−' : '+'}</span>
                 </button>
                 {activeAccordion === 'usage' && (
                   <div className="pdp-accordion-body">
                     <p>
-                      Store in a cool, dry place away from direct sunlight and moisture. Seal container tightly after use. Best before 12 months from manufacture.
+                      {isTamil 
+                        ? 'நேரடி சூரிய ஒளி மற்றும் ஈரப்பதம் படாத குளிர்ந்த, உலர்ந்த இடத்தில் சேமிக்கவும். பயன்படுத்திய பின் மூடியை இறுக்கமாக மூடவும். தயாரித்த தேதியிலிருந்து 12 மாதங்கள் வரை உகந்தது.' 
+                        : 'Store in a cool, dry place away from direct sunlight and moisture. Seal container tightly after use. Best before 12 months from manufacture.'}
                     </p>
                   </div>
                 )}
@@ -663,8 +712,8 @@ export default function ProductDetailPage() {
           <section className="pdp-related-section">
             <div className="pdp-section-header-row">
               <div>
-                <h2 className="pdp-section-title">Related Products</h2>
-                <p className="pdp-section-sub">Customers who viewed this item also explored</p>
+                <h2 className="pdp-section-title">{t('pdpRelatedTitle', 'Related Products')}</h2>
+                <p className="pdp-section-sub">{t('pdpRelatedSub', 'Customers who viewed this item also explored')}</p>
               </div>
               <div className="pdp-carousel-nav">
                 <button type="button" onClick={() => scrollRelated('left')} aria-label="Scroll left">
@@ -693,6 +742,42 @@ export default function ProductDetailPage() {
         )}
 
         {/* ════════════════════════════════════════════════════════════
+            SEE OUR OTHER PRODUCTS SECTION (EXPLORE MORE ROW)
+            ════════════════════════════════════════════════════════════ */}
+        {finalOtherProducts.length > 0 && (
+          <section className="pdp-related-section pdp-other-products-section">
+            <div className="pdp-section-header-row">
+              <div>
+                <h2 className="pdp-section-title">{isTamil ? 'எங்கள் பிற தயாரிப்புகள்' : 'See Our Other Products'}</h2>
+                <p className="pdp-section-sub">{isTamil ? 'வெண்துளிர் இயற்கை விளைபொருட்களின் பிற சிறந்த வகைகள்' : 'Explore more premium natural & organic harvests from our store'}</p>
+              </div>
+              <div className="pdp-carousel-nav">
+                <button type="button" onClick={() => scrollOther('left')} aria-label="Scroll left">
+                  <ChevronLeft size={20} />
+                </button>
+                <button type="button" onClick={() => scrollOther('right')} aria-label="Scroll right">
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div className="pdp-related-grid" id="otherProductsGrid">
+              {finalOtherProducts.map((othProduct) => (
+                <ProductCard
+                  key={othProduct._id || othProduct.id}
+                  product={othProduct}
+                  onBuyNow={(prod, variant) => {
+                    addToCart(prod, variant, 1);
+                    setIsCartOpen(false);
+                    router.push('/checkout');
+                  }}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ════════════════════════════════════════════════════════════
             CUSTOMER REVIEWS SECTION
             ════════════════════════════════════════════════════════════ */}
         <section className="pdp-reviews-section">
@@ -707,7 +792,7 @@ export default function ProductDetailPage() {
                 <Star size={18} fill="#eab308" color="#eab308" />
                 <Star size={18} fill="#eab308" color="#eab308" />
               </div>
-              <p className="pdp-score-text">Based on 520+ Verified Customer Reviews</p>
+              <p className="pdp-score-text">{t('pdpReviewsTitle', 'Based on 520+ Verified Customer Reviews')}</p>
             </div>
 
             <div className="pdp-bars-wrap">
@@ -745,7 +830,7 @@ export default function ProductDetailPage() {
                 onClick={handleWriteReview}
                 disabled={isCheckingReview}
               >
-                {isCheckingReview ? 'Verifying...' : 'Write a Review'}
+                {isCheckingReview ? (isTamil ? 'சரிபார்க்கிறது...' : 'Verifying...') : t('pdpWriteReview', 'Write a Review')}
               </button>
             </div>
 
@@ -757,18 +842,20 @@ export default function ProductDetailPage() {
               <div className="pdp-review-card-head">
                 <div className="pdp-reviewer-meta">
                   <div className="pdp-reviewer-avatar">S</div>
-                  <div>
+                  <div className="pdp-reviewer-info">
                     <div className="pdp-reviewer-name">Sundaramurthy K.</div>
-                    <div className="pdp-verified-badge"><Check size={11} /> Verified Buyer • Chennai</div>
+                    <div className="pdp-verified-badge"><Check size={11} /> <span>{t('pdpVerifiedBuyer', 'Verified Buyer')} • {isTamil ? 'சென்னை' : 'Chennai'}</span></div>
                   </div>
                 </div>
-                <span className="pdp-review-date">2 days ago</span>
+                <span className="pdp-review-date">{isTamil ? '2 நாட்களுக்கு முன்பு' : '2 days ago'}</span>
               </div>
               <div className="pdp-review-stars">
                 {[...Array(5)].map((_, i) => <Star key={i} size={13} fill="#eab308" color="#eab308" />)}
               </div>
               <p className="pdp-review-quote">
-                &quot;Pure authentic quality and excellent freshness. Arrived quickly with very secure and safe packaging!&quot;
+                {isTamil 
+                  ? '"அசல் தூய்மையான தரம் மற்றும் அற்புதம். பாதுகாப்பான பேக்கிங்குடன் விரைவாக வந்து சேர்ந்தது!"'
+                  : '"Pure authentic quality and excellent freshness. Arrived quickly with very secure and safe packaging!"'}
               </p>
             </div>
 
@@ -776,18 +863,20 @@ export default function ProductDetailPage() {
               <div className="pdp-review-card-head">
                 <div className="pdp-reviewer-meta">
                   <div className="pdp-reviewer-avatar">P</div>
-                  <div>
+                  <div className="pdp-reviewer-info">
                     <div className="pdp-reviewer-name">Priyadharshini R.</div>
-                    <div className="pdp-verified-badge"><Check size={11} /> Verified Buyer • Coimbatore</div>
+                    <div className="pdp-verified-badge"><Check size={11} /> <span>{t('pdpVerifiedBuyer', 'Verified Buyer')} • {isTamil ? 'கோயம்புத்தூர்' : 'Coimbatore'}</span></div>
                   </div>
                 </div>
-                <span className="pdp-review-date">1 week ago</span>
+                <span className="pdp-review-date">{isTamil ? '1 வாரத்திற்கு முன்பு' : '1 week ago'}</span>
               </div>
               <div className="pdp-review-stars">
                 {[...Array(5)].map((_, i) => <Star key={i} size={13} fill="#eab308" color="#eab308" />)}
               </div>
               <p className="pdp-review-quote">
-                &quot;Very happy with this purchase. Authentic natural aroma and top quality. Will definitely order again!&quot;
+                {isTamil 
+                  ? '"இந்த தயாரிப்பு மிகவும் திருப்தி அளிக்கிறது. இயற்கை நறுமணமும் சிறந்த தரமும் நிறைந்துள்ளது. மீண்டும் வாங்குவேன்!"'
+                  : '"Very happy with this purchase. Authentic natural aroma and top quality. Will definitely order again!"'}
               </p>
             </div>
 
@@ -795,48 +884,21 @@ export default function ProductDetailPage() {
               <div className="pdp-review-card-head">
                 <div className="pdp-reviewer-meta">
                   <div className="pdp-reviewer-avatar">M</div>
-                  <div>
+                  <div className="pdp-reviewer-info">
                     <div className="pdp-reviewer-name">Madhavan S.</div>
-                    <div className="pdp-verified-badge"><Check size={11} /> Verified Buyer • Madurai</div>
+                    <div className="pdp-verified-badge"><Check size={11} /> <span>{t('pdpVerifiedBuyer', 'Verified Buyer')} • {isTamil ? 'மதுரை' : 'Madurai'}</span></div>
                   </div>
                 </div>
-                <span className="pdp-review-date">2 weeks ago</span>
+                <span className="pdp-review-date">{isTamil ? '2 வாரங்களுக்கு முன்பு' : '2 weeks ago'}</span>
               </div>
               <div className="pdp-review-stars">
                 {[...Array(5)].map((_, i) => <Star key={i} size={13} fill="#eab308" color="#eab308" />)}
               </div>
               <p className="pdp-review-quote">
-                &quot;Top-tier purity and excellent taste. Great value for genuine natural produce.&quot;
+                {isTamil 
+                  ? '"உயர்தர தூய்மை மற்றும் அருமையான சுவை. உண்மையான இயற்கை விளைபொருளுக்கு ஏற்ற சிறந்த விலை."'
+                  : '"Top-tier purity and excellent taste. Great value for genuine natural produce."'}
               </p>
-            </div>
-          </div>
-        </section>
-
-        {/* ════════════════════════════════════════════════════════════
-            QUALITY GUARANTEE BANNER
-            ════════════════════════════════════════════════════════════ */}
-        <section className="pdp-guarantee-banner">
-          <h3>The Venthulir Pure Quality Promise</h3>
-          <p>
-            We are dedicated to delivering authentic, unadulterated organic harvest direct to your home. Every item is produced with zero artificial chemical additives or deceptive dilution.
-          </p>
-
-          <div className="pdp-guarantee-grid">
-            <div className="pdp-guarantee-item">
-              <Leaf size={28} className="guarantee-icon-svg" />
-              <span className="guarantee-text">100% Pure Natural Produce</span>
-            </div>
-            <div className="pdp-guarantee-item">
-              <Droplets size={28} className="guarantee-icon-svg" />
-              <span className="guarantee-text">Traditional Cold Processing</span>
-            </div>
-            <div className="pdp-guarantee-item">
-              <CheckCircle2 size={28} className="guarantee-icon-svg" />
-              <span className="guarantee-text">Zero Preservatives or Chemicals</span>
-            </div>
-            <div className="pdp-guarantee-item">
-              <ShieldCheck size={28} className="guarantee-icon-svg" />
-              <span className="guarantee-text">Lab Tested Quality Standards</span>
             </div>
           </div>
         </section>

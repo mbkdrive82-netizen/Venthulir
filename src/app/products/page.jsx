@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { useUIModal } from '@/components/Providers';
 import { 
-  Search, X, ArrowUpDown, Sparkles, Leaf, Droplets, 
+  Search, X, ArrowUpDown, Leaf, Droplets, 
   ShieldCheck, Package, ShoppingCart, Plus, Minus, Star 
 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
@@ -15,6 +16,7 @@ const API = '/api';
 
 function ProductsPageContent({ onCheckout }) {
   const { addToCart, setIsCartOpen } = useCart();
+  const { t, isTamil, getCategory, getProductName, getProductDesc } = useLanguage();
   const uiModal = useUIModal?.() || null;
   const handleCheckout = onCheckout || uiModal?.openCheckout;
   const searchParams = useSearchParams();
@@ -84,9 +86,8 @@ function ProductsPageContent({ onCheckout }) {
       if (query && query.trim()) params.set('search', query.trim());
       if (sort) params.set('sort', sort);
       params.set('limit', '60');
-      params.set('t', Date.now().toString());
 
-      const res = await fetch(`${API}/products?${params.toString()}`, { cache: 'no-store' });
+      const res = await fetch(`${API}/products?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         if (data && Array.isArray(data.products)) {
@@ -162,25 +163,6 @@ function ProductsPageContent({ onCheckout }) {
 
   return (
     <div className="products-page-root">
-      {/* Hero Banner Header */}
-      <section className="products-hero-header">
-        <div className="container">
-          <div className="products-header-content">
-            <div className="products-badge-pill">
-              <Sparkles size={13} className="gold" />
-              <span>100% UNADULTERATED • FARM HARVEST</span>
-            </div>
-            <h1 className="products-page-title">
-              Pure Staples. <span className="title-accent">Direct From Tamil Farms.</span>
-            </h1>
-            <p className="products-page-subtitle">
-              Explore our full catalog of cold-pressed virgin oils, stone-ground single-origin spice powders, 
-              and authentic masala blends crafted with zero chemicals.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* Main Catalog Section */}
       <section className="products-catalog-section">
         <div className="container">
@@ -191,7 +173,7 @@ function ProductsPageContent({ onCheckout }) {
               <Search size={16} className="search-icon" />
               <input
                 type="text"
-                placeholder="Search oils, turmeric, chilli, sambar..."
+                placeholder={isTamil ? "மசாலா, எண்ணெய், விரலி மஞ்சள், சாம்பார் பொடி..." : "Search oils, turmeric, chilli, sambar..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -215,11 +197,11 @@ function ProductsPageContent({ onCheckout }) {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="sort-select"
               >
-                <option value="featured">Featured &amp; Bestsellers</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="rating">Highest Rated (★)</option>
-                <option value="name">Product Name (A-Z)</option>
+                <option value="featured">{isTamil ? "முக்கிய தயாரிப்புகள்" : "Featured & Bestsellers"}</option>
+                <option value="price-asc">{isTamil ? "விலை: குறைந்தது முதல் அதிகம்" : "Price: Low to High"}</option>
+                <option value="price-desc">{isTamil ? "விலை: அதிகம் முதல் குறைந்தது" : "Price: High to Low"}</option>
+                <option value="rating">{isTamil ? "உயர்ந்த மதிப்பீடு (★)" : "Highest Rated (★)"}</option>
+                <option value="name">{isTamil ? "பெயர் வரிசை (A-Z)" : "Product Name (A-Z)"}</option>
               </select>
             </div>
           </div>
@@ -230,13 +212,14 @@ function ProductsPageContent({ onCheckout }) {
               const isPillActive = 
                 (cat === 'All' && (activeCategory === 'All' || !activeCategory)) ||
                 (cat !== 'All' && activeCategory && activeCategory !== 'All' && pMatchesCategory(cat, activeCategory));
+              const displayLabel = cat === 'All' ? (isTamil ? 'அனைத்து பொருட்கள்' : 'All') : getCategory(cat);
               return (
                 <button
                   key={cat}
                   className={`category-pill-btn ${isPillActive ? 'active' : ''}`}
                   onClick={() => handleCategoryFilterClick(cat)}
                 >
-                  {cat}
+                  {displayLabel}
                 </button>
               );
             })}
@@ -244,7 +227,7 @@ function ProductsPageContent({ onCheckout }) {
 
           {/* Results Count & Active Filter Indicator */}
           <div className="catalog-results-info">
-            <span>Showing <strong>{filteredProducts.length}</strong> products</span>
+            <span>{isTamil ? <>காட்டப்படும் பொருட்கள்: <strong>{filteredProducts.length}</strong></> : <>Showing <strong>{filteredProducts.length}</strong> products</>}</span>
             {(activeCategory !== 'All' || searchQuery) && (
               <button 
                 className="btn-clear-filters"
@@ -254,7 +237,7 @@ function ProductsPageContent({ onCheckout }) {
                   setSortBy('featured');
                 }}
               >
-                Reset All Filters
+                {isTamil ? 'வடிகட்டிகளை அழிக்க' : 'Reset All Filters'}
               </button>
             )}
           </div>
@@ -263,8 +246,8 @@ function ProductsPageContent({ onCheckout }) {
           {filteredProducts.length === 0 ? (
             <div className="catalog-empty-state">
               <Package size={48} />
-              <h3>No products match your criteria</h3>
-              <p>Try clearing your search keyword or selecting a different category.</p>
+              <h3>{isTamil ? 'பொருந்திய விளைபொருட்கள் கிடைக்கவில்லை' : 'No products match your criteria'}</h3>
+              <p>{isTamil ? 'தேடல் சொல்லை மாற்றவும் அல்லது வேறு பிரிவைத் தேர்ந்தெடுக்கவும்.' : 'Try clearing your search keyword or selecting a different category.'}</p>
               <button
                 className="btn-reset-catalog"
                 onClick={() => {
@@ -272,7 +255,7 @@ function ProductsPageContent({ onCheckout }) {
                   setSearchQuery('');
                 }}
               >
-                Show All Products
+                {isTamil ? 'அனைத்து பொருட்களையும் காண்க' : 'Show All Products'}
               </button>
             </div>
           ) : (
@@ -302,22 +285,22 @@ function ProductsPageContent({ onCheckout }) {
             <div className="trust-strip-item">
               <Leaf size={22} className="trust-icon" />
               <div>
-                <strong>100% Single-Origin</strong>
-                <span>Native Tamil Seeds &amp; Spices</span>
+                <strong>{isTamil ? '100% அசல் இயற்கை' : '100% Single-Origin'}</strong>
+                <span>{isTamil ? 'தமிழ்நாட்டு பாரம்பரிய விதைகள் & மசாலா' : 'Native Tamil Seeds & Spices'}</span>
               </div>
             </div>
             <div className="trust-strip-item">
               <Droplets size={22} className="trust-icon" />
               <div>
-                <strong>Wooden Chekku Pressed</strong>
-                <span>Cold extracted below 40°C</span>
+                <strong>{isTamil ? 'வாகை மரச்செக்கு தயாரிப்பு' : 'Wooden Chekku Pressed'}</strong>
+                <span>{isTamil ? '40°C-க்கும் குறைவான குளிர்ந்த பிழிதல்' : 'Cold extracted below 40°C'}</span>
               </div>
             </div>
             <div className="trust-strip-item">
               <ShieldCheck size={22} className="trust-icon" />
               <div>
-                <strong>Zero Chemical Additives</strong>
-                <span>100% Lab Tested &amp; FSSAI Pure</span>
+                <strong>{isTamil ? 'ரசாயனம் அற்ற தூய்மை' : 'Zero Chemical Additives'}</strong>
+                <span>{isTamil ? '100% ஆய்வகப் பரிசோதனை & FSSAI தரம்' : '100% Lab Tested & FSSAI Pure'}</span>
               </div>
             </div>
           </div>
@@ -343,7 +326,7 @@ function ProductsPageContent({ onCheckout }) {
                 >
                   <img
                     src={qvImages[activeImgIndex] || quickViewProduct.imageUrl}
-                    alt={quickViewProduct.name}
+                    alt={getProductName(quickViewProduct)}
                     className="quickview-main-img"
                     style={{
                       transformOrigin: `${zoomState.x}% ${zoomState.y}%`,
@@ -352,11 +335,11 @@ function ProductsPageContent({ onCheckout }) {
                     }}
                   />
                   {quickViewProduct.badge && (
-                    <span className="quickview-badge-tag">{quickViewProduct.badge}</span>
+                    <span className="quickview-badge-tag">{isTamil ? (quickViewProduct.tamilBadge || '100% இயற்கை') : quickViewProduct.badge}</span>
                   )}
                   <div className={`qv-zoom-badge ${zoomState.isZoomed ? 'hide' : ''}`}>
                     <Search size={11} />
-                    <span>Hover to Zoom</span>
+                    <span>{t('pdpHoverZoom', 'Hover to Zoom')}</span>
                   </div>
                 </div>
 
@@ -378,26 +361,26 @@ function ProductsPageContent({ onCheckout }) {
               {/* Product Details */}
               <div className="quickview-details">
                 <div className="qv-category-line">
-                  <span className="qv-category">{quickViewProduct.category}</span>
+                  <span className="qv-category">{getCategory(quickViewProduct.category)}</span>
                   <div className="qv-rating">
                     <Star size={13} fill="#c9a84c" color="#c9a84c" />
-                    <span>{quickViewProduct.rating || 4.9} ({quickViewProduct.reviewsCount || 250}+ reviews)</span>
+                    <span>{quickViewProduct.rating || 4.9} ({quickViewProduct.reviewsCount || 250}+ {isTamil ? 'மதிப்பீடுகள்' : 'reviews'})</span>
                   </div>
                 </div>
 
-                <h2 className="qv-product-name">{quickViewProduct.name}</h2>
+                <h2 className="qv-product-name">{getProductName(quickViewProduct)}</h2>
 
                 <div className="qv-price-row">
                   <span className="qv-price">₹{qvPrice}</span>
-                  <span className="qv-tax-note">Inclusive of all taxes • Free shipping &gt; ₹499</span>
+                  <span className="qv-tax-note">{t('pdpTaxNotice', 'Inclusive of all taxes • Free shipping > ₹499')}</span>
                 </div>
 
-                <p className="qv-description">{quickViewProduct.description}</p>
+                <p className="qv-description">{getProductDesc(quickViewProduct)}</p>
 
                 {/* Variants */}
                 {quickViewProduct.variants?.length > 0 && (
                   <div className="qv-variants-section">
-                    <label className="qv-label">Select Pack Size:</label>
+                    <label className="qv-label">{t('pdpSelectSize', 'Select Pack Size:')}</label>
                     <div className="qv-variant-pills">
                       {quickViewProduct.variants.map((v) => (
                         <button
@@ -444,7 +427,7 @@ function ProductsPageContent({ onCheckout }) {
                       type="button"
                     >
                       <ShoppingCart size={16} />
-                      <span>Add to Cart</span>
+                      <span>{t('addToCart', 'Add to Cart')}</span>
                     </button>
 
                     <button
@@ -457,7 +440,7 @@ function ProductsPageContent({ onCheckout }) {
                       }}
                       type="button"
                     >
-                      <span>Buy Now • ₹{qvPrice * quantity}</span>
+                      <span>{t('buyNow', 'Buy Now')} • ₹{qvPrice * quantity}</span>
                     </button>
                   </div>
                 </div>
@@ -466,11 +449,11 @@ function ProductsPageContent({ onCheckout }) {
                 <div className="qv-guarantees-row">
                   <div className="qv-guarantee-item">
                     <Leaf size={14} color="#15803d" />
-                    <span>100% Pure &amp; Unadulterated</span>
+                    <span>{t('pdpPurePillar1', '100% Pure & Unadulterated')}</span>
                   </div>
                   <div className="qv-guarantee-item">
                     <Droplets size={14} color="#b45309" />
-                    <span>Traditional Chekku Cold Extraction</span>
+                    <span>{t('pdpPromise2', 'Traditional Chekku Cold Extraction')}</span>
                   </div>
                 </div>
 

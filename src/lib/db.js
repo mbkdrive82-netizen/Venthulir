@@ -2,12 +2,11 @@ import mongoose from 'mongoose';
 import dns from 'dns';
 
 try {
-  dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
   if (dns.setDefaultResultOrder) {
     dns.setDefaultResultOrder('ipv4first');
   }
 } catch (e) {
-  // Ignore in environments where setServers is unsupported
+  // Ignore
 }
 
 const MONGO_URI = process.env.MONGO_URI;
@@ -32,16 +31,16 @@ async function connectDB() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 10000,
-      connectTimeoutMS: 15000,
-      socketTimeoutMS: 45000,
-      maxPoolSize: 20,
-      minPoolSize: 2,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 8000,
+      socketTimeoutMS: 30000,
+      maxPoolSize: 10,
+      minPoolSize: 1,
     };
 
     cached.promise = mongoose.connect(MONGO_URI, opts)
       .then((mongooseInstance) => {
-        console.log('🌿 Royal Venthulir Database Connected (Next.js Fullstack)');
+        console.log('🌿 Royal Venthulir Database Connected');
         return mongooseInstance;
       })
       .catch((err) => {

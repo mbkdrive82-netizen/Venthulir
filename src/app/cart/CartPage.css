@@ -518,3 +518,23 @@
   margin: 0 0 26px;
   line-height: 1.55;
 }
+
+/* ── Out-of-Stock Styles (Cart Page) ── */
+.cart-item-table-row.is-out-of-stock-row {
+  background: #fff8f8 !important;
+  border-left: 3px solid #dc2626 !important;
+}
+
+.cart-page-oos-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(220, 38, 38, 0.92);
+  color: #ffffff;
+  font-size: 0.52rem;
+  font-weight: 900;
+  text-align: center;
+  padding: 1px 0;
+  text-transform: uppercase;
+}

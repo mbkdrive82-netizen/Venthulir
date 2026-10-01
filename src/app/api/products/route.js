@@ -16,7 +16,7 @@ export async function GET(request) {
     const isAdminQuery = searchParams.get('admin') === 'true';
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '100', 10)));
-    const noCache = searchParams.get('nocache') === 'true' || searchParams.has('t');
+    const noCache = searchParams.get('nocache') === 'true';
 
     // Check if user is authenticated admin or requested admin mode
     let userIsAdmin = false;
@@ -28,14 +28,14 @@ export async function GET(request) {
     const isPublicQuery = !userIsAdmin && !isAdminQuery;
     const cacheKey = `products:list:cat:${category || 'all'}:b:${badge || 'none'}:s:${search || 'none'}:sort:${sort}:p:${page}:l:${limit}`;
 
-    // 1. Check in-memory cache for fast public responses (skip if cache-busting)
+    // 1. Check in-memory cache for ultra-fast sub-millisecond public responses
     if (isPublicQuery && !noCache) {
       const cached = cache.get(cacheKey);
       if (cached) {
         return NextResponse.json(cached, {
           headers: {
             'X-Cache': 'HIT',
-            'Cache-Control': 'no-cache, no-store, must-revalidate'
+            'Cache-Control': 'public, max-age=30, stale-while-revalidate=120'
           }
         });
       }
@@ -44,7 +44,8 @@ export async function GET(request) {
     let dbConnected = true;
     try {
       await connectDB();
-    } catch {
+    } catch (dbErr) {
+      console.error('Database connection error in /api/products:', dbErr.message);
       dbConnected = false;
     }
 
@@ -146,13 +147,13 @@ export async function GET(request) {
       };
 
       if (isPublicQuery && (formattedProducts.length > 0 || count > 0)) {
-        cache.set(cacheKey, responsePayload, 30); // 30s TTL
+        cache.set(cacheKey, responsePayload, 120); // 120s in-memory TTL
       }
 
       return NextResponse.json(responsePayload, {
         headers: {
           'X-Cache': 'MISS',
-          'Cache-Control': 'no-cache, no-store, must-revalidate'
+          'Cache-Control': 'public, max-age=30, stale-while-revalidate=120'
         }
       });
     }

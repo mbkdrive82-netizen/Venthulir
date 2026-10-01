@@ -157,33 +157,33 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .category-pill-btn {
   background: #ffffff;
-  border: 1.5px solid #e2e8f0;
+  border: 1.2px solid #e2e8f0;
   color: #334155;
-  font-size: 0.82rem;
-  font-weight: 750;
-  padding: 7px 16px;
-  border-radius: 40px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  padding: 5px 12px;
+  border-radius: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .category-pill-btn:hover {
   background: #f0f7f3;
-  border-color: #1B5E2F;
-  color: #1B5E2F;
+  border-color: #0b331f;
+  color: #0b331f;
 }
 
 .category-pill-btn.active {
-  background: #1B5E2F;
-  border-color: #1B5E2F;
+  background: #0b331f;
+  border-color: #0b331f;
   color: #ffffff;
-  font-weight: 750;
-  box-shadow: 0 4px 14px rgba(27, 94, 47, 0.25);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(11, 51, 31, 0.22);
 }
 
 /* Results Info */
@@ -199,7 +199,7 @@
 .btn-clear-filters {
   background: none;
   border: none;
-  color: var(--accent-mid);
+  color: #0b331f;
   font-weight: 700;
   font-size: 0.82rem;
   cursor: pointer;
@@ -238,21 +238,21 @@
 
 .btn-reset-catalog {
   margin-top: 16px;
-  background: #1B5E2F !important;
+  background: #0b331f !important;
   color: #ffffff !important;
-  border: 1px solid #1B5E2F !important;
+  border: 1px solid #0b331f !important;
   padding: 10px 24px;
   border-radius: 50px;
   font-size: 0.88rem;
   font-weight: 750;
   cursor: pointer;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 14px rgba(27, 94, 47, 0.25);
+  box-shadow: 0 4px 14px rgba(11, 51, 31, 0.25);
 }
 
 .btn-reset-catalog:hover {
-  background: #134522 !important;
-  border-color: #134522 !important;
+  background: #064e26 !important;
+  border-color: #064e26 !important;
   color: #ffffff !important;
   transform: translateY(-1px);
 }

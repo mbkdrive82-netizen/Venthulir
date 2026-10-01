@@ -6,7 +6,7 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 998;
+  z-index: 100005;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -133,18 +133,25 @@
 }
 
 /* Mobile Responsive */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .floating-whatsapp-container {
-    bottom: 20px;
-    right: 16px;
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    right: 14px;
+    z-index: 100005;
   }
 
   .whatsapp-float-btn {
-    padding: 12px;
+    padding: 10px;
     border-radius: 50%;
-    width: 52px;
-    height: 52px;
+    width: 48px;
+    height: 48px;
     justify-content: center;
+    box-shadow: 0 4px 16px rgba(37, 211, 102, 0.45);
+  }
+
+  .whatsapp-float-btn svg {
+    width: 26px;
+    height: 26px;
   }
 
   .whatsapp-ping {
