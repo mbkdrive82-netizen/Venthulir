@@ -557,15 +557,24 @@ a.contact-item:hover {
 .van-vehicle {
   width: 210px;
   height: 75px;
-  animation: driveSmoothCruise 16s linear infinite;
+  animation: driveSmoothCruise 11s linear infinite;
 }
 
 @keyframes driveSmoothCruise {
   0% {
-    transform: translate3d(-280px, 0, 0);
+    transform: translate3d(-215px, 0, 0);
   }
   100% {
-    transform: translate3d(calc(100vw + 80px), 0, 0);
+    transform: translate3d(calc(100vw + 40px), 0, 0);
+  }
+}
+
+@keyframes driveSmoothCruiseMobile {
+  0% {
+    transform: translate3d(-135px, 0, 0);
+  }
+  100% {
+    transform: translate3d(calc(100vw + 20px), 0, 0);
   }
 }
 
@@ -703,6 +712,7 @@ a.contact-item:hover {
   .van-vehicle {
     width: 130px !important;
     height: 48px !important;
+    animation: driveSmoothCruiseMobile 6s linear infinite !important;
   }
 
   .vehicle-speech-bubble {
