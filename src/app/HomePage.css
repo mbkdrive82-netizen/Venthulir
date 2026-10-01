@@ -142,28 +142,29 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #eaf8ef;
-  border: 1.5px solid #a3e6ba;
-  padding: 7px 16px;
+  background: #ffffff;
+  border: 1.5px solid #d4af37;
+  padding: 8px 18px;
   border-radius: 9999px;
-  font-size: 0.80rem;
-  font-weight: 750;
-  color: #0f5132;
-  letter-spacing: 0.3px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 10px rgba(21, 128, 61, 0.08);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0b3d24;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.18);
   position: relative;
   z-index: 2;
   backdrop-filter: blur(8px);
 }
 
 .badge-leaf-icon {
-  color: #15803d;
+  color: #16a34a;
   flex-shrink: 0;
 }
 
 .hero-main-heading {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   letter-spacing: -0.02em;
   display: flex;
   flex-direction: column;
@@ -173,46 +174,50 @@
 }
 
 .heading-italic-lead {
-  font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
-  font-size: clamp(1.8rem, 2.6vw, 2.5rem);
-  font-weight: 600;
-  font-style: italic;
+  font-family: 'Cinzel', 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.4rem, 2.2vw, 2.0rem);
+  font-weight: 700;
+  font-style: normal;
   color: #15803d;
-  letter-spacing: -0.015em;
-  line-height: 1.15;
-  margin-bottom: 2px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  line-height: 1.2;
+  margin-bottom: 4px;
 }
 
 .heading-nature-bold {
-  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-  font-size: clamp(2.3rem, 3.5vw, 3.2rem);
+  font-family: 'Cinzel', 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.6rem, 4.4vw, 3.8rem);
   font-weight: 900;
   font-style: normal;
   color: #064e26;
-  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #09381e 0%, #15803d 55%, #064e26 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
   line-height: 1.05;
-  margin-bottom: 6px;
-  text-shadow: 0 1px 2px rgba(6, 78, 38, 0.06);
+  margin-bottom: 8px;
+  text-shadow: 0 2px 10px rgba(6, 78, 38, 0.08);
 }
 
 .heading-farm-sub {
-  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
   font-style: normal;
-  font-weight: 750;
-  font-size: clamp(1.15rem, 1.6vw, 1.45rem);
-  color: #0f3d24;
-  letter-spacing: -0.015em;
-  line-height: 1.25;
-  max-width: 520px;
+  font-weight: 700;
+  font-size: clamp(1.15rem, 1.65vw, 1.45rem);
+  color: #1e293b;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  max-width: 540px;
 }
 
 .hero-description {
-  font-size: 0.94rem;
-  line-height: 1.55;
-  color: #4b5563;
-  margin-bottom: 18px;
-  max-width: 500px;
-  font-weight: 450;
+  font-size: 0.96rem;
+  line-height: 1.6;
+  color: #475569;
+  margin-bottom: 22px;
+  max-width: 520px;
+  font-weight: 500;
   position: relative;
   z-index: 2;
 }
@@ -222,7 +227,7 @@
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   position: relative;
   z-index: 2;
 }
@@ -231,24 +236,39 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: #0b331f !important;
+  background: linear-gradient(135deg, #0a3322 0%, #15803d 100%) !important;
   color: #ffffff !important;
   font-size: 0.98rem;
-  font-weight: 750;
-  padding: 13px 28px;
+  font-weight: 800;
+  padding: 14px 30px;
   border-radius: 9999px;
-  border: none !important;
+  border: 1px solid rgba(212, 175, 55, 0.4) !important;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(11, 51, 31, 0.32);
+  box-shadow: 0 8px 24px rgba(10, 51, 34, 0.32);
   transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
 }
 
+.btn-hero-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  transition: left 0.6s ease;
+}
+
+.btn-hero-primary:hover::after {
+  left: 100%;
+}
+
 .btn-hero-primary:hover {
-  background: #064e26 !important;
+  background: linear-gradient(135deg, #072619 0%, #166534 100%) !important;
   transform: translateY(-2px);
-  box-shadow: 0 10px 26px rgba(11, 51, 31, 0.42);
+  box-shadow: 0 12px 30px rgba(10, 51, 34, 0.42);
 }
 
 .btn-cart-icon {
@@ -268,15 +288,23 @@
   align-items: center;
   gap: 8px;
   background-color: #ffffff;
-  color: #0b331f;
+  color: #0a3322;
   font-size: 0.96rem;
-  font-weight: 700;
-  padding: 12px 24px;
+  font-weight: 750;
+  padding: 13px 26px;
   border-radius: 9999px;
-  border: 1.8px solid #0b331f;
+  border: 1.8px solid #0a3322;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-hero-secondary:hover {
+  background-color: #f0fdf4;
+  border-color: #15803d;
+  color: #15803d;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(10, 51, 34, 0.12);
 }
 
 .btn-hero-secondary:hover {
@@ -682,20 +710,31 @@
 }
 
 .artisan-aura-glow {
-  display: none;
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.35;
+  z-index: 0;
+  pointer-events: none;
+  animation: auraGlowPulse 4s ease-in-out infinite alternate;
 }
 
 @keyframes auraGlowPulse {
-  0% { transform: scale(0.96); opacity: 0.7; }
-  100% { transform: scale(1.08); opacity: 0.95; }
+  0% { transform: translateX(-50%) scale(0.95); opacity: 0.25; }
+  100% { transform: translateX(-50%) scale(1.08); opacity: 0.45; }
 }
 
 .artisan-arch-stage {
   position: relative;
-  border: 2px solid #dbeef1;
+  border: 2px solid rgba(212, 175, 55, 0.35);
   border-radius: 80px 80px 24px 24px;
   overflow: hidden;
-  box-shadow: 0 20px 48px -8px rgba(11, 51, 31, 0.12), 0 4px 14px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 24px 50px -10px rgba(11, 51, 31, 0.14), 0 4px 14px rgba(0, 0, 0, 0.04);
   aspect-ratio: 0.92;
   max-height: 440px;
   z-index: 1;
