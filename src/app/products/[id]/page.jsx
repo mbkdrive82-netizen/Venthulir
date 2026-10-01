@@ -730,10 +730,8 @@ export default function ProductDetailPage() {
                 <ProductCard
                   key={relProduct._id}
                   product={relProduct}
-                  onBuyNow={(prod, variant) => {
-                    addToCart(prod, variant, 1);
-                    setIsCartOpen(false);
-                    router.push('/checkout');
+                  onBuyNow={(prod, variant, itemKey) => {
+                    router.push(`/checkout${itemKey ? `?buyNow=${encodeURIComponent(itemKey)}` : ''}`);
                   }}
                 />
               ))}
@@ -766,10 +764,8 @@ export default function ProductDetailPage() {
                 <ProductCard
                   key={othProduct._id || othProduct.id}
                   product={othProduct}
-                  onBuyNow={(prod, variant) => {
-                    addToCart(prod, variant, 1);
-                    setIsCartOpen(false);
-                    router.push('/checkout');
+                  onBuyNow={(prod, variant, itemKey) => {
+                    router.push(`/checkout${itemKey ? `?buyNow=${encodeURIComponent(itemKey)}` : ''}`);
                   }}
                 />
               ))}

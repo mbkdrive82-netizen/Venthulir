@@ -265,10 +265,8 @@ function ProductsPageContent({ onCheckout }) {
                   key={product._id}
                   product={product}
                   onQuickView={handleOpenQuickView}
-                  onBuyNow={(prod, variant) => {
-                    addToCart(prod, variant, 1);
-                    setIsCartOpen(false);
-                    router.push('/checkout');
+                  onBuyNow={(prod, variant, itemKey) => {
+                    router.push(`/checkout${itemKey ? `?buyNow=${encodeURIComponent(itemKey)}` : ''}`);
                   }}
                 />
               ))}

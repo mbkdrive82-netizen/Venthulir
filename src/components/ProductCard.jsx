@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -47,7 +47,13 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const [touchStartX, setTouchStartX] = useState(null);
   const [added, setAdded] = useState(false);
+  const [isBuying, setIsBuying] = useState(false);
   const [liked, setLiked] = useState(false);
+
+  useEffect(() => {
+    // Prefetch checkout route in background for instantaneous navigation
+    router.prefetch('/checkout');
+  }, [router]);
 
   if (!product) return null;
 
@@ -159,12 +165,14 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
 
   const handleBuyNow = (e) => {
     e.stopPropagation();
-    const itemKey = addToCart(product, selectedVariant);
+    if (isBuying) return;
+    setIsBuying(true);
+    const itemKey = addToCart(product, selectedVariant, 1);
     setIsCartOpen(false);
     if (onBuyNow) {
       onBuyNow(product, selectedVariant, itemKey);
     } else {
-      router.push(`/checkout?buyNow=${encodeURIComponent(itemKey)}`);
+      router.push(`/checkout${itemKey ? `?buyNow=${encodeURIComponent(itemKey)}` : ''}`);
     }
   };
 
@@ -426,13 +434,15 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
           </button>
 
           <button 
-            className="btn-buy-instant" 
+            className={`btn-buy-instant ${isBuying ? 'is-loading' : ''}`}
             onClick={handleBuyNow}
+            disabled={isBuying}
             type="button"
+            title={t('buyNow', 'Buy Now')}
           >
             <div className="buy-btn-content">
               <Zap size={14} className="bolt-icon" fill="#facc15" color="#facc15" />
-              <span>{t('buyNow', 'Buy Now')}</span>
+              <span>{isBuying ? (isTamil ? 'செல்கிறது...' : 'Redirecting...') : t('buyNow', 'Buy Now')}</span>
             </div>
             <div className="buy-arrow-circle">
               <ArrowRight size={12} />
