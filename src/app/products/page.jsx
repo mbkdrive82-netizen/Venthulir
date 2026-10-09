@@ -10,6 +10,7 @@ import {
   ShieldCheck, Package, ShoppingCart, Plus, Minus, Star 
 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
+import { INITIAL_PRODUCTS } from '@/data/initialCatalog';
 import './ProductsPage.css';
 
 const API = '/api';
@@ -22,8 +23,8 @@ function ProductsPageContent({ onCheckout }) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(INITIAL_PRODUCTS);
+  const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('featured');
@@ -160,6 +161,19 @@ function ProductsPageContent({ onCheckout }) {
     ? (quickViewProduct.images?.length ? quickViewProduct.images : [quickViewProduct.imageUrl].filter(Boolean))
     : [];
   const qvPrice = selectedVariant?.price ?? quickViewProduct?.price ?? 0;
+  let qvOriginalPrice = selectedVariant?.originalPrice;
+  if (!qvOriginalPrice && quickViewProduct) {
+    if (quickViewProduct.originalPrice && quickViewProduct.price && quickViewProduct.originalPrice > quickViewProduct.price) {
+      const ratio = quickViewProduct.originalPrice / quickViewProduct.price;
+      qvOriginalPrice = Math.round(qvPrice * ratio);
+    } else {
+      qvOriginalPrice = Math.round(qvPrice * 1.25);
+    }
+  }
+  const qvSavings = Math.max(0, (qvOriginalPrice || 0) - qvPrice);
+  const qvDiscount = (qvOriginalPrice && qvOriginalPrice > qvPrice)
+    ? Math.round(((qvOriginalPrice - qvPrice) / qvOriginalPrice) * 100)
+    : 0;
 
   return (
     <div className="products-page-root">
@@ -369,9 +383,22 @@ function ProductsPageContent({ onCheckout }) {
                 <h2 className="qv-product-name">{getProductName(quickViewProduct)}</h2>
 
                 <div className="qv-price-row">
-                  <span className="qv-price">₹{qvPrice}</span>
-                  <span className="qv-tax-note">{t('pdpTaxNotice', 'Inclusive of all taxes • Free shipping > ₹499')}</span>
+                  <span className="qv-price">₹{qvPrice.toLocaleString()}</span>
+                  {qvOriginalPrice > qvPrice && (
+                    <span className="qv-mrp-group">
+                      M.R.P.: <span className="qv-strike-price">₹{qvOriginalPrice.toLocaleString()}</span>
+                    </span>
+                  )}
+                  {qvDiscount > 0 && (
+                    <span className="qv-discount-pill">{qvDiscount}% OFF</span>
+                  )}
                 </div>
+                {qvSavings > 0 && (
+                  <div className="qv-savings-badge">
+                    <span>Save ₹{qvSavings.toLocaleString()} on this item</span>
+                  </div>
+                )}
+                <span className="qv-tax-note">{t('pdpTaxNotice', 'Inclusive of all taxes • Free shipping > ₹499')}</span>
 
                 <p className="qv-description">{getProductDesc(quickViewProduct)}</p>
 

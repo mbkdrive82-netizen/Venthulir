@@ -13,6 +13,7 @@ import {
   HelpCircle, Check, ZoomIn, ArrowLeft, ChevronLeft, Zap
 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
+import { INITIAL_PRODUCTS } from '@/data/initialCatalog';
 import { toast } from 'react-toastify';
 import './ProductDetail.css';
 
@@ -45,17 +46,20 @@ const getProductImages = (product) => {
   return ['/assets/hero/turmeric.png'];
 };
 
-export default function ProductDetailPage() {
+function ProductDetailPageContent() {
   const params = useParams();
   const router = useRouter();
   const { addToCart, setIsCartOpen } = useCart();
   const { user, isAuthenticated } = useAuth();
   const { t, isTamil, getProductName, getProductDesc, getCategory } = useLanguage();
 
-  const [product, setProduct] = useState(null);
-  const [allProducts, setAllProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedVariant, setSelectedVariant] = useState(null);
+  const productId = params?.id;
+  const initialMatch = productId ? INITIAL_PRODUCTS.find(p => (p._id || p.id) === productId || p.slug === productId) : null;
+
+  const [product, setProduct] = useState(initialMatch || null);
+  const [allProducts, setAllProducts] = useState(INITIAL_PRODUCTS);
+  const [loading, setLoading] = useState(!initialMatch);
+  const [selectedVariant, setSelectedVariant] = useState(initialMatch?.variants?.[0] || null);
   const [quantity, setQuantity] = useState(1);
   const [activeImgIndex, setActiveImgIndex] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -73,13 +77,18 @@ export default function ProductDetailPage() {
   // Accordion active tab
   const [activeAccordion, setActiveAccordion] = useState('heritage');
 
+  // Instant scroll to top on product change
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [productId]);
+
   // 1. Fetch Product Detail and Catalog (Instant Display)
   useEffect(() => {
     let isMounted = true;
     const fetchProductData = async () => {
       try {
-        setLoading(true);
-        const productId = params?.id;
         if (!productId) return;
 
         // Step 1: Fetch single product details first for INSTANT loading
@@ -327,24 +336,6 @@ export default function ProductDetailPage() {
               ════════════════════════════════════════════════════════════ */}
           <div className="pdp-gallery-wrap">
             
-            {/* Show thumbnails ONLY if this product actually has multiple images */}
-            {hasMultipleImages && (
-              <div className="pdp-thumbnails-strip">
-                {productImages.map((imgUrl, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    className={`pdp-thumb-item ${activeImgIndex === idx ? 'active' : ''}`}
-                    onClick={() => setActiveImgIndex(idx)}
-                    onMouseEnter={() => setActiveImgIndex(idx)}
-                    aria-label={`View Image ${idx + 1}`}
-                  >
-                    <img src={imgUrl} alt={`${getProductName(product)} angle ${idx + 1}`} />
-                  </button>
-                ))}
-              </div>
-            )}
-
             {/* Main Stage Image with Zoom Lens */}
             <div className="pdp-main-stage">
               
@@ -421,6 +412,24 @@ export default function ProductDetailPage() {
 
             </div>
 
+            {/* Show thumbnails BELOW the main stage box */}
+            {hasMultipleImages && (
+              <div className="pdp-thumbnails-strip">
+                {productImages.map((imgUrl, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className={`pdp-thumb-item ${activeImgIndex === idx ? 'active' : ''}`}
+                    onClick={() => setActiveImgIndex(idx)}
+                    onMouseEnter={() => setActiveImgIndex(idx)}
+                    aria-label={`View Image ${idx + 1}`}
+                  >
+                    <img src={imgUrl} alt={`${getProductName(product)} angle ${idx + 1}`} />
+                  </button>
+                ))}
+              </div>
+            )}
+
           </div>
 
           {/* ════════════════════════════════════════════════════════════
@@ -451,19 +460,29 @@ export default function ProductDetailPage() {
               {getProductDesc(product) || (isTamil ? 'உயர்ந்த அக்கறையுடனும் தரத்துடனும் தயாரிக்கப்பட்ட தூய இயற்கை தயாரிப்பு.' : 'Pure unadulterated quality produced with highest care and standards.')}
             </p>
 
-            {/* Flipkart-Style Pricing Box */}
+            {/* Realworld E-Commerce Pricing Box */}
             <div className="pdp-pricing-card">
               <div className="pdp-price-row">
-                <span className="pdp-current-price">₹{unitPrice}</span>
+                <span className="pdp-current-price">₹{unitPrice.toLocaleString()}</span>
                 {originalPrice > unitPrice && (
-                  <span className="pdp-strike-price">₹{originalPrice}</span>
+                  <span className="pdp-mrp-group">
+                    <span className="pdp-mrp-label">M.R.P.:</span>
+                    <span className="pdp-strike-price">₹{originalPrice.toLocaleString()}</span>
+                  </span>
                 )}
-                {savingsPerUnit > 0 && (
-                  <span className="pdp-save-pill">
-                    {isTamil ? `சேமிப்பு ₹${savingsPerUnit} (${discountPercent}% தள்ளுபடி)` : `Save ₹${savingsPerUnit} (${discountPercent}% OFF)`}
+                {discountPercent > 0 && (
+                  <span className="pdp-discount-pill">
+                    {isTamil ? `${discountPercent}% தள்ளுபடி` : `${discountPercent}% off`}
                   </span>
                 )}
               </div>
+              {savingsPerUnit > 0 && (
+                <div className="pdp-savings-row">
+                  <span className="pdp-savings-badge">
+                    {isTamil ? `🎉 நீங்கள் ₹${savingsPerUnit.toLocaleString()} சேமிக்கிறீர்கள்` : `🎉 You Save: ₹${savingsPerUnit.toLocaleString()}`}
+                  </span>
+                </div>
+              )}
               <p className="pdp-tax-notice">
                 {t('pdpTaxNotice', 'Inclusive of all taxes • 🚚 Free Delivery on orders above ₹499')}
               </p>
@@ -777,124 +796,211 @@ export default function ProductDetailPage() {
             CUSTOMER REVIEWS SECTION
             ════════════════════════════════════════════════════════════ */}
         <section className="pdp-reviews-section">
-          <div className="pdp-reviews-overview">
-            
-            <div className="pdp-score-card">
-              <div className="pdp-score-num">4.9</div>
-              <div className="pdp-score-stars">
-                <Star size={18} fill="#eab308" color="#eab308" />
-                <Star size={18} fill="#eab308" color="#eab308" />
-                <Star size={18} fill="#eab308" color="#eab308" />
-                <Star size={18} fill="#eab308" color="#eab308" />
-                <Star size={18} fill="#eab308" color="#eab308" />
-              </div>
-              <p className="pdp-score-text">{t('pdpReviewsTitle', 'Based on 520+ Verified Customer Reviews')}</p>
-            </div>
-
-            <div className="pdp-bars-wrap">
-              <div className="pdp-bar-row">
-                <span>5 ★</span>
-                <div className="pdp-bar-bg"><div className="pdp-bar-fill" style={{ width: '92%' }} /></div>
-                <span>92%</span>
-              </div>
-              <div className="pdp-bar-row">
-                <span>4 ★</span>
-                <div className="pdp-bar-bg"><div className="pdp-bar-fill" style={{ width: '6%' }} /></div>
-                <span>6%</span>
-              </div>
-              <div className="pdp-bar-row">
-                <span>3 ★</span>
-                <div className="pdp-bar-bg"><div className="pdp-bar-fill" style={{ width: '2%' }} /></div>
-                <span>2%</span>
-              </div>
-              <div className="pdp-bar-row">
-                <span>2 ★</span>
-                <div className="pdp-bar-bg"><div className="pdp-bar-fill" style={{ width: '0%' }} /></div>
-                <span>0%</span>
-              </div>
-              <div className="pdp-bar-row">
-                <span>1 ★</span>
-                <div className="pdp-bar-bg"><div className="pdp-bar-fill" style={{ width: '0%' }} /></div>
-                <span>0%</span>
-              </div>
-            </div>
-
+          {/* Section Header */}
+          <div className="pdp-reviews-header">
             <div>
-              <button
-                type="button"
-                className="pdp-write-review-btn"
-                onClick={handleWriteReview}
-                disabled={isCheckingReview}
-              >
-                {isCheckingReview ? (isTamil ? 'சரிபார்க்கிறது...' : 'Verifying...') : t('pdpWriteReview', 'Write a Review')}
-              </button>
+              <div className="pdp-reviews-eyebrow">
+                <ShieldCheck size={14} />
+                <span>100% VERIFIED CUSTOMER EXPERIENCES</span>
+              </div>
+              <h2 className="pdp-reviews-main-title">
+                {isTamil ? 'வாடிக்கையாளர் மதிப்புரைகள் & சான்றுகள்' : 'Customer Reviews & Feedback'}
+              </h2>
             </div>
 
+            <button
+              type="button"
+              className="pdp-write-review-btn-header"
+              onClick={handleWriteReview}
+              disabled={isCheckingReview}
+            >
+              <Sparkles size={15} />
+              <span>{isCheckingReview ? (isTamil ? 'சரிபார்க்கிறது...' : 'Verifying...') : (isTamil ? 'மதிப்புரை எழுதவும்' : 'Write a Review')}</span>
+            </button>
           </div>
 
-          {/* Customer Testimonials */}
-          <div className="pdp-reviews-feed">
-            <div className="pdp-review-card">
-              <div className="pdp-review-card-head">
-                <div className="pdp-reviewer-meta">
-                  <div className="pdp-reviewer-avatar">S</div>
-                  <div className="pdp-reviewer-info">
-                    <div className="pdp-reviewer-name">Sundaramurthy K.</div>
-                    <div className="pdp-verified-badge"><Check size={11} /> <span>{t('pdpVerifiedBuyer', 'Verified Buyer')} • {isTamil ? 'சென்னை' : 'Chennai'}</span></div>
+          <div className="pdp-reviews-layout">
+            {/* Left Column: Modern Rating Breakdown & Guarantee */}
+            <div className="pdp-rating-summary-card">
+              <div className="pdp-score-display">
+                <div className="pdp-score-huge">4.9</div>
+                <div className="pdp-score-meta">
+                  <div className="pdp-score-stars-row">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={17} fill="#F59E0B" color="#F59E0B" />
+                    ))}
                   </div>
+                  <span className="pdp-score-subtext">520+ {isTamil ? 'மதிப்பீடுகள்' : 'Verified Ratings'}</span>
                 </div>
-                <span className="pdp-review-date">{isTamil ? '2 நாட்களுக்கு முன்பு' : '2 days ago'}</span>
               </div>
-              <div className="pdp-review-stars">
-                {[...Array(5)].map((_, i) => <Star key={i} size={13} fill="#eab308" color="#eab308" />)}
+
+              <div className="pdp-recommend-badge">
+                <CheckCircle2 size={14} />
+                <span>98% {isTamil ? 'வாடிக்கையாளர்கள் பரிந்துரைக்கிறார்கள்' : 'of customers recommend this'}</span>
               </div>
-              <p className="pdp-review-quote">
-                {isTamil 
-                  ? '"அசல் தூய்மையான தரம் மற்றும் அற்புதம். பாதுகாப்பான பேக்கிங்குடன் விரைவாக வந்து சேர்ந்தது!"'
-                  : '"Pure authentic quality and excellent freshness. Arrived quickly with very secure and safe packaging!"'}
-              </p>
+
+              {/* Progress bars */}
+              <div className="pdp-rating-bars-list">
+                <div className="pdp-bar-item">
+                  <span className="pdp-bar-label">5 ★</span>
+                  <div className="pdp-bar-track">
+                    <div className="pdp-bar-progress" style={{ width: '92%' }} />
+                  </div>
+                  <span className="pdp-bar-pct">92%</span>
+                </div>
+                <div className="pdp-bar-item">
+                  <span className="pdp-bar-label">4 ★</span>
+                  <div className="pdp-bar-track">
+                    <div className="pdp-bar-progress" style={{ width: '6%' }} />
+                  </div>
+                  <span className="pdp-bar-pct">6%</span>
+                </div>
+                <div className="pdp-bar-item">
+                  <span className="pdp-bar-label">3 ★</span>
+                  <div className="pdp-bar-track">
+                    <div className="pdp-bar-progress" style={{ width: '2%' }} />
+                  </div>
+                  <span className="pdp-bar-pct">2%</span>
+                </div>
+                <div className="pdp-bar-item">
+                  <span className="pdp-bar-label">2 ★</span>
+                  <div className="pdp-bar-track">
+                    <div className="pdp-bar-progress" style={{ width: '0%' }} />
+                  </div>
+                  <span className="pdp-bar-pct">0%</span>
+                </div>
+                <div className="pdp-bar-item">
+                  <span className="pdp-bar-label">1 ★</span>
+                  <div className="pdp-bar-track">
+                    <div className="pdp-bar-progress" style={{ width: '0%' }} />
+                  </div>
+                  <span className="pdp-bar-pct">0%</span>
+                </div>
+              </div>
+
+              <div className="pdp-trust-note">
+                <ShieldCheck size={13} />
+                <span>{isTamil ? 'உறுதிப்படுத்தப்பட்ட வாடிக்கையாளர் மட்டுமே' : 'Only verified buyers who purchased this product can leave a review.'}</span>
+              </div>
             </div>
 
-            <div className="pdp-review-card">
-              <div className="pdp-review-card-head">
-                <div className="pdp-reviewer-meta">
-                  <div className="pdp-reviewer-avatar">P</div>
-                  <div className="pdp-reviewer-info">
-                    <div className="pdp-reviewer-name">Priyadharshini R.</div>
-                    <div className="pdp-verified-badge"><Check size={11} /> <span>{t('pdpVerifiedBuyer', 'Verified Buyer')} • {isTamil ? 'கோயம்புத்தூர்' : 'Coimbatore'}</span></div>
+            {/* Right Grid: 4 Symmetrical Premium Review Cards */}
+            <div className="pdp-reviews-cards-grid">
+              {/* Card 1 */}
+              <div className="pdp-luxury-review-card">
+                <div className="pdp-card-top-row">
+                  <div className="pdp-user-info-group">
+                    <div className="pdp-user-avatar-circle">S</div>
+                    <div>
+                      <h4 className="pdp-user-full-name">Sundaramurthy K.</h4>
+                      <div className="pdp-buyer-pill">
+                        <Check size={10} />
+                        <span>{t('pdpVerifiedBuyer', 'Verified Buyer')} • {isTamil ? 'சென்னை' : 'Chennai'}</span>
+                      </div>
+                    </div>
                   </div>
+                  <span className="pdp-card-timestamp">{isTamil ? '2 நாட்களுக்கு முன்' : '2 days ago'}</span>
                 </div>
-                <span className="pdp-review-date">{isTamil ? '1 வாரத்திற்கு முன்பு' : '1 week ago'}</span>
-              </div>
-              <div className="pdp-review-stars">
-                {[...Array(5)].map((_, i) => <Star key={i} size={13} fill="#eab308" color="#eab308" />)}
-              </div>
-              <p className="pdp-review-quote">
-                {isTamil 
-                  ? '"இந்த தயாரிப்பு மிகவும் திருப்தி அளிக்கிறது. இயற்கை நறுமணமும் சிறந்த தரமும் நிறைந்துள்ளது. மீண்டும் வாங்குவேன்!"'
-                  : '"Very happy with this purchase. Authentic natural aroma and top quality. Will definitely order again!"'}
-              </p>
-            </div>
 
-            <div className="pdp-review-card">
-              <div className="pdp-review-card-head">
-                <div className="pdp-reviewer-meta">
-                  <div className="pdp-reviewer-avatar">M</div>
-                  <div className="pdp-reviewer-info">
-                    <div className="pdp-reviewer-name">Madhavan S.</div>
-                    <div className="pdp-verified-badge"><Check size={11} /> <span>{t('pdpVerifiedBuyer', 'Verified Buyer')} • {isTamil ? 'மதுரை' : 'Madurai'}</span></div>
-                  </div>
+                <div className="pdp-card-star-row">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={14} fill="#F59E0B" color="#F59E0B" />
+                  ))}
                 </div>
-                <span className="pdp-review-date">{isTamil ? '2 வாரங்களுக்கு முன்பு' : '2 weeks ago'}</span>
+
+                <p className="pdp-card-comment">
+                  {isTamil 
+                    ? '"மரச்செக்கு எண்ணெயின் அசல் மணம் மற்றும் தூய்மை அருமை. பேக்கிங் மிகவும் பாதுகாப்பாக வந்து சேர்ந்தது!"'
+                    : '"Pure authentic wood cold-pressed quality and exceptional freshness. Arrived quickly in leak-proof packaging!"'}
+                </p>
               </div>
-              <div className="pdp-review-stars">
-                {[...Array(5)].map((_, i) => <Star key={i} size={13} fill="#eab308" color="#eab308" />)}
+
+              {/* Card 2 */}
+              <div className="pdp-luxury-review-card">
+                <div className="pdp-card-top-row">
+                  <div className="pdp-user-info-group">
+                    <div className="pdp-user-avatar-circle">P</div>
+                    <div>
+                      <h4 className="pdp-user-full-name">Priyadharshini R.</h4>
+                      <div className="pdp-buyer-pill">
+                        <Check size={10} />
+                        <span>{t('pdpVerifiedBuyer', 'Verified Buyer')} • {isTamil ? 'கோயம்புத்தூர்' : 'Coimbatore'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span className="pdp-card-timestamp">{isTamil ? '1 வாரத்திற்கு முன்' : '1 week ago'}</span>
+                </div>
+
+                <div className="pdp-card-star-row">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={14} fill="#F59E0B" color="#F59E0B" />
+                  ))}
+                </div>
+
+                <p className="pdp-card-comment">
+                  {isTamil 
+                    ? '"இயற்கையான நறுமணமும் சிறந்த தரமும் நிறைந்துள்ளது. சமையலில் அற்புதமான சுவை கிடைக்கிறது. நிச்சயமாக மீண்டும் வாங்குவேன்!"'
+                    : '"Very happy with this order. Truly unrefined aroma and rich golden texture. Imparts rich South Indian flavor to dishes."'}
+                </p>
               </div>
-              <p className="pdp-review-quote">
-                {isTamil 
-                  ? '"உயர்தர தூய்மை மற்றும் அருமையான சுவை. உண்மையான இயற்கை விளைபொருளுக்கு ஏற்ற சிறந்த விலை."'
-                  : '"Top-tier purity and excellent taste. Great value for genuine natural produce."'}
-              </p>
+
+              {/* Card 3 */}
+              <div className="pdp-luxury-review-card">
+                <div className="pdp-card-top-row">
+                  <div className="pdp-user-info-group">
+                    <div className="pdp-user-avatar-circle">M</div>
+                    <div>
+                      <h4 className="pdp-user-full-name">Madhavan S.</h4>
+                      <div className="pdp-buyer-pill">
+                        <Check size={10} />
+                        <span>{t('pdpVerifiedBuyer', 'Verified Buyer')} • {isTamil ? 'மதுரை' : 'Madurai'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span className="pdp-card-timestamp">{isTamil ? '2 வாரங்களுக்கு முன்' : '2 weeks ago'}</span>
+                </div>
+
+                <div className="pdp-card-star-row">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={14} fill="#F59E0B" color="#F59E0B" />
+                  ))}
+                </div>
+
+                <p className="pdp-card-comment">
+                  {isTamil 
+                    ? '"உயர்தர தூய்மை மற்றும் அருமையான சுவை. நியாயமான விலையில் கிடைக்கும் உண்மையான இயற்கை தயாரிப்பு."'
+                    : '"Top-tier purity and authentic taste. Completely free from chemical processing. Excellent value for genuine organic harvests."'}
+                </p>
+              </div>
+
+              {/* Card 4 */}
+              <div className="pdp-luxury-review-card">
+                <div className="pdp-card-top-row">
+                  <div className="pdp-user-info-group">
+                    <div className="pdp-user-avatar-circle">A</div>
+                    <div>
+                      <h4 className="pdp-user-full-name">Ananya N.</h4>
+                      <div className="pdp-buyer-pill">
+                        <Check size={10} />
+                        <span>{t('pdpVerifiedBuyer', 'Verified Buyer')} • {isTamil ? 'பெங்களூரு' : 'Bengaluru'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span className="pdp-card-timestamp">{isTamil ? '3 வாரங்களுக்கு முன்' : '3 weeks ago'}</span>
+                </div>
+
+                <div className="pdp-card-star-row">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={14} fill="#F59E0B" color="#F59E0B" />
+                  ))}
+                </div>
+
+                <p className="pdp-card-comment">
+                  {isTamil 
+                    ? '"பாரம்பரிய முறையில் தயார் செய்யப்பட்ட தூய்மையான தரம். குடும்பத்தின் ஆரோக்கியத்திற்கு மிகச் சிறந்தது!"'
+                    : '"You can immediately sense the difference in purity and aroma compared to supermarket brands. Will remain a regular customer!"'}
+                </p>
+              </div>
             </div>
           </div>
         </section>
@@ -903,3 +1009,29 @@ export default function ProductDetailPage() {
     </div>
   );
 }
+
+export default function ProductDetailPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div
+          style={{
+            minHeight: '60vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#FDFBF7',
+            color: '#1B5E2F',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '1.1rem',
+          }}
+        >
+          Loading product...
+        </div>
+      }
+    >
+      <ProductDetailPageContent />
+    </React.Suspense>
+  );
+}
+

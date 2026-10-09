@@ -102,7 +102,18 @@ export async function PUT(request, { params }) {
     const { id } = await params;
     const body = await request.json();
 
-    const product = await Product.findByIdAndUpdate(id, body, { new: true, runValidators: true });
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+    let product = null;
+    if (isObjectId) {
+      product = await Product.findByIdAndUpdate(id, body, { new: true, runValidators: true });
+    } else {
+      product = await Product.findOneAndUpdate(
+        { $or: [{ slug: id }, { productCode: id }] },
+        body,
+        { new: true, runValidators: true }
+      );
+    }
+
     if (!product) {
       return NextResponse.json({ msg: 'Product not found' }, { status: 404 });
     }
@@ -126,15 +137,31 @@ export async function DELETE(request, { params }) {
 
     await connectDB();
     const { id } = await params;
-    const product = await Product.findByIdAndDelete(id);
-    if (!product) {
-      return NextResponse.json({ msg: 'Product not found' }, { status: 404 });
+    if (!id) {
+      return NextResponse.json({ msg: 'Product ID required' }, { status: 400 });
     }
 
-    // Purge cached catalog
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+    let product = null;
+    if (isObjectId) {
+      product = await Product.findByIdAndDelete(id);
+    } else {
+      product = await Product.findOneAndDelete({
+        $or: [
+          { slug: id },
+          { productCode: id }
+        ]
+      });
+    }
+
+    // Purge cached catalog across all caches
     invalidateProductCache();
 
-    return NextResponse.json({ msg: 'Product deleted successfully' });
+    return NextResponse.json({ 
+      success: true, 
+      msg: 'Product removed from catalog successfully',
+      id 
+    });
   } catch (err) {
     console.error('API Delete Product Error:', err);
     return NextResponse.json({ error: err.message || 'Server Error' }, { status: 500 });

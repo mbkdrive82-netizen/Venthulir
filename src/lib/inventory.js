@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import Product from '@/models/Product';
 import Offer from '@/models/Offer';
+import { invalidateProductCache } from '@/lib/cache';
 
 export async function reduceStock(items) {
   if (!items || !Array.isArray(items)) return { success: true };
@@ -70,6 +71,10 @@ export async function reduceStock(items) {
     }
   }
 
+  if (successfullyDeducted.length > 0) {
+    invalidateProductCache();
+  }
+
   return { success: true };
 }
 
@@ -101,4 +106,6 @@ export async function restoreStock(items) {
       console.warn('Inventory restore warning for item:', itemId, err.message);
     }
   }
+
+  invalidateProductCache();
 }

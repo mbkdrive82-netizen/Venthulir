@@ -26,17 +26,19 @@ import {
 import OrderDetailModal from '../components/OrderDetailModal';
 import { getWhatsAppOrderUrl } from '@/lib/whatsapp';
 
+let adminOrdersCache = null;
+
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState(adminOrdersCache || []);
+  const [loading, setLoading] = useState(!adminOrdersCache);
   const [activeTab, setActiveTab] = useState('All'); // 'All', 'Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [viewMode, setViewMode] = useState('auto'); // 'auto' | 'cards' | 'table'
-  const initialLoadRef = useRef(true);
-  const prevOrdersCountRef = useRef(0);
+  const initialLoadRef = useRef(!adminOrdersCache);
+  const prevOrdersCountRef = useRef(adminOrdersCache ? adminOrdersCache.length : 0);
 
   const playNotificationChime = () => {
     try {
@@ -58,9 +60,12 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (showSpinner = false) => {
     try {
-      const token = localStorage.getItem('venthulir_token');
+      if (showSpinner || !adminOrdersCache) {
+        setLoading(true);
+      }
+      const token = typeof window !== 'undefined' ? localStorage.getItem('venthulir_token') : null;
       const res = await fetch('/api/orders', {
         headers: {
           ...(token && { Authorization: `Bearer ${token}` })
@@ -74,6 +79,7 @@ export default function AdminOrdersPage() {
           }
           prevOrdersCountRef.current = data.length;
           initialLoadRef.current = false;
+          adminOrdersCache = data;
           setOrders(data);
         }
       }
@@ -86,8 +92,6 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 8000);
-    return () => clearInterval(interval);
   }, []);
 
   const handleStatusUpdate = async (orderId, newStatus, isCancel, extras = {}) => {

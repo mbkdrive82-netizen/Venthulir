@@ -103,25 +103,27 @@
 
 /* ── 2. MAIN FOOTER CONTENT ── */
 .footer-main {
-  padding: 52px 0 40px;
+  padding: 44px 0 36px;
 }
 
 .footer-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 36px;
+  gap: 32px;
 }
 
 @media (min-width: 640px) {
   .footer-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
   }
 }
 
 @media (min-width: 1024px) {
   .footer-grid {
-    grid-template-columns: 1.4fr 0.9fr 0.9fr 1.3fr;
-    gap: 48px;
+    grid-template-columns: 1.4fr 1fr 1fr 1.2fr;
+    gap: 40px;
+    align-items: flex-start;
   }
 }
 
@@ -134,90 +136,63 @@
   margin-bottom: 8px;
 }
 
-.footer-brand-logo .brand-crest {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #0F3D2A;
-  color: #F4DA90;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(244, 218, 144, 0.4);
-  box-shadow: 0 2px 8px rgba(15, 61, 42, 0.12);
+.footer-brand-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
 }
 
 .footer-brand-logo .brand-name {
   font-family: 'Cinzel', Georgia, serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 900;
   letter-spacing: 2px;
-  display: inline-block;
-  /* Left to Right Elegant Rich Gold Shimmer (No White Washout) */
-  background: linear-gradient(
-    110deg,
-    #785206 0%,
-    #A16E0A 20%,
-    #C89116 35%,
-    #FFD54F 50%,
-    #C89116 65%,
-    #A16E0A 80%,
-    #785206 100%
-  );
+  color: #0F3D2A;
+  background: linear-gradient(110deg, #785206 0%, #A16E0A 35%, #D4AF37 50%, #A16E0A 65%, #785206 100%);
   background-size: 250% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  color: transparent;
-  animation: footerGoldGlow 6.5s ease-in-out infinite;
-  filter: drop-shadow(0 1px 2px rgba(120, 82, 6, 0.25));
-}
-
-@keyframes footerGoldGlow {
-  0% {
-    background-position: 130% 0;
-  }
-  65%, 100% {
-    background-position: -130% 0;
-  }
+  display: inline-block;
 }
 
 .footer-tamil-sub {
-  font-size: 13px;
-  font-weight: 750;
+  font-size: 12.5px;
+  font-weight: 700;
   color: #8C5815;
-  letter-spacing: 0.3px;
-  margin-bottom: 14px;
+  letter-spacing: 0.2px;
+  margin-bottom: 10px;
 }
 
 .footer-about-text {
-  font-size: 13.5px;
-  color: #456252;
-  line-height: 1.65;
-  margin: 0 0 22px 0;
-  max-width: 340px;
+  font-size: 13px;
+  color: #4A6354;
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+  max-width: 300px;
   font-weight: 500;
 }
 
 .footer-social-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .social-pill-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
   background: #FFFFFF;
-  border: 1.5px solid #DFD5BE;
+  border: 1.2px solid #DFD5BE;
   color: #0F3D2A;
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  transition: all 0.25s ease;
-  box-shadow: 0 2px 6px rgba(15, 61, 42, 0.04);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(15, 61, 42, 0.04);
 }
 
 .social-pill-btn:hover {
@@ -225,7 +200,7 @@
   color: #F4DA90;
   border-color: #0F3D2A;
   transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(15, 61, 42, 0.15);
+  box-shadow: 0 4px 10px rgba(15, 61, 42, 0.12);
 }
 
 .social-pill-btn.whatsapp:hover {
@@ -234,15 +209,15 @@
   border-color: #25D366;
 }
 
-/* Nav Columns */
+/* Nav Columns & Column Titles */
 .footer-col-title {
   font-family: 'Cinzel', Georgia, serif;
-  font-size: 13.5px;
-  font-weight: 850;
+  font-size: 13px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.2px;
   color: #8C5815;
-  margin: 0 0 18px 0;
+  margin: 0 0 14px 0;
 }
 
 .footer-links-list {
@@ -251,49 +226,49 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .footer-links-list button {
   background: none;
   border: none;
   padding: 0;
-  font-size: 13.5px;
+  font-size: 13px;
   color: #385545;
   text-align: left;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
-  font-weight: 550;
+  font-weight: 500;
 }
 
 .footer-links-list button:hover {
   color: #0F3D2A;
   font-weight: 700;
-  transform: translateX(4px);
+  transform: translateX(3px);
 }
 
-/* Contact & Newsletter Column */
+/* Contact Details */
 .footer-contact-details {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 24px;
 }
 
 .contact-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-size: 13px;
   color: #385545;
   text-decoration: none;
   transition: color 0.2s;
-  font-weight: 550;
+  font-weight: 500;
 }
 
 a.contact-item:hover {
   color: #0F3D2A;
+  font-weight: 650;
 }
 
 .contact-icon {
@@ -301,65 +276,57 @@ a.contact-item:hover {
   flex-shrink: 0;
 }
 
-/* Luxury Newsletter Card (Light Theme) */
-.footer-newsletter-card {
-  background: #FFFFFF;
-  border: 1.5px solid #E3D9C4;
-  border-radius: 16px;
-  padding: 20px 22px;
-  box-shadow: 0 4px 16px rgba(15, 61, 42, 0.05);
+/* Clean Newsletter Column */
+.footer-newsletter-col {
+  display: flex;
+  flex-direction: column;
 }
 
-.footer-newsletter-card h4 {
-  margin: 0 0 6px 0;
-  font-size: 14px;
-  font-weight: 800;
-  color: #0F3D2A;
-}
-
-.footer-newsletter-card p {
-  margin: 0 0 14px 0;
-  font-size: 12px;
+.footer-newsletter-desc {
+  font-size: 12.5px;
   color: #557262;
   line-height: 1.5;
+  margin: 0 0 14px 0;
 }
 
-.newsletter-luxury-form {
+.newsletter-clean-form {
   display: flex;
   align-items: center;
-  background: #F8F5EE;
-  border: 1.5px solid #DDD0B6;
-  border-radius: 12px;
-  padding: 4px 6px 4px 14px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.newsletter-luxury-form:focus-within {
-  border-color: #0F3D2A;
   background: #FFFFFF;
-  box-shadow: 0 0 0 2px rgba(15, 61, 42, 0.12);
+  border: 1.2px solid #D5C9AF;
+  border-radius: 10px;
+  padding: 3px 4px 3px 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  max-width: 320px;
 }
 
-.newsletter-luxury-form input {
+.newsletter-clean-form:focus-within {
+  border-color: #0F3D2A;
+  box-shadow: 0 0 0 2px rgba(15, 61, 42, 0.1);
+}
+
+.newsletter-clean-form input {
   flex: 1;
   background: transparent;
   border: none;
   outline: none;
-  font-size: 13px;
+  font-size: 12.5px;
   color: #0F3D2A;
   padding: 6px 0;
+  font-family: inherit;
   font-weight: 500;
+  min-width: 0;
 }
 
-.newsletter-luxury-form input::placeholder {
+.newsletter-clean-form input::placeholder {
   color: #8C9F94;
 }
 
-.newsletter-luxury-form button {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: #0b331f;
+.newsletter-clean-form button {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: #0F3D2A;
   color: #F4DA90;
   border: none;
   display: flex;
@@ -370,20 +337,20 @@ a.contact-item:hover {
   flex-shrink: 0;
 }
 
-.newsletter-luxury-form button:hover {
-  background: #064e26;
+.newsletter-clean-form button:hover {
+  background: #155E38;
   color: #FFFFFF;
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 .newsletter-success-state {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 12px;
   color: #059669;
-  font-weight: 650;
-  padding: 8px 0;
+  font-weight: 600;
+  padding: 6px 0;
 }
 
 /* ── 3. BOTTOM BAR ── */
@@ -544,37 +511,38 @@ a.contact-item:hover {
 .anim-moving-vehicle {
   position: absolute;
   bottom: 8px;
+  left: 0;
   z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
   pointer-events: auto;
   cursor: pointer;
-  transform: translate3d(-300px, 0, 0);
+  width: max-content;
   will-change: transform;
+  animation: driveSmoothCruise 11s linear infinite;
 }
 
 .van-vehicle {
   width: 210px;
   height: 75px;
-  animation: driveSmoothCruise 11s linear infinite;
 }
 
 @keyframes driveSmoothCruise {
   0% {
-    transform: translate3d(-215px, 0, 0);
+    transform: translate3d(-320px, 0, 0);
   }
   100% {
-    transform: translate3d(calc(100vw + 40px), 0, 0);
+    transform: translate3d(calc(100vw + 100px), 0, 0);
   }
 }
 
 @keyframes driveSmoothCruiseMobile {
   0% {
-    transform: translate3d(-135px, 0, 0);
+    transform: translate3d(-240px, 0, 0);
   }
   100% {
-    transform: translate3d(calc(100vw + 20px), 0, 0);
+    transform: translate3d(calc(100vw + 60px), 0, 0);
   }
 }
 
@@ -687,13 +655,13 @@ a.contact-item:hover {
     margin-bottom: 12px !important;
   }
 
-  .footer-bottom {
-    padding: 12px 0 24px !important;
+  .footer-bottom-bar {
+    padding: 16px 0 !important;
   }
 
-  .footer-bottom-container {
+  .footer-bottom-flex {
     flex-direction: column !important;
-    gap: 8px !important;
+    gap: 10px !important;
     text-align: center !important;
   }
 
@@ -709,10 +677,14 @@ a.contact-item:hover {
     height: 20px !important;
   }
 
+  .anim-moving-vehicle {
+    bottom: 5px !important;
+    animation: driveSmoothCruiseMobile 7s linear infinite !important;
+  }
+
   .van-vehicle {
     width: 130px !important;
     height: 48px !important;
-    animation: driveSmoothCruiseMobile 6s linear infinite !important;
   }
 
   .vehicle-speech-bubble {
@@ -721,5 +693,7 @@ a.contact-item:hover {
     top: -17px !important;
   }
 }
+
+
 
 

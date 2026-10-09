@@ -17,19 +17,24 @@ import {
 } from 'lucide-react';
 import StatCard from '../components/StatCard';
 
-export default function AdminAnalyticsPage() {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+let adminAnalyticsCache = null;
 
-  const fetchStats = async () => {
+export default function AdminAnalyticsPage() {
+  const [stats, setStats] = useState(adminAnalyticsCache);
+  const [loading, setLoading] = useState(!adminAnalyticsCache);
+
+  const fetchStats = async (showSpinner = false) => {
     try {
-      setLoading(true);
-      const token = localStorage.getItem('venthulir_token');
+      if (showSpinner || !adminAnalyticsCache) {
+        setLoading(true);
+      }
+      const token = typeof window !== 'undefined' ? localStorage.getItem('venthulir_token') : null;
       const res = await fetch('/api/admin/stats', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { ...(token && { Authorization: `Bearer ${token}` }) }
       });
       if (res.ok) {
         const data = await res.json();
+        adminAnalyticsCache = data;
         setStats(data);
       }
     } catch (err) {

@@ -105,15 +105,13 @@ export default function Footer() {
           <div className="footer-grid">
             {/* Column 1: Brand & Heritage */}
             <div className="footer-brand-col">
-              <Link href="/home" className="footer-brand-logo">
-                <span className="brand-crest">
-                  <Leaf size={20} />
-                </span>
+              <Link href="/" className="footer-brand-logo">
+                <img src="/logo.png" alt="Venthulir Logo" className="footer-brand-img" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                 <span className="brand-name">VENTHULIR</span>
               </Link>
               <div className="footer-tamil-sub">தூய மரச்செக்கு எண்ணெய் & இயற்கை விளைச்சல்</div>
               <p className="footer-about-text">
-                Honoring ancient South Indian cold-pressing traditions. Handcrafted in traditional wooden chekkus to preserve living nutrients, wholesome aroma, and natural vitality.
+                Pure wood cold-pressed oils & traditional spices directly from our organic farms in Tamil Nadu.
               </p>
 
               <div className="footer-social-row">
@@ -124,7 +122,7 @@ export default function Footer() {
                   className="social-pill-btn"
                   aria-label="Instagram"
                 >
-                  <Instagram size={17} />
+                  <Instagram size={16} />
                 </a>
                 <a 
                   href="https://facebook.com" 
@@ -133,7 +131,7 @@ export default function Footer() {
                   className="social-pill-btn"
                   aria-label="Facebook"
                 >
-                  <Facebook size={17} />
+                  <Facebook size={16} />
                 </a>
                 <a 
                   href="https://wa.me/918778476414" 
@@ -142,117 +140,87 @@ export default function Footer() {
                   className="social-pill-btn whatsapp"
                   aria-label="WhatsApp"
                 >
-                  <MessageCircle size={17} />
+                  <MessageCircle size={16} />
                 </a>
               </div>
             </div>
 
-            {/* Column 2: Pure Harvests (Shop) */}
+            {/* Column 2: Quick Links */}
             <div className="footer-nav-col">
-              <h3 className="footer-col-title">Pure Harvests</h3>
+              <h4 className="footer-col-title">Quick Links</h4>
               <ul className="footer-links-list">
                 <li>
                   <button onClick={() => router.push('/products?category=Cold-Pressed Oils')}>
-                    Cold-Pressed Oils (Marachekku)
+                    Cold-Pressed Oils
                   </button>
                 </li>
                 <li>
                   <button onClick={() => router.push('/products?category=Spices & Powders')}>
-                    Traditional Spices & Podis
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => router.push('/products?category=Masala Blends')}>
-                    Heritage Masala Blends
+                    Traditional Spices
                   </button>
                 </li>
                 <li>
                   <button onClick={() => router.push('/products')}>
-                    View All Products
+                    All Products
                   </button>
                 </li>
-                <li>
-                  <button onClick={() => router.push('/profile?tab=cart')}>
-                    My Harvest Basket
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* Column 3: Heritage & Trust */}
-            <div className="footer-nav-col">
-              <h3 className="footer-col-title">Heritage & Trust</h3>
-              <ul className="footer-links-list">
                 <li>
                   <button onClick={() => handleLink('/home#why-choose', '#why-choose')}>
-                    Our Story & Farmers
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleLink('/home#reviews', '#reviews')}>
-                    Customer Reviews
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleLink('/home#faq', '#faq')}>
-                    Frequently Asked Questions
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => router.push('/profile?tab=custom')}>
-                    Custom & Bulk Tin Orders
+                    Our Story
                   </button>
                 </li>
                 <li>
                   <button onClick={() => router.push('/profile')}>
-                    My Account Dashboard
+                    My Account
                   </button>
                 </li>
               </ul>
             </div>
 
-            {/* Column 4: Direct Contact & Harvest Club */}
-            <div className="footer-contact-col">
-              <h3 className="footer-col-title">Farm Direct</h3>
+            {/* Column 3: Contact Info */}
+            <div className="footer-nav-col">
+              <h4 className="footer-col-title">Contact Us</h4>
               <div className="footer-contact-details">
                 <a href="tel:+918778476414" className="contact-item">
-                  <Phone size={16} className="contact-icon" />
+                  <Phone size={15} className="contact-icon" />
                   <span>+91 87784 76414</span>
                 </a>
                 <a href="mailto:theventhulir@gmail.com" className="contact-item">
-                  <Mail size={16} className="contact-icon" />
+                  <Mail size={15} className="contact-icon" />
                   <span>theventhulir@gmail.com</span>
                 </a>
                 <div className="contact-item">
-                  <MapPin size={16} className="contact-icon" />
+                  <MapPin size={15} className="contact-icon" />
                   <span>Tamil Nadu, India</span>
                 </div>
               </div>
+            </div>
 
-              {/* Newsletter Box */}
-              <div className="footer-newsletter-card">
-                <h4>Join the Venthulir Circle</h4>
-                <p>Receive 10% off your first harvest order and seasonal recipe guides.</p>
-                {subscribed ? (
-                  <div className="newsletter-success-state">
-                    <CheckCircle2 size={18} />
-                    <span>Welcome! Check your inbox for your 10% code.</span>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubscribe} className="newsletter-luxury-form">
-                    <input
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                    <button type="submit" disabled={submitting} aria-label="Subscribe">
-                      <ArrowRight size={16} />
-                    </button>
-                  </form>
-                )}
-              </div>
+            {/* Column 4: Newsletter */}
+            <div className="footer-newsletter-col">
+              <h4 className="footer-col-title">Stay Connected</h4>
+              <p className="footer-newsletter-desc">
+                Subscribe for exclusive offers and harvest updates.
+              </p>
+              {subscribed ? (
+                <div className="newsletter-success-state">
+                  <CheckCircle2 size={16} />
+                  <span>Thank you for subscribing!</span>
+                </div>
+              ) : (
+                <form onSubmit={handleSubscribe} className="newsletter-clean-form">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                  <button type="submit" disabled={submitting} aria-label="Subscribe">
+                    <ArrowRight size={15} />
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         </div>
@@ -385,7 +353,7 @@ export default function Footer() {
         <div className="anim-moving-vehicle" title="Venthulir Express - Farm to Doorstep in 24 Hours">
           <div className="vehicle-speech-bubble">
             <span className="bubble-live-dot" />
-            <span>🚚 Farm Direct &bull; Pollachi Express &bull; Same Day Dispatch</span>
+            <span>🚚 Same Day Dispatch</span>
           </div>
 
           <div className="van-vehicle">
@@ -420,11 +388,10 @@ export default function Footer() {
                   <stop offset="100%" stopColor="#FEF08A" stopOpacity="0" />
                 </linearGradient>
 
-                {/* Crystal Sapphire Windshield Glass */}
-                <linearGradient id="sapphireGlass" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.9" />
-                  <stop offset="100%" stopColor="#0369A1" stopOpacity="0.75" />
-                </linearGradient>
+                {/* Official Logo Circular Clip */}
+                <clipPath id="truckLogoClip">
+                  <circle cx="36" cy="36" r="8" />
+                </clipPath>
               </defs>
 
               {/* Headlight Beam Cone Shining Ahead on Road */}
@@ -447,20 +414,57 @@ export default function Footer() {
                 strokeWidth="1.2"
               />
 
-              {/* Front Sapphire Windshield Glass */}
+              {/* Front Sapphire Windshield Glass Background */}
               <path
                 d="M164 28 L182 28 Q192 28 198 37 L206 48 L164 48 Z"
-                fill="url(#sapphireGlass)"
+                fill="#E0F2FE"
                 stroke="#BAE6FD"
                 strokeWidth="0.8"
               />
 
-              {/* Front Cabin Side Window */}
+              {/* ── Delivery Driver Character Inside Cabin ── */}
+              <g id="truckDriver">
+                {/* Driver Torso / Venthulir Green Uniform */}
+                <path
+                  d="M167 48 L167 42 Q174 40 181 42 L181 48 Z"
+                  fill="#1B5E2F"
+                />
+                {/* Uniform Collar */}
+                <polygon points="172,41 174,44 176,41" fill="#FFFFFF" />
+
+                {/* Driver Head / Face */}
+                <circle cx="174" cy="36.5" r="3.2" fill="#F59E0B" />
+
+                {/* Delivery Cap (Crown + Visor) */}
+                <ellipse cx="174" cy="34" rx="3.6" ry="2.2" fill="#0B331F" />
+                <path d="M173 34.5 Q178 33 181 35.5 L175 36.2 Z" fill="#062B19" />
+
+                {/* Steering Wheel */}
+                <ellipse
+                  cx="187"
+                  cy="43.5"
+                  rx="1.8"
+                  ry="5"
+                  fill="none"
+                  stroke="#1E293B"
+                  strokeWidth="1.4"
+                  transform="rotate(-20 187 43.5)"
+                />
+                {/* Steering Center Hub */}
+                <circle cx="187" cy="43.5" r="1.2" fill="#475569" />
+
+                {/* Driver Hands on Steering Wheel */}
+                <circle cx="185.5" cy="42" r="1.1" fill="#F59E0B" />
+                <circle cx="186" cy="45.5" r="1.1" fill="#F59E0B" />
+              </g>
+
+              {/* Front Windshield Glass Highlight Overlay (Crystal Glare) */}
               <path
-                d="M165 30 L178 30 Q185 30 190 38 L195 47 L165 47 Z"
-                fill="#E0F2FE"
-                opacity="0.3"
+                d="M164 28 L182 28 Q192 28 198 37 L206 48 L164 48 Z"
+                fill="url(#sapphireGlass)"
+                opacity="0.35"
               />
+              <line x1="172" y1="30" x2="192" y2="46" stroke="#FFFFFF" strokeWidth="1.2" strokeOpacity="0.4" strokeLinecap="round" />
 
               {/* Dual Gold Foil Luxury Accent Pinstripes */}
               <rect x="18" y="50" width="201" height="3" fill="url(#goldFoilGrad)" />
@@ -469,11 +473,16 @@ export default function Footer() {
               {/* Lower Emerald Bumper Skirt */}
               <rect x="18" y="58" width="201" height="4" fill="#062B19" />
 
-              {/* Venthulir Leaf Crest Emblem in Gold Circle */}
-              <circle cx="36" cy="36" r="7.5" fill="#0B331F" stroke="url(#goldFoilGrad)" strokeWidth="1.2" />
-              <path
-                d="M36 31 C33 34 32 37 36 41 C40 37 39 34 36 31 Z"
-                fill="#4ADE80"
+              {/* Official Venthulir Brand Logo Emblem */}
+              <circle cx="36" cy="36" r="8" fill="#FFFFFF" stroke="url(#goldFoilGrad)" strokeWidth="1.2" />
+              <image
+                href="/logo.png"
+                x="28.5"
+                y="28.5"
+                width="15"
+                height="15"
+                preserveAspectRatio="xMidYMid meet"
+                clipPath="url(#truckLogoClip)"
               />
 
               {/* Brand Typography */}
@@ -537,6 +546,8 @@ export default function Footer() {
           </div>
         </div>
       </div>
+
+
 
       {/* ── 3. BOTTOM BAR ── */}
       <div className="footer-bottom-bar">

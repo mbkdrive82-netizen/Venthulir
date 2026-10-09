@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
@@ -109,12 +109,16 @@ function CartPageContent() {
       : Math.min(appliedCoupon.value, cartTotal)
     : 0;
 
+  const totalMrp = cartItems.reduce((acc, item) => {
+    const orig = item.variant?.originalPrice || item.originalPrice || Math.round((item.price || 0) * 1.25);
+    return acc + (orig * (item.quantity || 1));
+  }, 0);
+  const totalSavings = Math.max(0, (totalMrp - cartTotal) + discountAmount);
+
   const afterDiscountTotal = Math.max(cartTotal - discountAmount, 0);
   const isFreeShipping = afterDiscountTotal >= SHIPPING_FREE_THRESHOLD || afterDiscountTotal === 0;
   const shippingFee = isFreeShipping ? 0 : SHIPPING_FEE;
   const grandTotal = afterDiscountTotal + shippingFee;
-  const progressPercent = Math.min(100, Math.round((afterDiscountTotal / SHIPPING_FREE_THRESHOLD) * 100));
-  const amountNeeded = Math.max(0, SHIPPING_FREE_THRESHOLD - afterDiscountTotal);
 
   // ── EMPTY CART STATE ──
   if (cartItems.length === 0) {
@@ -160,29 +164,9 @@ function CartPageContent() {
         {/* 2-Column Cart Grid */}
         <div className="cart-page-grid">
           
-          {/* ── LEFT COLUMN: ITEMS & FREE SHIPPING PROGRESS ── */}
+          {/* ── LEFT COLUMN: ITEMS ── */}
           <div className="cart-left-col">
             
-            {/* Free Shipping Progress Banner */}
-            <div className="cart-shipping-banner">
-              <div className={`shipping-banner-text ${isFreeShipping ? 'unlocked' : ''}`}>
-                <Truck size={18} />
-                {isFreeShipping ? (
-                  <span>🎉 Congratulations! You have unlocked <strong>FREE Farm Express Delivery</strong>!</span>
-                ) : (
-                  <span>
-                    Add <strong>₹{amountNeeded}</strong> more to unlock <strong>FREE Delivery</strong> (Free &gt; ₹{SHIPPING_FREE_THRESHOLD})
-                  </span>
-                )}
-              </div>
-              <div className="shipping-progress-track">
-                <div 
-                  className="shipping-progress-fill" 
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-            </div>
-
             {/* Cart Items Table / Card */}
             <div className="cart-items-card">
               
@@ -199,6 +183,7 @@ function CartPageContent() {
               <div className="cart-items-rows-wrap">
                 {cartItems.map((item) => {
                   const itemPrice = item.price || 0;
+                  const itemOrigPrice = item.variant?.originalPrice || item.originalPrice || Math.round(itemPrice * 1.25);
                   const itemSubtotal = itemPrice * (item.quantity || 1);
                   const { isOutOfStock } = getStockInfo(item);
 
@@ -249,7 +234,10 @@ function CartPageContent() {
 
                       {/* 2. Unit Price */}
                       <div className="cart-row-unit-price">
-                        <span>₹{itemPrice}</span>
+                        <span className="cart-current-unit-price">₹{itemPrice.toLocaleString()}</span>
+                        {itemOrigPrice > itemPrice && (
+                          <span className="cart-strike-unit-price">₹{itemOrigPrice.toLocaleString()}</span>
+                        )}
                       </div>
 
                       {/* 3. Quantity Controls */}
@@ -282,7 +270,10 @@ function CartPageContent() {
 
                       {/* 4. Subtotal */}
                       <div className="cart-row-subtotal">
-                        <span style={isOutOfStock ? { color: '#94a3b8', textDecoration: 'line-through' } : {}}>₹{itemSubtotal}</span>
+                        <span className="cart-current-subtotal" style={isOutOfStock ? { color: '#94a3b8', textDecoration: 'line-through' } : {}}>₹{itemSubtotal.toLocaleString()}</span>
+                        {itemOrigPrice > itemPrice && !isOutOfStock && (
+                          <span className="cart-strike-subtotal">₹{(itemOrigPrice * (item.quantity || 1)).toLocaleString()}</span>
+                        )}
                       </div>
 
                       {/* 5. Remove Button */}
@@ -368,6 +359,13 @@ function CartPageContent() {
                   <span>Bag Subtotal</span>
                   <span>₹{cartTotal}</span>
                 </div>
+
+                {totalSavings > 0 && (
+                  <div className="breakdown-row" style={{ color: '#15803d', fontWeight: 700, background: '#f0fdf4', padding: '6px 10px', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                    <span>🎉 Total Savings</span>
+                    <span style={{ fontWeight: 850 }}>Save ₹{totalSavings}</span>
+                  </div>
+                )}
 
                 {discountAmount > 0 && (
                   <div className="breakdown-row discount-row">

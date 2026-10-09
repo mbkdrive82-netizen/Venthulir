@@ -1,14 +1,13 @@
-'use client';
-
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { X, Eye, EyeOff, Loader, User, Mail, Phone, Lock, MapPin, CheckCircle, ArrowRight } from 'lucide-react';
+import GoogleAuthButton from '@/components/GoogleAuthButton';
 import { toast } from 'react-toastify';
 import './AuthModal.css';
 
 export default function AuthModal({ onClose }) {
-  const { login, register, requestOTP, verifyOTP, forgotPassword, resetPassword } = useAuth();
-  const [tab, setTab]           = useState('login');   // 'login' | 'register' | 'otp' | 'forgot' | 'reset-pass'
+  const { login, register, forgotPassword, resetPassword } = useAuth();
+  const [tab, setTab]           = useState('login');   // 'login' | 'register' | 'forgot' | 'reset-pass'
   const [form, setForm]         = useState({ 
     name: '', 
     email: '', 
@@ -81,38 +80,6 @@ export default function AuthModal({ onClose }) {
       onClose();
     } else {
       setError(reg.msg || 'Account registration failed. Please try again.');
-    }
-    setLoading(false);
-  };
-
-  // Optional OTP Sign In Request
-  const handleRequestOTP = async (e) => {
-    e.preventDefault();
-    if (!form.email) {
-      setError('Please enter your registered email address.');
-      return;
-    }
-    setLoading(true);
-    const res = await requestOTP(form.email, form.password || '');
-    if (res.success) {
-      setTab('otp');
-      toast.info('Verification code dispatched to your email.');
-    } else {
-      setError(res.msg || 'Unable to send OTP. Please use password login.');
-    }
-    setLoading(false);
-  };
-
-  // Verify OTP
-  const handleVerifyOTP = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    const res = await verifyOTP(form.email, form.otp);
-    if (res.success) {
-      toast.success('Signed in successfully!');
-      onClose();
-    } else {
-      setError(res.msg || 'Invalid or expired OTP code.');
     }
     setLoading(false);
   };
@@ -192,6 +159,22 @@ export default function AuthModal({ onClose }) {
               </button>
             </div>
 
+            {/* Google OAuth Button */}
+            <div className="modal-google-wrapper">
+              <GoogleAuthButton
+                onSuccess={() => {
+                  toast.success('Signed in with Google!');
+                  onClose();
+                }}
+                onError={(err) => setError(err)}
+                buttonText="Continue with Google"
+              />
+            </div>
+
+            <div className="auth-social-divider">
+              <span>or sign in with password</span>
+            </div>
+
             <form onSubmit={handleLogin} className="auth-form">
               <div className="auth-field">
                 <label>Email Address</label>
@@ -211,23 +194,13 @@ export default function AuthModal({ onClose }) {
               <div className="auth-field">
                 <div className="field-label-row">
                   <label>Password</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button 
-                      type="button" 
-                      className="forgot-pass-btn" 
-                      onClick={() => { setTab('forgot'); setError(''); setSuccessMsg(''); }}
-                    >
-                      Forgot Password?
-                    </button>
-                    <span style={{ color: '#d1d5db', fontSize: '11px' }}>•</span>
-                    <button 
-                      type="button" 
-                      className="forgot-pass-btn" 
-                      onClick={handleRequestOTP}
-                    >
-                      Login with OTP
-                    </button>
-                  </div>
+                  <button 
+                    type="button" 
+                    className="forgot-pass-btn" 
+                    onClick={() => { setTab('forgot'); setError(''); setSuccessMsg(''); }}
+                  >
+                    Forgot Password?
+                  </button>
                 </div>
                 <div className="auth-input-wrapper pass-wrap">
                   <Lock size={15} className="field-icon" />
@@ -281,6 +254,22 @@ export default function AuthModal({ onClose }) {
                 Sign In
               </button>
               <button type="button" className="auth-tab active">Create Account</button>
+            </div>
+
+            {/* Google OAuth Button */}
+            <div className="modal-google-wrapper">
+              <GoogleAuthButton
+                onSuccess={() => {
+                  toast.success('Account created with Google!');
+                  onClose();
+                }}
+                onError={(err) => setError(err)}
+                buttonText="Sign up with Google"
+              />
+            </div>
+
+            <div className="auth-social-divider">
+              <span>or register with email</span>
             </div>
 
             <form onSubmit={handleRegister} className="auth-form register-form-scroll">

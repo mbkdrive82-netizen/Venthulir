@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Layers, Package, ArrowRight, TrendingUp, Sparkles } from 'lucide-react';
 
+let adminCategoriesProductsCache = null;
+
 export default function AdminCategoriesPage() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(adminCategoriesProductsCache || []);
+  const [loading, setLoading] = useState(!adminCategoriesProductsCache);
 
   useEffect(() => {
     const fetchCatalog = async () => {
@@ -14,7 +16,9 @@ export default function AdminCategoriesPage() {
         const res = await fetch('/api/products?admin=true&limit=100');
         if (res.ok) {
           const data = await res.json();
-          setProducts(data.products || []);
+          const prods = data.products || [];
+          adminCategoriesProductsCache = prods;
+          setProducts(prods);
         }
       } catch (err) {
         console.error('Failed to load categories:', err);

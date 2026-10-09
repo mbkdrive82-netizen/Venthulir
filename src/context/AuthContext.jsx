@@ -12,6 +12,25 @@ export const AuthProvider = ({ children }) => {
   const API_URL = '/api';
 
   useEffect(() => {
+    // 1. Instant Synchronous Cache Hydration (0ms load time)
+    if (typeof window !== 'undefined') {
+      const savedUserStr = localStorage.getItem('venthulir_user');
+      const token = localStorage.getItem('venthulir_token');
+      if (token && savedUserStr) {
+        try {
+          const parsed = JSON.parse(savedUserStr);
+          if (parsed && (parsed.email || parsed.id)) {
+            setUser(parsed);
+            setIsAuthenticated(true);
+            setLoading(false);
+          }
+        } catch {}
+      } else if (!token) {
+        setLoading(false);
+      }
+    }
+
+    // 2. Silent Background Token Verification (Non-blocking)
     const verify = async () => {
       const token = typeof window !== 'undefined' ? localStorage.getItem('venthulir_token') : null;
       if (!token) {
@@ -30,6 +49,10 @@ export const AuthProvider = ({ children }) => {
             name: u.name,
             email: u.email,
             phone: u.phone,
+            avatar: u.avatar || '',
+            googleId: u.googleId || '',
+            authProvider: u.authProvider || '',
+            gender: u.gender || 'Male',
             isAdmin: Boolean(u.isAdmin),
             isEmailVerified: u.isEmailVerified ?? true,
             deliveryAddress: u.deliveryAddress || { address: '', city: '', state: 'Tamil Nadu', zipCode: '' },
@@ -38,18 +61,17 @@ export const AuthProvider = ({ children }) => {
           setUser(freshUser);
           setIsAuthenticated(true);
           localStorage.setItem('venthulir_user', JSON.stringify(freshUser));
-        } else {
+        } else if (res.status === 401 || res.status === 403) {
           localStorage.removeItem('venthulir_token');
           localStorage.removeItem('venthulir_user');
+          setUser(null);
+          setIsAuthenticated(false);
         }
       } catch {
-        const saved = localStorage.getItem('venthulir_user');
-        if (saved) {
-          setUser(JSON.parse(saved));
-          setIsAuthenticated(true);
-        }
+        // Keep cached user if network temporarily disconnects
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     verify();
   }, []);
@@ -193,6 +215,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async ({ credential, accessToken, userInfo }) => {
+    try {
+      const res = await fetch(`${API_URL}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential, accessToken, userInfo })
+      });
+      const data = await res.json();
+      if (res.ok && data.token && data.user) {
+        setUser(data.user);
+        setIsAuthenticated(true);
+        localStorage.setItem('venthulir_token', data.token);
+        localStorage.setItem('venthulir_user', JSON.stringify(data.user));
+        return { success: true, user: data.user };
+      }
+      return { success: false, msg: data.msg || 'Google Sign-In failed' };
+    } catch {
+      return { success: false, msg: 'Server connection failed' };
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
@@ -216,7 +259,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, register, requestOTP, requestRegisterOTP, verifyOTP, verifyRegisterOTP, forgotPassword, resetPassword, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, loginWithGoogle, register, requestOTP, requestRegisterOTP, verifyOTP, verifyRegisterOTP, forgotPassword, resetPassword, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

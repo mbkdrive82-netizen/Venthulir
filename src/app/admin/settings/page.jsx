@@ -14,8 +14,10 @@ import {
   Loader2
 } from 'lucide-react';
 
+let adminSettingsCache = null;
+
 export default function AdminSettingsPage() {
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState(adminSettingsCache || {
     storeName: 'Venthulir Organic',
     tagline: '100% Pure Organic Oils & Heritage Harvest',
     supportEmail: 'theoptime.io@gmail.com',
@@ -33,7 +35,7 @@ export default function AdminSettingsPage() {
     },
   });
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!adminSettingsCache);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -43,6 +45,7 @@ export default function AdminSettingsPage() {
         const res = await fetch('/api/admin/settings');
         if (res.ok) {
           const data = await res.json();
+          adminSettingsCache = data;
           setSettings(prev => ({ ...prev, ...data }));
         }
       } catch (err) {

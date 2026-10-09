@@ -93,8 +93,9 @@ export async function POST(request) {
         const prod = await Product.findById(item.product || item._id || item.productId);
         let verifiedPrice = item.price;
         if (prod) {
-          if (item.variant && prod.variants && prod.variants.length > 0) {
-            const v = prod.variants.find(varObj => varObj.label === item.variant.label);
+          const variantLabel = typeof item.variant === 'object' ? item.variant?.label : item.variant;
+          if (variantLabel && prod.variants && prod.variants.length > 0) {
+            const v = prod.variants.find(varObj => varObj.label === variantLabel);
             if (v && v.price) verifiedPrice = v.price;
           } else if (prod.price) {
             verifiedPrice = prod.price;

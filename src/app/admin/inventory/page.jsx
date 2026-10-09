@@ -15,17 +15,21 @@ import {
 import RestockModal from '../components/RestockModal';
 import StatCard from '../components/StatCard';
 
+let adminInventoryCache = null;
+
 export default function AdminInventoryPage() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(adminInventoryCache || []);
+  const [loading, setLoading] = useState(!adminInventoryCache);
   const [activeFilter, setActiveFilter] = useState('All'); // 'All', 'LowStock', 'OutOfStock'
   const [searchTerm, setSearchTerm] = useState('');
   const [restockProduct, setRestockProduct] = useState(null);
 
-  const fetchInventory = async () => {
+  const fetchInventory = async (showSpinner = false) => {
     try {
-      setLoading(true);
-      const token = localStorage.getItem('venthulir_token');
+      if (showSpinner || !adminInventoryCache) {
+        setLoading(true);
+      }
+      const token = typeof window !== 'undefined' ? localStorage.getItem('venthulir_token') : null;
       const res = await fetch('/api/products?admin=true&limit=100', {
         headers: {
           ...(token && { Authorization: `Bearer ${token}` })
@@ -33,7 +37,9 @@ export default function AdminInventoryPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setProducts(data.products || []);
+        const prods = data.products || [];
+        adminInventoryCache = prods;
+        setProducts(prods);
       }
     } catch (err) {
       console.error('Failed to load inventory:', err);

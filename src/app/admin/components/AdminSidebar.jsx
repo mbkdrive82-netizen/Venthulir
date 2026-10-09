@@ -11,6 +11,7 @@ import {
   Boxes,
   ShoppingCart,
   Users,
+  UserPlus,
   Ticket,
   Sparkles,
   Image as ImageIcon,
@@ -73,6 +74,7 @@ export default function AdminSidebar({
     {
       group: 'Marketing',
       items: [
+        { label: 'Visitor Leads', href: '/admin/leads', icon: UserPlus },
         { label: 'Offers', href: '/admin/offers', icon: Sparkles },
         { label: 'Banners', href: '/admin/banners', icon: ImageIcon },
       ]
@@ -194,8 +196,17 @@ export default function AdminSidebar({
         {/* Footer */}
         <div className="admin-sidebar-footer">
           <div className="admin-sidebar-user">
-            <div className="admin-user-avatar">
-              {(user?.name || 'A')[0].toUpperCase()}
+            <div className="admin-user-avatar" style={user?.avatar ? { background: 'transparent', padding: 0, overflow: 'hidden' } : {}}>
+              {user?.avatar ? (
+                <img 
+                  src={user.avatar} 
+                  alt={user?.name || 'Admin'} 
+                  referrerPolicy="no-referrer"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                />
+              ) : (
+                (user?.name || 'A')[0].toUpperCase()
+              )}
             </div>
             {!collapsed && (
               <div className="admin-user-info">

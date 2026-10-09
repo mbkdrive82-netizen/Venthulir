@@ -382,27 +382,7 @@ const INITIAL_CATALOG_PRODUCTS = [
     ],
     inStock: true
   },
-  {
-    _id: '6aba0cd61452a86806531196',
-    slug: 'royal-chettinad-garam-masala-blend',
-    productCode: 'VEN-MS-GAR',
-    name: 'Royal Chettinad Garam Masala Blend',
-    category: 'Masala Blends',
-    badge: 'Traditional Recipe',
-    price: 180,
-    originalPrice: 230,
-    discountPercent: 22,
-    rating: 5.0,
-    reviewsCount: 417,
-    imageUrl: imgGaramMasala,
-    images: [imgGaramMasala],
-    description: 'A master blend of 12 hand-roasted whole spices: green cardamom, royal cinnamon, cloves, star anise, and mace. Unrivaled fragrant depth.',
-    variants: [
-      { label: '100g', price: 180, originalPrice: 230 },
-      { label: '200g', price: 340, originalPrice: 440 }
-    ],
-    inStock: true
-  },
+
   {
     _id: '6aba0cd61452a86806531195',
     slug: 'heritage-grandmothers-sambar-powder',
@@ -680,28 +660,11 @@ export default function HomePage({ onCheckout }) {
     } catch {}
   }, []);
 
-  // Auto-advance hero slides every 4.5 seconds (pauses on hover/drag)
-  useEffect(() => {
-    if (isHeroPaused) return;
-    const interval = setInterval(() => {
-      setCurrentHeroSlide((prev) => (prev + 1) % activeHeroSlides.length);
-    }, 4500);
-    return () => clearInterval(interval);
-  }, [isHeroPaused, activeHeroSlides.length]);
-
-  // Reset slide index if category changes
+  // Manual / user-driven hero slides (no aggressive automatic auto-switching)
   const handleCategorySwitch = (tab) => {
     setHeroTab(tab);
     setCurrentHeroSlide(0);
   };
-
-  // Auto rotate reviews
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentReview((prev) => (prev + 1) % REVIEWS.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Hero Touch & Drag Handlers for Mobile / Desktop Swipe
   const handleDragStart = (clientX) => {
@@ -802,7 +765,10 @@ export default function HomePage({ onCheckout }) {
               </div>
 
               <h1 className="hero-main-heading">
-                <span className="heading-italic-lead">{isTamil ? 'சுவையான பாரம்பரிய' : 'Taste the Purity of'}</span>
+                <span className="hero-brand-name-tag" style={{ display: 'block', fontSize: '0.88rem', color: '#1B5E2F', letterSpacing: '0.06em', marginBottom: '14px', fontWeight: '800', textTransform: 'uppercase' }}>
+                  {isTamil ? 'வெண்துளிர் இயற்கை' : 'Venthulir Natural Harvests'}
+                </span>
+                <span className="heading-italic-lead">{isTamil ? 'சுவையான பாரம்பரிய ' : 'Taste the Purity of '}</span>
                 <span className="heading-nature-bold">{isTamil ? 'இயற்கை நல்வாழ்வு.' : 'Nature.'}</span>
                 <span className="heading-farm-sub">{isTamil ? 'பண்ணையிலிருந்து உங்கள் சமையலறைக்கு.' : 'From Tamil Nadu Farms to Your Kitchen.'}</span>
               </h1>
@@ -832,30 +798,6 @@ export default function HomePage({ onCheckout }) {
                   <span>{isTamil ? 'மசாலா & எண்ணெய்களைப் பார்க்க' : 'Explore Spices & Oils'}</span>
                   <ArrowRight size={17} className="btn-arrow-icon" />
                 </button>
-              </div>
-
-              {/* Luxury Micro Trust Metric Row */}
-              <div className="hero-trust-row">
-                <div className="hero-trust-item">
-                  <div className="hero-trust-stars">
-                    <Star size={13} fill="#eab308" color="#eab308" />
-                    <Star size={13} fill="#eab308" color="#eab308" />
-                    <Star size={13} fill="#eab308" color="#eab308" />
-                    <Star size={13} fill="#eab308" color="#eab308" />
-                    <Star size={13} fill="#eab308" color="#eab308" />
-                  </div>
-                  <span className="hero-trust-text"><strong>4.9/5</strong> ({isTamil ? '2,500+ திருப்திகரமான குடும்பங்கள்' : '2,500+ Happy Families'})</span>
-                </div>
-                <div className="hero-trust-divider" />
-                <div className="hero-trust-item">
-                  <ShieldCheck size={15} className="hero-trust-icon" />
-                  <span className="hero-trust-text">{isTamil ? '100% அசல் நேரடி விளைச்சல்' : '100% Single-Origin Direct'}</span>
-                </div>
-                <div className="hero-trust-divider" />
-                <div className="hero-trust-item">
-                  <Truck size={15} className="hero-trust-icon" />
-                  <span className="hero-trust-text">{isTamil ? 'விரைவு பண்ணை டெலிவரி' : 'Express Farm Dispatch'}</span>
-                </div>
               </div>
             </div>
 

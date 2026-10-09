@@ -99,6 +99,15 @@
   font-weight: 800;
   flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(27, 94, 47, 0.25);
+  overflow: hidden;
+}
+
+.fk-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 .fk-user-details {
@@ -123,6 +132,32 @@
   overflow: hidden;
   text-overflow: ellipsis;
   margin-top: 2px;
+}
+
+.fk-user-card-logout-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #fee2e2;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fk-user-card-logout-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+  transform: translateY(-1px);
 }
 
 /* Main Navigation Menu Card */
@@ -402,6 +437,32 @@
   background: #ecfdf5;
   border: 1px solid #a7f3d0;
   color: #047857;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.fk-badge-empty {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.fk-badge-google {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
   font-size: 0.72rem;
   font-weight: 800;
   padding: 2px 8px;

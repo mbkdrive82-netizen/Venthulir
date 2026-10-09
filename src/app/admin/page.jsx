@@ -44,10 +44,12 @@ import ConfirmStatusModal from './components/ConfirmStatusModal';
 import { toast } from 'react-toastify';
 import { useAuth } from '@/context/AuthContext';
 
+let adminDashboardStatsCache = null;
+
 export default function SimpleAdminDashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(adminDashboardStatsCache);
+  const [loading, setLoading] = useState(!adminDashboardStatsCache);
   const [refreshing, setRefreshing] = useState(false);
   const [orderFilter, setOrderFilter] = useState('all'); // 'all' | 'pending' | 'confirmed' | 'shipped' | 'delivered'
   const [paymentFilter, setPaymentFilter] = useState('all'); // 'all' | 'prepaid' | 'cod'
@@ -67,17 +69,21 @@ export default function SimpleAdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      setRefreshing(true);
+      if (!adminDashboardStatsCache) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
       if (typeof window === 'undefined') return;
 
       const token = localStorage.getItem('venthulir_token');
       const savedUserStr = localStorage.getItem('venthulir_user');
       
-      let isAdminUser = user?.isAdmin;
+      let isAdminUser = user?.isAdmin && (user?.email?.toLowerCase() === 'admin@venthulir.com');
       if (!isAdminUser && savedUserStr) {
         try {
           const parsed = JSON.parse(savedUserStr);
-          isAdminUser = parsed?.isAdmin;
+          isAdminUser = parsed?.isAdmin && (parsed?.email?.toLowerCase() === 'admin@venthulir.com');
         } catch {
           isAdminUser = false;
         }
@@ -95,7 +101,10 @@ export default function SimpleAdminDashboard() {
 
       if (res && res.ok) {
         const data = await res.json().catch(() => null);
-        if (data) setStats(data);
+        if (data) {
+          adminDashboardStatsCache = data;
+          setStats(data);
+        }
       }
     } catch {
       // Safe fallback
@@ -107,8 +116,6 @@ export default function SimpleAdminDashboard() {
 
   useEffect(() => {
     fetchStats();
-    const interval = setInterval(fetchStats, 15000);
-    return () => clearInterval(interval);
   }, [user]);
 
   const handleAdminOrderStatusUpdate = async (orderId, newStatus, isCancel, extras) => {

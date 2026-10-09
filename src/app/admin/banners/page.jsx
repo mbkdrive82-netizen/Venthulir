@@ -11,12 +11,14 @@ import {
   Loader2
 } from 'lucide-react';
 
+let adminBannersCache = null;
+
 export default function AdminBannersPage() {
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState(adminBannersCache || {
     announcementText: '🌿 Pure Heritage Harvest Direct From Tamil Nadu Farms — Express Delivery Across India!',
     announcementActive: true,
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!adminBannersCache);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -26,10 +28,12 @@ export default function AdminBannersPage() {
         const res = await fetch('/api/admin/settings');
         if (res.ok) {
           const data = await res.json();
-          setSettings({
+          const loaded = {
             announcementText: data.announcementText || '🌿 Pure Heritage Harvest Direct From Tamil Nadu Farms — Express Delivery Across India!',
             announcementActive: data.announcementActive !== undefined ? data.announcementActive : true,
-          });
+          };
+          adminBannersCache = loaded;
+          setSettings(loaded);
         }
       } catch (err) {
         console.error('Failed to load banner settings:', err);

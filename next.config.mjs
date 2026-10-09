@@ -18,17 +18,18 @@ const nextConfig = {
   },
   // Ensure heavy server-only packages are not bundled for client
   serverExternalPackages: ['mongoose', 'bcryptjs', 'razorpay', 'nodemailer', 'resend', 'sharp'],
-  experimental: {
-    optimizePackageImports: [
-      'lucide-react',
-      'gsap',
-      'lenis',
-      'react-toastify',
-      'axios',
-      'jspdf',
-      'html2canvas'
-    ],
-  },
+
+  headers: async () => [
+    {
+      source: '/:path*',
+      headers: [
+        {
+          key: 'Cross-Origin-Opener-Policy',
+          value: 'same-origin-allow-popups',
+        },
+      ],
+    },
+  ],
 };
 
 export default nextConfig;

@@ -1,0 +1,183 @@
+export const INITIAL_PRODUCTS = [
+  {
+    _id: '6aba0cd61452a86806531192',
+    slug: 'high-curcumin-pure-turmeric-powder',
+    productCode: 'VEN-SP-TUR',
+    name: 'High-Curcumin Pure Turmeric Powder',
+    category: 'Spices & Powders',
+    badge: '100% Pure',
+    price: 140,
+    originalPrice: 185,
+    discountPercent: 24,
+    rating: 4.9,
+    reviewsCount: 348,
+    imageUrl: '/assets/hero/turmeric.png',
+    images: ['/assets/hero/turmeric.png'],
+    description: 'High curcumin content authentic Salem turmeric roots, sun-dried and stone ground to retain natural color, aroma, and medicinal healing properties.',
+    variants: [
+      { label: '100g', price: 140, originalPrice: 185 },
+      { label: '250g', price: 320, originalPrice: 420 },
+      { label: '500g', price: 590, originalPrice: 780 }
+    ],
+    inStock: true,
+    currentStock: 100
+  },
+  {
+    _id: '6aba0cd61452a86806531193',
+    slug: 'authentic-guntur-red-chilli-powder',
+    productCode: 'VEN-SP-CHL',
+    name: 'Authentic Guntur Red Chilli Powder',
+    category: 'Spices & Powders',
+    badge: 'Stone Ground',
+    price: 150,
+    originalPrice: 195,
+    discountPercent: 23,
+    rating: 4.8,
+    reviewsCount: 512,
+    imageUrl: '/assets/hero/chilli.png',
+    images: ['/assets/hero/chilli.png'],
+    description: 'Sun-dried premium red chillies stone-ground at low temperatures. Delivers deep natural red color, balanced piquant heat, and zero artificial dyes.',
+    variants: [
+      { label: '100g', price: 150, originalPrice: 195 },
+      { label: '250g', price: 340, originalPrice: 440 },
+      { label: '500g', price: 620, originalPrice: 800 }
+    ],
+    inStock: true,
+    currentStock: 80
+  },
+  {
+    _id: '6aba0cd61452a86806531194',
+    slug: 'single-origin-stone-ground-coriander-powder',
+    productCode: 'VEN-SP-COR',
+    name: 'Single-Origin Stone Ground Coriander Powder',
+    category: 'Spices & Powders',
+    badge: 'Single Origin',
+    price: 130,
+    originalPrice: 165,
+    discountPercent: 21,
+    rating: 4.9,
+    reviewsCount: 289,
+    imageUrl: '/assets/hero/coriander.png',
+    images: ['/assets/hero/coriander.png'],
+    description: 'Slow roasted Tamil Nadu heirloom coriander seeds ground to fragrant perfection. An essential heart of daily South Indian curries and gravies.',
+    variants: [
+      { label: '100g', price: 130, originalPrice: 165 },
+      { label: '250g', price: 290, originalPrice: 380 },
+      { label: '500g', price: 540, originalPrice: 700 }
+    ],
+    inStock: true,
+    currentStock: 90
+  },
+  {
+    _id: '6aba0cd61452a86806531195',
+    slug: 'heritage-grandmothers-sambar-powder',
+    productCode: 'VEN-MS-SAM',
+    name: 'Heritage Grandmothers Sambar Powder',
+    category: 'Masala Blends',
+    badge: 'Bestseller',
+    price: 160,
+    originalPrice: 210,
+    discountPercent: 24,
+    rating: 4.9,
+    reviewsCount: 628,
+    imageUrl: '/assets/hero/sambar.png',
+    images: ['/assets/hero/sambar.png'],
+    description: 'Handcrafted with an authentic generational recipe of roasted dals, whole red chillies, coriander, fenugreek, and aromatic spices.',
+    variants: [
+      { label: '100g', price: 160, originalPrice: 210 },
+      { label: '250g', price: 360, originalPrice: 470 },
+      { label: '500g', price: 680, originalPrice: 890 }
+    ],
+    inStock: true,
+    currentStock: 65
+  },
+  {
+    _id: '6aba0cd61452a86806531190',
+    slug: 'wood-cold-pressed-virgin-coconut-oil',
+    productCode: 'VEN-OIL-COC',
+    name: 'Wood Cold-Pressed Virgin Coconut Oil',
+    category: 'Cold-Pressed Oils',
+    badge: 'Chekku Pressed',
+    price: 280,
+    originalPrice: 350,
+    discountPercent: 20,
+    rating: 4.8,
+    reviewsCount: 381,
+    imageUrl: '/assets/hero/oil_coconut.png',
+    images: ['/assets/hero/oil_coconut.png'],
+    description: 'Extracted from sun-dried sulfur-free copra using traditional Vaagai wood pestles below 40°C. Raw, unrefined, virgin quality.',
+    variants: [
+      { label: '500ml', price: 280, originalPrice: 350 },
+      { label: '1 Litre', price: 520, originalPrice: 650 }
+    ],
+    inStock: true,
+    currentStock: 45
+  },
+  {
+    _id: '6aba0cd61452a8680653118e',
+    slug: 'wood-cold-pressed-groundnut-oil',
+    productCode: 'VEN-OIL-GND',
+    name: 'Wood Cold-Pressed Groundnut Oil (Marachekku)',
+    category: 'Cold-Pressed Oils',
+    badge: 'Rich Aroma',
+    price: 260,
+    originalPrice: 335,
+    discountPercent: 22,
+    rating: 4.9,
+    reviewsCount: 463,
+    imageUrl: '/assets/hero/oil_groundnut.png',
+    images: ['/assets/hero/oil_groundnut.png'],
+    description: 'Pressed from selected native peanuts. High smoke point, rich nutty aroma, and heart-healthy monounsaturated fats.',
+    variants: [
+      { label: '500ml', price: 260, originalPrice: 335 },
+      { label: '1 Litre', price: 490, originalPrice: 630 },
+      { label: '5 Litres', price: 2350, originalPrice: 2990 }
+    ],
+    inStock: true,
+    currentStock: 50
+  },
+  {
+    _id: '6aba0cd61452a8680653118f',
+    slug: 'wood-cold-pressed-gingelly-sesame-oil',
+    productCode: 'VEN-OIL-GIN',
+    name: 'Wood Cold-Pressed Gingelly Sesame Oil',
+    category: 'Cold-Pressed Oils',
+    badge: 'Palm Jaggery Blend',
+    price: 340,
+    originalPrice: 430,
+    discountPercent: 21,
+    rating: 4.9,
+    reviewsCount: 580,
+    imageUrl: '/assets/hero/oil_gingelly.png',
+    images: ['/assets/hero/oil_gingelly.png'],
+    description: 'First-grade black sesame seeds slow-pressed with authentic Palm Jaggery (Karupatti). Rich in calcium and live antioxidants.',
+    variants: [
+      { label: '500ml', price: 340, originalPrice: 430 },
+      { label: '1 Litre', price: 650, originalPrice: 820 }
+    ],
+    inStock: true,
+    currentStock: 40
+  },
+  {
+    _id: '6aba0cd61452a86806531191',
+    slug: 'wood-cold-pressed-pure-sunflower-oil',
+    productCode: 'VEN-OIL-SUN',
+    name: 'Wood Cold-Pressed Pure Sunflower Oil',
+    category: 'Cold-Pressed Oils',
+    badge: '100% Unrefined',
+    price: 240,
+    originalPrice: 300,
+    discountPercent: 20,
+    rating: 4.7,
+    reviewsCount: 275,
+    imageUrl: '/assets/hero/oil_sunflower.png',
+    images: ['/assets/hero/oil_sunflower.png'],
+    description: 'Cold-extracted from high-grade sunflower seeds. Light golden hue, neutral pleasant flavour, and packed with natural Vitamin E.',
+    variants: [
+      { label: '500ml', price: 240, originalPrice: 300 },
+      { label: '1 Litre', price: 460, originalPrice: 580 }
+    ],
+    inStock: true,
+    currentStock: 35
+  }
+];

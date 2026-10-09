@@ -72,39 +72,34 @@ export default function RestockModal({
             </div>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#f8fafc', padding: '12px', borderRadius: '10px', marginBottom: '16px', border: '1px solid #e2e8f0' }}>
-            <img
-              src={product.imageUrl || (product.images && product.images[0]) || '/assets/hero/turmeric.png'}
-              alt={product.name}
-              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-            />
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '14px', color: '#0f172a' }}>{product.name}</div>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>SKU: {product.productCode || 'VNT-PROD'}</div>
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
-              <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Current Stock</div>
-              <div style={{ fontSize: '22px', fontWeight: 800, color: currentStock <= 5 ? '#dc2626' : '#0f3d2a' }}>
-                {currentStock}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '12px 14px', borderRadius: '10px', marginBottom: '16px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <img
+                src={product.imageUrl || (product.images && product.images[0]) || '/assets/hero/turmeric.png'}
+                alt={product.name}
+                style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+              />
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '13.5px', color: '#0f172a' }}>{product.name}</div>
+                <div style={{ fontSize: '11.5px', color: '#64748b' }}>SKU: {product.productCode || 'VNT-PROD'}</div>
               </div>
             </div>
-
-            <div style={{ background: '#dcfce7', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
-              <div style={{ fontSize: '11px', color: '#1B5E2F', textTransform: 'uppercase', fontWeight: 600 }}>New Stock</div>
-              <div style={{ fontSize: '22px', fontWeight: 800, color: '#15803d' }}>
-                {newProjectedStock}
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '10.5px', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Current Stock</div>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: currentStock <= 5 ? '#dc2626' : '#0f3d2a' }}>
+                {currentStock} units
               </div>
             </div>
           </div>
 
           <div className="adm-form-group">
-            <label className="adm-form-label">Units to Add to Warehouse (+)</label>
+            <label className="adm-form-label" style={{ fontWeight: 700, color: '#1e293b' }}>
+              Add Stock Quantity (+)
+            </label>
             <input
               type="number"
               className="adm-form-input"
+              placeholder="Enter units to add"
               value={addQty}
               onChange={(e) => setAddQty(e.target.value)}
               min="1"
@@ -118,7 +113,7 @@ export default function RestockModal({
                 key={preset}
                 type="button"
                 className="adm-btn-secondary"
-                style={{ flex: 1, justifyContent: 'center', padding: '7px' }}
+                style={{ flex: 1, justifyContent: 'center', padding: '7px', fontWeight: 700 }}
                 onClick={() => setAddQty(preset)}
               >
                 +{preset}
@@ -138,7 +133,7 @@ export default function RestockModal({
             disabled={submitting}
           >
             {submitting ? <Loader2 size={15} className="spin" /> : <CheckCircle2 size={15} />}
-            <span>Confirm Restock</span>
+            <span>Add Stock</span>
           </button>
         </div>
       </div>

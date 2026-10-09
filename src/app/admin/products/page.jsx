@@ -19,32 +19,42 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import ProductFormModal from '../components/ProductFormModal';
 import RestockModal from '../components/RestockModal';
 
+let adminProductsCache = {
+  products: null,
+  totalPages: 1,
+  totalItems: 0,
+  timestamp: 0
+};
+
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(adminProductsCache.products || []);
+  const [loading, setLoading] = useState(!adminProductsCache.products);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStockFilter, setSelectedStockFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(adminProductsCache.totalPages || 1);
+  const [totalItems, setTotalItems] = useState(adminProductsCache.totalItems || 0);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [restockProduct, setRestockProduct] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (showSpinner = false) => {
     try {
-      setLoading(true);
-      const token = localStorage.getItem('venthulir_token');
+      if (showSpinner || !adminProductsCache.products) {
+        setLoading(true);
+      }
+      const token = typeof window !== 'undefined' ? localStorage.getItem('venthulir_token') : null;
       const params = new URLSearchParams({
         admin: 'true',
         page: currentPage.toString(),
-        limit: '15',
+        limit: '20',
         ...(selectedCategory !== 'All' && { category: selectedCategory }),
         ...(searchTerm && { search: searchTerm })
       });
@@ -57,9 +67,22 @@ export default function AdminProductsPage() {
 
       if (res.ok) {
         const data = await res.json();
-        setProducts(data.products || []);
+        const loadedProducts = data.products || [];
+        setProducts(loadedProducts);
         setTotalPages(data.totalPages || 1);
-        setTotalItems(data.totalItems || (data.products ? data.products.length : 0));
+        setTotalItems(data.totalItems || loadedProducts.length);
+
+        if (currentPage === 1 && selectedCategory === 'All' && !searchTerm) {
+          adminProductsCache = {
+            products: loadedProducts,
+            totalPages: data.totalPages || 1,
+            totalItems: data.totalItems || loadedProducts.length,
+            timestamp: Date.now()
+          };
+        }
+      } else {
+        const err = await res.json().catch(() => ({}));
+        console.error('Failed to load products:', err);
       }
     } catch (err) {
       console.error('Failed to load products:', err);
@@ -91,6 +114,7 @@ export default function AdminProductsPage() {
       throw new Error(err.error || err.msg || 'Failed to save product');
     }
 
+    toast.success(id ? 'Product updated successfully!' : 'New product created successfully!');
     fetchProducts();
   };
 
@@ -107,11 +131,20 @@ export default function AdminProductsPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok || res.status === 200) {
+        // Immediately remove from UI list
+        setProducts(prev => prev.filter(p => (p._id !== id && p.id !== id)));
+        setTotalItems(prev => Math.max(0, prev - 1));
+        toast.success('Product deleted from catalog successfully!');
         fetchProducts();
+      } else {
+        toast.error(data.msg || data.error || 'Failed to delete product.');
       }
     } catch (err) {
       console.error('Delete product failed:', err);
+      toast.error('Network error. Unable to delete product.');
     } finally {
       setDeletingId(null);
     }
@@ -129,7 +162,10 @@ export default function AdminProductsPage() {
     });
 
     if (res.ok) {
+      toast.success('Stock level updated successfully!');
       fetchProducts();
+    } else {
+      toast.error('Failed to update stock level.');
     }
   };
 

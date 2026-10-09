@@ -13,22 +13,29 @@ import {
   Eye,
   Loader2
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import OfferFormModal from '../components/OfferFormModal';
 
+let adminOffersCache = null;
+
 export default function AdminOffersPage() {
-  const [offers, setOffers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [offers, setOffers] = useState(adminOffersCache || []);
+  const [loading, setLoading] = useState(!adminOffersCache);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
-  const fetchOffers = async () => {
+  const fetchOffers = async (showSpinner = false) => {
     try {
-      setLoading(true);
+      if (showSpinner || !adminOffersCache) {
+        setLoading(true);
+      }
       const res = await fetch('/api/offers?all=true');
       if (res.ok) {
         const data = await res.json();
-        setOffers(Array.isArray(data) ? data : []);
+        const offerList = Array.isArray(data) ? data : [];
+        adminOffersCache = offerList;
+        setOffers(offerList);
       }
     } catch (err) {
       console.error('Failed to load offers:', err);
@@ -74,9 +81,16 @@ export default function AdminOffersPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      if (res.ok) fetchOffers();
+      if (res.ok) {
+        setOffers(prev => prev.filter(o => o._id !== id));
+        toast.success('Offer campaign deleted successfully!');
+        fetchOffers();
+      } else {
+        toast.error('Failed to delete offer.');
+      }
     } catch (err) {
       console.error('Delete offer failed:', err);
+      toast.error('Network error deleting offer.');
     } finally {
       setDeletingId(null);
     }

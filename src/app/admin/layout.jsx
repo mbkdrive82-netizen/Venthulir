@@ -6,21 +6,31 @@ import AdminGuard from './components/AdminGuard';
 import AdminSidebar from './components/AdminSidebar';
 import AdminTopNav from './components/AdminTopNav';
 
+let globalStatsCache = null;
+let lastStatsFetchTime = 0;
+
 export default function AdminLayout({ children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState(globalStatsCache);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         if (typeof window === 'undefined') return;
+        const now = Date.now();
+        // If cached within last 45 seconds, avoid redundant network calls
+        if (globalStatsCache && (now - lastStatsFetchTime < 45000)) {
+          setStats(globalStatsCache);
+          return;
+        }
+
         const token = localStorage.getItem('venthulir_token');
         const savedUserStr = localStorage.getItem('venthulir_user');
         if (!token || !savedUserStr) return;
 
         const savedUser = JSON.parse(savedUserStr);
-        if (!savedUser?.isAdmin) return;
+        if (!savedUser?.isAdmin || savedUser?.email?.toLowerCase() !== 'admin@venthulir.com') return;
 
         const res = await fetch('/api/admin/stats', {
           headers: { Authorization: `Bearer ${token}` }
@@ -28,7 +38,11 @@ export default function AdminLayout({ children }) {
 
         if (res && res.ok) {
           const data = await res.json().catch(() => null);
-          if (data) setStats(data);
+          if (data) {
+            globalStatsCache = data;
+            lastStatsFetchTime = Date.now();
+            setStats(data);
+          }
         }
       } catch (err) {
         console.warn('Admin layout stats sync will retry in background');
@@ -36,8 +50,6 @@ export default function AdminLayout({ children }) {
     };
 
     fetchStats();
-    const timer = setInterval(fetchStats, 10000);
-    return () => clearInterval(timer);
   }, []);
 
   return (

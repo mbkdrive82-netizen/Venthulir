@@ -61,10 +61,13 @@ export const CartProvider = ({ children }) => {
     const rawImg = product.images?.[0] || product.imageUrl || product.image;
     const safeImg = rawImg || getFallbackImage(product.name, product.category);
 
+    const parsedQty = Math.max(1, Number(quantity) || 1);
+    const parsedPrice = Number(variant?.price ?? product?.price ?? 0);
+
     setCartItems(prev => {
       const existing = prev.find(i => i.key === key);
       if (existing) {
-        return prev.map(i => i.key === key ? { ...i, quantity: i.quantity + quantity } : i);
+        return prev.map(i => i.key === key ? { ...i, quantity: i.quantity + parsedQty } : i);
       }
       return [...prev, {
         key,
@@ -73,8 +76,8 @@ export const CartProvider = ({ children }) => {
         name: product.name,
         image: safeImg,
         variant: variant || null,
-        price: variant?.price || product.price,
-        quantity,
+        price: parsedPrice,
+        quantity: parsedQty,
         category: product.category
       }];
     });

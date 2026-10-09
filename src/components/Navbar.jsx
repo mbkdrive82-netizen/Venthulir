@@ -90,6 +90,8 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
 
   useEffect(() => {
     setMounted(true);
+    router.prefetch('/products');
+    router.prefetch('/home');
     fetch('/api/products?limit=100')
       .then(res => res.json())
       .then(data => {
@@ -98,7 +100,7 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (menuOpen) {
@@ -160,6 +162,16 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
     }, 4500);
     return () => clearInterval(timer);
   }, []);
+
+  // Prefetch critical customer routes for 0ms instantaneous navigation
+  useEffect(() => {
+    if (router?.prefetch) {
+      router.prefetch('/profile');
+      router.prefetch('/login');
+      router.prefetch('/products');
+      router.prefetch('/checkout');
+    }
+  }, [router]);
 
   // Scroll listener
   useEffect(() => {
@@ -364,7 +376,12 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
                           </div>
 
                           <div className="search-item-actions">
-                            <span className="search-item-price">₹{p.price}</span>
+                            <div className="search-item-price-group">
+                              <span className="search-item-price">₹{p.price}</span>
+                              {(p.originalPrice || Math.round(p.price * 1.25)) > p.price && (
+                                <span className="search-item-strike-price">₹{p.originalPrice || Math.round(p.price * 1.25)}</span>
+                              )}
+                            </div>
                             <button
                               type="button"
                               className={`search-item-add-btn ${isAdded ? 'added' : ''}`}
@@ -576,20 +593,37 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
             {/* Auth / Account Profile */}
             {isAuthenticated ? (
               <Link href="/profile" className="user-profile-btn" style={{textDecoration: 'none'}}>
-                <div className="user-avatar-initial">
-                  {user?.name?.[0]?.toUpperCase() || <User size={14} />}
+                <div className="user-avatar-initial" style={user?.avatar ? { background: 'transparent', padding: 0 } : {}}>
+                  {user?.avatar ? (
+                    <img 
+                      src={user.avatar} 
+                      alt={user?.name || 'User'} 
+                      referrerPolicy="no-referrer"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                    />
+                  ) : (
+                    user?.name?.[0]?.toUpperCase() || <User size={14} />
+                  )}
                 </div>
                 <span className="user-firstname">{user?.name?.split(' ')[0] || t('account', 'Account')}</span>
               </Link>
             ) : (
-              <Link 
-                href="/login"
+              <button 
+                type="button"
                 className="btn-header-signin" 
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                  setMenuOpen(false);
+                  if (onAuthOpen) {
+                    onAuthOpen();
+                  } else {
+                    router.push('/login');
+                  }
+                }}
+                aria-label="Sign In"
               >
                 <User size={15} />
                 <span>{t('signIn', 'Sign In')}</span>
-              </Link>
+              </button>
             )}
 
             {/* Mobile Hamburger Toggle */}
@@ -698,14 +732,21 @@ export default function Navbar({ onAuthOpen, onSearchOpen }) {
             {/* Mobile Auth Button */}
             <div className="mobile-panel-footer">
               {!isAuthenticated ? (
-                <Link 
-                  href="/login"
+                <button 
+                  type="button"
                   className="mobile-auth-cta" 
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    if (onAuthOpen) {
+                      onAuthOpen();
+                    } else {
+                      router.push('/login');
+                    }
+                  }}
                 >
                   <User size={16} />
                   <span>{t('signIn', 'Sign In / Register')}</span>
-                </Link>
+                </button>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <Link

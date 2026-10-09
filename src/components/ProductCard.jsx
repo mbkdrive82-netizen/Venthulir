@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useUIModal } from '@/components/Providers';
 import { 
   ShoppingBag, Eye, Star, Check, Heart, ArrowRight, 
-  Flame, Camera, Tag, Zap, ShieldCheck, Leaf, Sparkles,
-  ChevronLeft, ChevronRight
+  Flame, Tag, Zap
 } from 'lucide-react';
 import './ProductCard.css';
 
@@ -44,16 +44,17 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
   const { t, isTamil, getProductName, getCategory } = useLanguage();
   const uiModal = useUIModal?.() || null;
   const [selectedVariant, setSelectedVariant] = useState(product?.variants?.[0] || null);
-  const [currentImgIndex, setCurrentImgIndex] = useState(0);
-  const [touchStartX, setTouchStartX] = useState(null);
   const [added, setAdded] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
   const [liked, setLiked] = useState(false);
 
+  const productUrl = `/products/${product?._id || product?.slug || product?.id || ''}`;
+
   useEffect(() => {
-    // Prefetch checkout route in background for instantaneous navigation
+    // Prefetch product and checkout routes for instantaneous 0ms transitions
+    if (productUrl) router.prefetch(productUrl);
     router.prefetch('/checkout');
-  }, [router]);
+  }, [router, productUrl]);
 
   if (!product) return null;
 
@@ -90,71 +91,8 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
     return '/assets/hero/turmeric.png';
   };
 
-  const rawImages = Array.isArray(product.images) && product.images.length > 0 
-    ? product.images 
-    : (product.imageUrl ? [product.imageUrl] : []);
-  const imagesList = rawImages.length > 0 ? rawImages : [getFallbackImg(product)];
-  const safeIndex = currentImgIndex % imagesList.length;
-  const currentImage = imagesList[safeIndex] || getFallbackImg(product);
-  const hasMultipleImages = imagesList.length > 1;
+  const currentImage = product.imageUrl || (product.images && product.images[0]) || getFallbackImg(product);
   const hasVariants = product.variants?.length > 0;
-
-  const handlePrevImg = (e) => {
-    e.stopPropagation();
-    setCurrentImgIndex((prev) => (prev - 1 + imagesList.length) % imagesList.length);
-  };
-
-  const handleNextImg = (e) => {
-    e.stopPropagation();
-    setCurrentImgIndex((prev) => (prev + 1) % imagesList.length);
-  };
-
-  const handleTouchStart = (e) => {
-    setTouchStartX(e.touches[0].clientX);
-  };
-
-  const handleTouchEnd = (e) => {
-    if (touchStartX === null || !hasMultipleImages) return;
-    const touchEndX = e.changedTouches[0].clientX;
-    const diff = touchStartX - touchEndX;
-    if (Math.abs(diff) > 35) {
-      if (diff > 0) {
-        // Swiped Left -> Next
-        setCurrentImgIndex((prev) => (prev + 1) % imagesList.length);
-      } else {
-        // Swiped Right -> Prev
-        setCurrentImgIndex((prev) => (prev - 1 + imagesList.length) % imagesList.length);
-      }
-    }
-    setTouchStartX(null);
-  };
-
-  // Dynamic 3-spec value proposition items
-  const getProductSpecs = (p) => {
-    const cat = (p?.category || '').toLowerCase();
-    const name = (p?.name || '').toLowerCase();
-    if (cat.includes('oil') || name.includes('oil')) {
-      return [
-        { icon: Zap, label: isTamil ? 'மரச்செக்கு' : 'Wood Pressed' },
-        { icon: ShieldCheck, label: isTamil ? '100% தூயது' : '100% Virgin' },
-        { icon: Leaf, label: isTamil ? 'குளிர்ந்த பிழிதல்' : 'Zero Heat' }
-      ];
-    }
-    if (cat.includes('spice') || cat.includes('masala') || name.includes('powder')) {
-      return [
-        { icon: Zap, label: isTamil ? 'கல் அரைப்பு' : 'Stone Ground' },
-        { icon: ShieldCheck, label: isTamil ? 'அசல் தரம்' : 'Single Origin' },
-        { icon: Leaf, label: isTamil ? 'கலப்படமற்றது' : 'No Additives' }
-      ];
-    }
-    return [
-      { icon: Zap, label: isTamil ? 'பண்ணை நேரடி' : 'Farm Fresh' },
-      { icon: ShieldCheck, label: isTamil ? '100% இயற்கை' : '100% Pure' },
-      { icon: Leaf, label: isTamil ? 'பூஜ்ஜிய ரசாயனம்' : 'Zero Chemicals' }
-    ];
-  };
-
-  const specs = getProductSpecs(product);
 
   const handleAdd = (e) => {
     e.stopPropagation();
@@ -181,8 +119,9 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
     setLiked(!liked);
   };
 
-  const handleCardNavigate = () => {
-    router.push(`/products/${product._id || product.slug}`);
+  const handleCardNavigate = (e) => {
+    if (e?.target?.closest('button') || e?.target?.closest('a')) return;
+    router.push(productUrl);
   };
 
   // Badge determination: Best Seller, Top Rated, or Custom
@@ -212,16 +151,17 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
   const localizedCategory = getCategory ? getCategory(product.category) : (product.category || 'Farm Harvest');
 
   return (
-    <div className="product-card" onClick={handleCardNavigate} style={{ cursor: 'pointer' }}>
+    <div 
+      className="product-card" 
+      onClick={handleCardNavigate} 
+      onMouseEnter={() => router.prefetch(productUrl)}
+      style={{ cursor: 'pointer' }}
+    >
       
       {/* ── Top Media Showcase Stage ── */}
-      <div 
-        className="product-card-media"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
+      <div className="product-card-media">
         
-        {/* Top-Left Badge (Best Seller or Top Rated) */}
+        {/* Top-Left Badge */}
         <div className="product-top-badge">
           {isTopRated ? (
             <span className="badge-top-rated" title={badgeText}>
@@ -247,72 +187,24 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
           <Heart size={16} fill={liked ? '#ef4444' : 'none'} color={liked ? '#ef4444' : '#64748b'} />
         </button>
 
-        {/* Product Image */}
-        <div className="product-img-box">
+        {/* Product Image Link */}
+        <Link 
+          href={productUrl} 
+          prefetch={true} 
+          className="product-img-box" 
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', textDecoration: 'none' }}
+        >
           <img 
-            key={currentImage}
             src={currentImage} 
             alt={localizedTitle} 
-            className="product-img card-img-fade" 
+            className="product-img" 
             loading="lazy" 
             onError={(e) => {
               e.currentTarget.onerror = null;
               e.currentTarget.src = getFallbackImg(product);
             }}
           />
-        </div>
-
-        {/* Image Switcher Navigation Arrows (Visible when multiple images) */}
-        {hasMultipleImages && (
-          <>
-            <button
-              type="button"
-              className="card-img-arrow left"
-              onClick={handlePrevImg}
-              aria-label="Previous image"
-              title="Previous photo"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              type="button"
-              className="card-img-arrow right"
-              onClick={handleNextImg}
-              aria-label="Next image"
-              title="Next photo"
-            >
-              <ChevronRight size={16} />
-            </button>
-
-            {/* Pagination Dots */}
-            <div className="card-img-dots-bar" onClick={(e) => e.stopPropagation()}>
-              {imagesList.map((_, dotIdx) => (
-                <span
-                  key={dotIdx}
-                  className={`card-img-dot ${dotIdx === safeIndex ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentImgIndex(dotIdx);
-                  }}
-                  title={`Photo ${dotIdx + 1} of ${imagesList.length}`}
-                />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Bottom-Right Photo Count Interactive Badge */}
-        {hasMultipleImages && (
-          <button 
-            type="button"
-            className="product-photo-count clickable"
-            onClick={handleNextImg}
-            title="Click to view next photo"
-          >
-            <Camera size={11} />
-            <span>{safeIndex + 1}/{imagesList.length}</span>
-          </button>
-        )}
+        </Link>
 
         {/* Quick View Button on Hover */}
         {onQuickView && (
@@ -333,10 +225,12 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
         
         {/* Product Title */}
         <h3 className="product-title-heading" title={localizedTitle}>
-          {localizedTitle}
+          <Link href={productUrl} prefetch={true} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+            {localizedTitle}
+          </Link>
         </h3>
 
-        {/* Category & Rating Row (Combined for compact sleek card height) */}
+        {/* Category & Rating Row */}
         <div className="product-meta-row">
           <span className="product-category-text" title={localizedCategory}>
             {localizedCategory}
@@ -350,7 +244,7 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
           </div>
         </div>
 
-        {/* Pricing Row: Current Price + M.R.P. + Discount Tag */}
+        {/* Pricing Row: Realworld E-Commerce (Flipkart & Amazon style with struck-out M.R.P.) */}
         <div className="product-pricing-row">
           <div className="price-main-group">
             <span className="price-current">₹{price.toLocaleString()}</span>
@@ -399,20 +293,7 @@ export default function ProductCard({ product, onQuickView, onBuyNow }) {
           </div>
         )}
 
-        {/* 3-Feature Specification Micro-Badges */}
-        <div className="product-specs-row">
-          {specs.map((item, idx) => {
-            const IconComponent = item.icon;
-            return (
-              <div key={idx} className={`spec-item spec-item-${idx + 1}`}>
-                <IconComponent size={14} className="spec-icon" />
-                <span className="spec-label">{item.label}</span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Action Button Cluster (Add to Cart + High-Converting Buy Now) */}
+        {/* Action Button Cluster (Add to Cart + Instant Buy Now) */}
         <div className="product-button-cluster">
           <button 
             className={`btn-add-cart ${added ? 'added-state' : ''}`} 

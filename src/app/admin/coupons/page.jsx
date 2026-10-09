@@ -14,33 +14,46 @@ import {
   Tag,
   Loader2
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import CouponFormModal from '../components/CouponFormModal';
 
+let adminCouponsCache = {
+  coupons: null,
+  products: null
+};
+
 export default function AdminCouponsPage() {
-  const [coupons, setCoupons] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [coupons, setCoupons] = useState(adminCouponsCache.coupons || []);
+  const [products, setProducts] = useState(adminCouponsCache.products || []);
+  const [loading, setLoading] = useState(!adminCouponsCache.coupons);
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
-  const fetchCouponsAndProducts = async () => {
+  const fetchCouponsAndProducts = async (showSpinner = false) => {
     try {
-      setLoading(true);
-      const token = localStorage.getItem('venthulir_token');
+      if (showSpinner || !adminCouponsCache.coupons) {
+        setLoading(true);
+      }
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('venthulir_token') || localStorage.getItem('token')) : null;
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const [couponRes, prodRes] = await Promise.all([
-        fetch('/api/coupons', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/products?admin=true&limit=100', { headers: { Authorization: `Bearer ${token}` } })
+        fetch('/api/coupons', { headers }).catch(() => null),
+        fetch('/api/products?admin=true&limit=100', { headers }).catch(() => null)
       ]);
 
-      if (couponRes.ok) {
-        const cData = await couponRes.json();
-        setCoupons(Array.isArray(cData) ? cData : []);
+      if (couponRes && couponRes.ok) {
+        const cData = await couponRes.json().catch(() => []);
+        const coupList = Array.isArray(cData) ? cData : [];
+        adminCouponsCache.coupons = coupList;
+        setCoupons(coupList);
       }
-      if (prodRes.ok) {
-        const pData = await prodRes.json();
-        setProducts(pData.products || []);
+      if (prodRes && prodRes.ok) {
+        const pData = await prodRes.json().catch(() => ({}));
+        const prodList = pData.products || [];
+        adminCouponsCache.products = prodList;
+        setProducts(prodList);
       }
     } catch (err) {
       console.error('Failed to load coupons:', err);
@@ -72,6 +85,7 @@ export default function AdminCouponsPage() {
       throw new Error(err.error || err.msg || 'Failed to save coupon');
     }
 
+    toast.success(id ? 'Coupon updated successfully!' : 'New coupon created successfully!');
     fetchCouponsAndProducts();
   };
 
@@ -87,10 +101,15 @@ export default function AdminCouponsPage() {
       });
 
       if (res.ok) {
+        setCoupons(prev => prev.filter(c => c._id !== id));
+        toast.success('Coupon removed successfully!');
         fetchCouponsAndProducts();
+      } else {
+        toast.error('Failed to delete coupon.');
       }
     } catch (err) {
       console.error('Delete coupon error:', err);
+      toast.error('Network error deleting coupon.');
     } finally {
       setDeletingId(null);
     }

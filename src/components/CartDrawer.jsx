@@ -76,16 +76,43 @@ export default function CartDrawer({ onCheckout }) {
     };
   }, [isCartOpen]);
 
-  const applyCouponCode = (codeToApply) => {
+  const applyCouponCode = async (codeToApply) => {
     const code = (codeToApply || couponInput).trim().toUpperCase();
     if (!code) return;
+
     if (PRESET_COUPONS[code]) {
       setAppliedCoupon({ code, ...PRESET_COUPONS[code] });
       setCouponError('');
       setCouponInput(code);
-    } else {
-      setCouponError('Invalid coupon code');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/coupons/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const discountType = data.discountType || 'percent';
+        const discountVal = data.discountValue || data.discountPercentage || 10;
+        setAppliedCoupon({
+          code,
+          type: discountType,
+          value: discountVal,
+          label: `${discountVal}${discountType === 'percent' ? '%' : '₹'} OFF`
+        });
+        setCouponError('');
+        setCouponInput(code);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setAppliedCoupon(null);
+        setCouponError(errData.error || 'Invalid or expired coupon code');
+      }
+    } catch {
       setAppliedCoupon(null);
+      setCouponError('Invalid coupon code');
     }
   };
 
@@ -98,8 +125,11 @@ export default function CartDrawer({ onCheckout }) {
   const afterDiscount = Math.max(cartTotal - discount, 0);
   const shippingFee   = afterDiscount >= SHIPPING_FREE_THRESHOLD || cartItems.length === 0 ? 0 : SHIPPING_FEE;
   const grandTotal    = afterDiscount + shippingFee;
-  const freeShipRemaining = Math.max(0, SHIPPING_FREE_THRESHOLD - afterDiscount);
-  const freeShipPercent = Math.min(100, Math.round((afterDiscount / SHIPPING_FREE_THRESHOLD) * 100));
+  const totalMrp = cartItems.reduce((acc, item) => {
+    const orig = item.variant?.originalPrice || item.originalPrice || Math.round(item.price * 1.25);
+    return acc + (orig * item.quantity);
+  }, 0);
+  const totalSavings = Math.max(0, (totalMrp - cartTotal) + discount);
   const totalItemCount = cartItems.reduce((s, i) => s + i.quantity, 0);
 
   if (!isCartOpen) return null;
@@ -124,31 +154,6 @@ export default function CartDrawer({ onCheckout }) {
               <X size={18} />
             </button>
           </div>
-
-          {/* Free Shipping Gamification Bar */}
-          {cartItems.length > 0 && (
-            <div className="cart-shipping-progress-wrap">
-              <div className="cart-shipping-progress-text">
-                {freeShipRemaining === 0 ? (
-                  <span className="free-ship-unlocked">
-                    <Sparkles size={13} />
-                    <span><strong>Congratulations!</strong> Free Delivery Unlocked!</span>
-                  </span>
-                ) : (
-                  <span>
-                    Add <strong>₹{freeShipRemaining}</strong> more for <strong>FREE Delivery</strong>
-                  </span>
-                )}
-                <span className="free-ship-threshold-tag">Goal: ₹{SHIPPING_FREE_THRESHOLD}</span>
-              </div>
-              <div className="cart-progress-track">
-                <div 
-                  className={`cart-progress-bar ${freeShipRemaining === 0 ? 'is-complete' : ''}`}
-                  style={{ width: `${freeShipPercent}%` }}
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Items List */}
@@ -170,6 +175,7 @@ export default function CartDrawer({ onCheckout }) {
           ) : (
             cartItems.map(item => {
               const { isOutOfStock } = getStockInfo(item);
+              const origPrice = item.variant?.originalPrice || item.originalPrice || Math.round(item.price * 1.25);
               return (
                 <div key={item.key} className="cart-item">
                   <div className="cart-item-img">
@@ -200,7 +206,12 @@ export default function CartDrawer({ onCheckout }) {
                       {item.variant && (
                         <span className="cart-item-variant">{item.variant.label}</span>
                       )}
-                      <span className="cart-item-unit-price">₹{item.price} each</span>
+                      <div className="cart-item-unit-price-group">
+                        <span className="cart-item-unit-price">₹{item.price}</span>
+                        {origPrice > item.price && (
+                          <span className="cart-item-strike-price">₹{origPrice}</span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Clean stock status line */}
@@ -213,7 +224,12 @@ export default function CartDrawer({ onCheckout }) {
                     </div>
 
                     <div className="cart-item-bottom-row">
-                      <span className="cart-item-total-price">₹{item.price * item.quantity}</span>
+                      <div className="cart-item-total-group">
+                        <span className="cart-item-total-price">₹{item.price * item.quantity}</span>
+                        {origPrice > item.price && (
+                          <span className="cart-item-total-strike">₹{origPrice * item.quantity}</span>
+                        )}
+                      </div>
                       
                       {isOutOfStock ? (
                         <span className="cart-oos-action-hint">Currently unavailable</span>
@@ -295,6 +311,12 @@ export default function CartDrawer({ onCheckout }) {
                 <span>Subtotal ({totalItemCount} items)</span>
                 <span>₹{cartTotal}</span>
               </div>
+              {totalSavings > 0 && (
+                <div className="total-row savings-highlight-row">
+                  <span>🎉 Total Savings</span>
+                  <span className="savings-amount">Save ₹{totalSavings}</span>
+                </div>
+              )}
               {discount > 0 && (
                 <div className="total-row discount">
                   <span>Discount ({appliedCoupon?.code})</span>

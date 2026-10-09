@@ -26,10 +26,12 @@ export default function AdminGuard({ children }) {
       if (cleanInput.toLowerCase() === 'admin') cleanInput = 'admin@venthulir.com';
 
       const res = await login(cleanInput, adminPassword);
-      if (res.success && res.user?.isAdmin) {
+      const isTrueAdmin = res.success && res.user?.isAdmin && (res.user?.email?.toLowerCase() === 'admin@venthulir.com' || cleanInput === 'admin@venthulir.com');
+
+      if (isTrueAdmin) {
         toast.success(`Welcome to Executive Portal, ${res.user.name || 'Admin'}!`);
-      } else if (res.success && !res.user?.isAdmin) {
-        setErrorMsg('Access denied: This account does not possess administrator privileges.');
+      } else if (res.success) {
+        setErrorMsg('Access denied: Only the master administrator account can access this portal.');
       } else {
         setErrorMsg(res.msg || 'Invalid administrative credentials.');
       }
@@ -60,8 +62,14 @@ export default function AdminGuard({ children }) {
     );
   }
 
-  // If already authenticated as Admin, show the full admin dashboard
-  if (isAuthenticated && user?.isAdmin) {
+  // Only the dedicated master admin account (admin@venthulir.com) is allowed to enter
+  const isDedicatedAdmin = Boolean(
+    isAuthenticated && 
+    user?.isAdmin && 
+    user?.email?.toLowerCase() === 'admin@venthulir.com'
+  );
+
+  if (isDedicatedAdmin) {
     return <>{children}</>;
   }
 

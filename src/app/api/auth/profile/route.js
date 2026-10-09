@@ -18,11 +18,11 @@ export async function PUT(request) {
       return NextResponse.json({ msg: 'User not found' }, { status: 404 });
     }
 
-    if (name) user.name = name;
-    if (phone) user.phone = phone;
+    if (name !== undefined) user.name = name.trim();
+    if (phone !== undefined) user.phone = phone.trim();
 
     await user.save();
-    return NextResponse.json({ msg: 'Profile updated successfully', user: { name: user.name, phone: user.phone } });
+    return NextResponse.json({ msg: 'Profile updated successfully', user: { name: user.name, phone: user.phone, email: user.email } });
   } catch (err) {
     console.error('API Update Profile Error:', err);
     return NextResponse.json({ msg: 'Server Error updating profile' }, { status: 500 });

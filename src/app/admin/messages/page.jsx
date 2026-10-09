@@ -14,19 +14,24 @@ import {
   RefreshCw,
   Loader2
 } from 'lucide-react';
+import { toast } from 'react-toastify';
+
+let adminMessagesCache = null;
 
 export default function AdminMessagesPage() {
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState(adminMessagesCache || []);
+  const [loading, setLoading] = useState(!adminMessagesCache);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('All'); // 'All', 'Pending', 'Resolved'
   const [updatingId, setUpdatingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
-  const fetchMessages = async () => {
+  const fetchMessages = async (showSpinner = false) => {
     try {
-      setLoading(true);
-      const token = localStorage.getItem('venthulir_token');
+      if (showSpinner || !adminMessagesCache) {
+        setLoading(true);
+      }
+      const token = typeof window !== 'undefined' ? localStorage.getItem('venthulir_token') : null;
       const res = await fetch('/api/messages', {
         headers: {
           ...(token && { Authorization: `Bearer ${token}` })
@@ -34,7 +39,9 @@ export default function AdminMessagesPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setMessages(Array.isArray(data) ? data : []);
+        const msgList = Array.isArray(data) ? data : [];
+        adminMessagesCache = msgList;
+        setMessages(msgList);
       }
     } catch (err) {
       console.error('Failed to load messages:', err);
@@ -86,9 +93,13 @@ export default function AdminMessagesPage() {
 
       if (res.ok) {
         setMessages(prev => prev.filter(m => m._id !== id));
+        toast.success('Support inquiry message deleted.');
+      } else {
+        toast.error('Failed to delete message.');
       }
     } catch (err) {
       console.error('Delete message error:', err);
+      toast.error('Network error deleting message.');
     } finally {
       setDeletingId(null);
     }

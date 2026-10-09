@@ -35,11 +35,17 @@ export function requireAuth(req) {
   return { error: null, user };
 }
 
+export const ADMIN_EMAILS = [
+  'admin@venthulir.com'
+];
+
 export function requireAdmin(req) {
   const authRes = requireAuth(req);
   if (authRes.error) return authRes;
-  if (!authRes.user?.isAdmin) {
+  const userEmail = (authRes.user?.email || '').toLowerCase().trim();
+  const isAdmin = Boolean(authRes.user?.isAdmin && ADMIN_EMAILS.includes(userEmail));
+  if (!isAdmin) {
     return { error: 'Access denied. Administrator privileges required.', status: 403, user: authRes.user };
   }
-  return { error: null, user: authRes.user };
+  return { error: null, user: { ...authRes.user, isAdmin: true } };
 }

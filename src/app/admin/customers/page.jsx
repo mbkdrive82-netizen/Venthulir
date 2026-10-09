@@ -16,29 +16,45 @@ import {
 } from 'lucide-react';
 import OrderDetailModal from '../components/OrderDetailModal';
 
+let adminCustomersCache = {
+  customers: null,
+  orders: null
+};
+
 export default function AdminCustomersPage() {
-  const [customers, setCustomers] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [customers, setCustomers] = useState(adminCustomersCache.customers || []);
+  const [orders, setOrders] = useState(adminCustomersCache.orders || []);
+  const [loading, setLoading] = useState(!adminCustomersCache.customers);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('customer'); // 'customer' | 'admin' | 'all'
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  const fetchCustomerData = async (role = roleFilter) => {
+  const fetchCustomerData = async (role = roleFilter, showSpinner = false) => {
     try {
-      setLoading(true);
-      const token = localStorage.getItem('venthulir_token');
+      if (showSpinner || !adminCustomersCache.customers) {
+        setLoading(true);
+      }
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('venthulir_token') || localStorage.getItem('token')) : null;
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
       const [userRes, orderRes] = await Promise.all([
-        fetch(`/api/admin/users?role=${role}`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/orders', { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`/api/admin/users?role=${role}`, { headers }).catch(() => null),
+        fetch('/api/orders', { headers }).catch(() => null)
       ]);
 
-      if (userRes.ok && orderRes.ok) {
-        const uData = await userRes.json();
-        const oData = await orderRes.json();
-        setCustomers(Array.isArray(uData) ? uData : []);
-        setOrders(Array.isArray(oData) ? oData : []);
+      if (userRes && userRes.ok) {
+        const uData = await userRes.json().catch(() => []);
+        const custList = Array.isArray(uData) ? uData : [];
+        adminCustomersCache.customers = custList;
+        setCustomers(custList);
+      }
+
+      if (orderRes && orderRes.ok) {
+        const oData = await orderRes.json().catch(() => []);
+        const ordList = Array.isArray(oData) ? oData : (Array.isArray(oData?.orders) ? oData.orders : []);
+        adminCustomersCache.orders = ordList;
+        setOrders(ordList);
       }
     } catch (err) {
       console.error('Failed to load customer list:', err);
@@ -52,8 +68,8 @@ export default function AdminCustomersPage() {
   }, [roleFilter]);
 
   // Compute stats per customer
-  const customerAnalytics = customers.map((c) => {
-    const userOrders = orders.filter(
+  const customerAnalytics = (Array.isArray(customers) ? customers : []).map((c) => {
+    const userOrders = (Array.isArray(orders) ? orders : []).filter(
       o => (o.customerEmail || '').toLowerCase() === (c.email || '').toLowerCase()
     );
 

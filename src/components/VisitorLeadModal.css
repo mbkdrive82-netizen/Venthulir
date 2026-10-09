@@ -1,0 +1,422 @@
+/* ==========================================================
+   VENTHULIR VISITOR LEAD CAPTURE MODAL
+   Luxury Royal Organic Design System
+   ========================================================== */
+
+.vlm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 25, 18, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+  animation: vlmFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes vlmFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.vlm-modal {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px -12px rgba(11, 51, 31, 0.35),
+              0 0 0 1px rgba(212, 175, 55, 0.25),
+              0 0 40px rgba(27, 94, 47, 0.1);
+  overflow: hidden;
+  animation: vlmSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes vlmSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.vlm-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.25);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.vlm-close-btn:hover {
+  background: rgba(0, 0, 0, 0.45);
+  transform: rotate(90deg) scale(1.05);
+}
+
+/* Header Banner */
+.vlm-header {
+  background: linear-gradient(135deg, #0b331f 0%, #1B5E2F 60%, #236B3A 100%);
+  padding: 24px 22px 20px;
+  color: #ffffff;
+  text-align: center;
+  position: relative;
+  border-bottom: 2px solid #D4AF37;
+}
+
+.vlm-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.18), transparent 60%);
+  pointer-events: none;
+}
+
+.vlm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  padding: 3.5px 12px;
+  border-radius: 50px;
+  font-size: 0.70rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #E8F5EC;
+  margin-bottom: 8px;
+}
+
+.vlm-title {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 6px;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
+.vlm-subtitle {
+  font-size: 0.82rem;
+  color: #E8F5EC;
+  margin: 0;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+
+/* Modal Body */
+.vlm-body {
+  padding: 20px 22px 18px;
+  background: #fbfbf9;
+}
+
+.vlm-form {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.vlm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+}
+
+.vlm-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f3d2a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  letter-spacing: 0.01em;
+}
+
+.vlm-label-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vlm-mandatory-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #dc2626;
+  background: #fef2f2;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid #fecaca;
+  letter-spacing: 0.02em;
+}
+
+.vlm-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.vlm-input-icon {
+  position: absolute;
+  left: 13px;
+  color: #1B5E2F;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.vlm-input {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 0.90rem;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.vlm-input:focus {
+  border-color: #1B5E2F;
+  box-shadow: 0 0 0 3px rgba(27, 94, 47, 0.14);
+}
+
+.vlm-input.vlm-input-error {
+  border-color: #ef4444;
+  background: #fffafa;
+}
+
+.vlm-input.vlm-input-error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.vlm-input::placeholder {
+  color: #94a3b8;
+  font-size: 0.84rem;
+}
+
+.vlm-select {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 0.90rem;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231B5E2F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 15px;
+}
+
+.vlm-select:focus {
+  border-color: #1B5E2F;
+  box-shadow: 0 0 0 3px rgba(27, 94, 47, 0.14);
+}
+
+.vlm-error-text {
+  font-size: 0.76rem;
+  color: #dc2626;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Submit Button */
+.vlm-submit-btn {
+  margin-top: 4px;
+  width: 100%;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #0b331f 0%, #1B5E2F 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.94rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(11, 51, 31, 0.25);
+  transition: all 0.2s ease;
+}
+
+.vlm-submit-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #064e26 0%, #15803d 100%);
+  box-shadow: 0 6px 20px rgba(11, 51, 31, 0.35);
+  transform: translateY(-1px);
+}
+
+.vlm-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Footer note & skip */
+.vlm-footer {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.vlm-privacy {
+  font-size: 0.72rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.vlm-skip-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 3px 6px;
+  transition: color 0.2s ease;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 550;
+}
+
+.vlm-skip-btn:hover {
+  color: #0f3d2a;
+}
+
+/* Success View */
+.vlm-success-box {
+  text-align: center;
+  padding: 24px 8px 8px;
+  animation: vlmFadeIn 0.3s ease;
+}
+
+.vlm-success-icon {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 14px;
+  background: linear-gradient(135deg, #1B5E2F, #16a34a);
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.3);
+}
+
+.vlm-success-title {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0b331f;
+  margin: 0 0 6px;
+}
+
+.vlm-success-desc {
+  font-size: 0.86rem;
+  color: #475569;
+  line-height: 1.45;
+  margin: 0 0 14px;
+}
+
+.vlm-coupon-badge {
+  display: inline-block;
+  background: #f0fdf4;
+  border: 1.5px dashed #16a34a;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-weight: 850;
+  font-size: 1rem;
+  color: #15803d;
+  letter-spacing: 0.08em;
+}
+
+/* Spinner */
+.vlm-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: vlmSpin 0.7s linear infinite;
+}
+
+@keyframes vlmSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .vlm-overlay {
+    padding: 12px;
+  }
+
+  .vlm-modal {
+    max-width: 100%;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    border-radius: 18px;
+  }
+
+  .vlm-header {
+    padding: 20px 16px 16px;
+  }
+
+  .vlm-badge {
+    font-size: 0.65rem;
+    padding: 3px 9px;
+  }
+
+  .vlm-title {
+    font-size: 1.12rem;
+  }
+
+  .vlm-subtitle {
+    font-size: 0.78rem;
+  }
+
+  .vlm-body {
+    padding: 16px 16px 14px;
+  }
+
+  .vlm-input,
+  .vlm-select {
+    font-size: 16px; /* Prevents auto-zoom on iOS */
+  }
+}

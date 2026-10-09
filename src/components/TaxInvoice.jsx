@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Printer, Download, X, CheckCircle, FileText, Maximize2, Minimize2, Loader2 } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Printer, Download, X, FileText, Loader2, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import './TaxInvoice.css';
 
 /**
  * Converts a numeric amount to Indian Currency Words
- * Example: 799 -> "Seven Hundred Ninety Nine"
+ * Example: 190 -> "One Hundred Ninety"
  */
 function numberToWords(num) {
   if (num === null || num === undefined || isNaN(num)) return 'Zero';
@@ -75,51 +76,42 @@ function formatDate(d) {
 
 export default function TaxInvoice({ order, isOpen, onClose }) {
   const invoiceRef = useRef(null);
-  const [viewMode, setViewMode] = useState('scroll'); // 'scroll' (100% swipe) | 'fit' (scale to fit phone)
-  const [isMobile, setIsMobile] = useState(false);
-  const [scale, setScale] = useState(1);
-  const [invoiceHeight, setInvoiceHeight] = useState(0);
+  const printSheetRef = useRef(null);
+  const [mounted, setMounted] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Lock background scroll when invoice is open
   useEffect(() => {
-    if (isOpen) {
-      const prevOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = prevOverflow;
-      };
-    }
-  }, [isOpen]);
-
-  // Handle responsive scale calculations for mobile view
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth <= 768;
-      setIsMobile(mobile);
-      if (mobile) {
-        const availableWidth = window.innerWidth - (window.innerWidth <= 480 ? 16 : 28);
-        const calculatedScale = Math.min(1, Math.max(0.38, availableWidth / 780));
-        setScale(calculatedScale);
-      } else {
-        setScale(1);
-      }
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    setMounted(true);
   }, []);
 
-  // Update measured invoice height for fit mode scaling
+  // Close on Escape key press
   useEffect(() => {
-    if (invoiceRef.current) {
-      setInvoiceHeight(invoiceRef.current.offsetHeight);
-    }
-  }, [isOpen, viewMode, scale]);
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
-  if (!isOpen || !order) return null;
+  // Freeze background page scroll completely while invoice modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const origBodyOverflow = document.body.style.overflow;
+    const origHtmlOverflow = document.documentElement.style.overflow;
 
-  const orderIdRaw = order.orderId || order._id || 'ORD';
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = origBodyOverflow;
+      document.documentElement.style.overflow = origHtmlOverflow;
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !order || !mounted) return null;
+
   const invoiceNo = (order.orderId || order._id || 'VEN').toString().slice(-8).toUpperCase();
   const invoiceDate = formatDate(order.createdAt || order.date);
   const challanNo = `CH-${invoiceNo}`;
@@ -131,6 +123,7 @@ export default function TaxInvoice({ order, isOpen, onClose }) {
   const addressObj = order.deliveryAddress || order.shippingAddress || order.address || {};
   const buyerAddress = [
     addressObj.address || addressObj.street,
+    addressObj.locality,
     addressObj.city,
     addressObj.state || 'Tamil Nadu',
     addressObj.zipCode ? `- ${addressObj.zipCode}` : ''
@@ -194,18 +187,23 @@ export default function TaxInvoice({ order, isOpen, onClose }) {
   };
 
   const handleDownloadPdf = async () => {
-    if (!invoiceRef.current) return;
+    const targetElement = printSheetRef.current || invoiceRef.current;
+    if (!targetElement) return;
     try {
       setIsDownloading(true);
-      const element = invoiceRef.current;
       
-      // Temporarily remove transform scaling for high quality render
-      const originalTransform = element.style.transform;
-      element.style.transform = 'none';
+      // Temporarily ensure pristine high-res A4 render
+      const originalDisplay = targetElement.style.display;
+      targetElement.style.display = 'block';
       
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      const canvas = await html2canvas(targetElement, { 
+        scale: 2, 
+        useCORS: true, 
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
       
-      element.style.transform = originalTransform;
+      targetElement.style.display = originalDisplay;
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -222,176 +220,156 @@ export default function TaxInvoice({ order, isOpen, onClose }) {
     }
   };
 
-  const isFitActive = isMobile && viewMode === 'fit';
-
-  return (
+  return createPortal(
     <div className="tax-invoice-modal-overlay" onClick={onClose}>
       <div className="tax-invoice-modal-container" onClick={(e) => e.stopPropagation()}>
         
-        {/* Modal Action Controls Bar (Hidden during printing) */}
+        {/* Sticky Action Toolbar (Screen Only) */}
         <div className="invoice-action-toolbar no-print">
-          <div className="invoice-toolbar-title">
-            <FileText size={17} color="#0c2f34" />
-            <span className="toolbar-title-text">Tax Invoice</span>
-            <span className="invoice-pill-badge">#{invoiceNo}</span>
+          <div className="invoice-toolbar-top-row">
+            <div className="invoice-toolbar-title">
+              <FileText size={18} color="#064e3b" />
+              <span className="toolbar-title-text">Official Tax Invoice</span>
+              <span className="invoice-pill-badge">#VEN-{invoiceNo}</span>
+            </div>
+            
+            <button 
+              type="button" 
+              className="btn-invoice-close" 
+              onClick={onClose} 
+              aria-label="Close invoice"
+              title="Close (Esc)"
+            >
+              <X size={18} />
+            </button>
           </div>
 
           <div className="invoice-toolbar-actions">
-            {/* View Mode Switcher for Mobile */}
-            {isMobile && (
-              <button
-                type="button"
-                className={`btn-invoice-action secondary ${isFitActive ? 'active' : ''}`}
-                onClick={() => setViewMode(v => v === 'fit' ? 'scroll' : 'fit')}
-                title={isFitActive ? 'Switch to 100% zoom with swipe' : 'Fit entire invoice to screen'}
-              >
-                {isFitActive ? <Maximize2 size={13} /> : <Minimize2 size={13} />}
-                <span>{isFitActive ? '100% Zoom' : 'Fit Screen'}</span>
-              </button>
-            )}
-
-            <button type="button" className="btn-invoice-action primary" onClick={handleDownloadPdf} disabled={isDownloading} style={{ marginRight: '8px' }}>
-              {isDownloading ? <Loader2 size={15} className="lounge-spin-icon" /> : <Download size={15} />}
-              <span className="btn-print-text">{isDownloading ? 'Downloading...' : 'Download'}</span>
+            <button 
+              type="button" 
+              className="btn-invoice-action primary" 
+              onClick={handleDownloadPdf} 
+              disabled={isDownloading}
+            >
+              {isDownloading ? <Loader2 size={14} className="invoice-spin-icon" /> : <Download size={14} />}
+              <span>{isDownloading ? 'Downloading...' : 'Download PDF'}</span>
             </button>
 
-            <button type="button" className="btn-invoice-action secondary" onClick={handlePrint}>
-              <Printer size={15} />
-              <span className="btn-print-text">Print</span>
-            </button>
-            
-            <button type="button" className="btn-invoice-close" onClick={onClose} aria-label="Close invoice">
-              <X size={18} />
+            <button 
+              type="button" 
+              className="btn-invoice-action secondary" 
+              onClick={handlePrint}
+            >
+              <Printer size={14} />
+              <span>Print Invoice</span>
             </button>
           </div>
         </div>
 
-        {/* Mobile Swipe Helper Hint (shown on mobile when in full scroll mode) */}
-        {isMobile && !isFitActive && (
-          <div className="mobile-scroll-hint no-print">
-            <span>👈 Swipe horizontally to view all invoice columns 👉</span>
-          </div>
-        )}
-
-        {/* Printable Tax Invoice Paper Document Scroll Wrapper */}
-        <div 
-          className={`tax-invoice-paper-wrapper ${isFitActive ? 'mode-fit' : 'mode-scroll'}`}
-          style={isFitActive && invoiceHeight ? {
-            height: `${Math.round(invoiceHeight * scale) + 16}px`,
-            overflow: 'hidden'
-          } : {}}
-        >
-          <div 
-            className="tax-invoice-sheet" 
-            ref={invoiceRef}
-            style={isFitActive ? {
-              transform: `scale(${scale})`,
-              transformOrigin: 'top left',
-              width: '780px',
-              minWidth: '780px'
-            } : {}}
-          >
-          
-          {/* Top Dark Header Bar */}
+        {/* ── Visual Invoice Sheet (100% Native Width on Mobile, No Horizontal Scroll) ── */}
+        <div className="tax-invoice-sheet" ref={invoiceRef}>
+        
+          {/* Top GST Banner Header */}
           <div className="tax-invoice-top-banner">
-            <span>TAX INVOICE</span>
+            <div className="banner-title">TAX INVOICE</div>
+            <div className="banner-sub">[ Original for Recipient &bull; Bill of Supply under Section 31 of CGST Act, 2017 ]</div>
           </div>
 
           {/* Company Brand & Address Header */}
           <div className="tax-invoice-header-row">
+            <div className="company-logo-block">
+              <div className="logo-circle-frame">
+                <img 
+                  src="/logo.png" 
+                  alt="Venthulir Logo" 
+                  className="invoice-logo-img"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+              <div className="company-crest-text">VENTHULIR</div>
+            </div>
+
             <div className="company-info-block">
               <h1 className="company-brand-name">
                 <span className="brand-primary">VENTHULIR</span>{' '}
                 <span className="brand-accent">ORGANIC HARVEST</span>
               </h1>
+              <div className="company-tagline">100% Pure Heritage Masala Powders &amp; Wood Cold-Pressed Oils</div>
               <div className="company-address-text">
-                IInd Floor, OM Shiva Towers, 259-B, Advaitha Ashram Rd, Fairlands, Salem, Tamil Nadu - 636004<br />
-                <strong>GSTIN:</strong> 33AAFTO2026V1Z8 &nbsp;|&nbsp; <strong>Phone:</strong> +91 8778476414 &nbsp;|&nbsp; <strong>Email:</strong> theventhulir@gmail.com
+                <strong>Registered Office:</strong> IInd Floor, OM Shiva Towers, 259-B, Advaitha Ashram Rd, Fairlands, Salem, Tamil Nadu - 636004<br />
+                <strong>GSTIN:</strong> 33AAFTO2026V1Z8 &nbsp;|&nbsp; <strong>State:</strong> Tamil Nadu (33) &nbsp;|&nbsp; <strong>FSSAI:</strong> 12423018000421<br />
+                <strong>Phone:</strong> +91 8778476414 &nbsp;|&nbsp; <strong>Email:</strong> theventhulir@gmail.com
               </div>
-            </div>
-
-            <div className="company-logo-block">
-              <img 
-                src="/logo.png" 
-                alt="Venthulir Logo" 
-                className="invoice-logo-img"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-              <div className="company-crest-text">VENTHULIR</div>
             </div>
           </div>
 
-          {/* Details Table: Single Unified 4-Column Grid */}
+          {/* Structured Meta Details Grid */}
           <table className="tax-grid-table">
             <tbody>
-              {/* Row 1: Invoice & Challan Info */}
-              <tr>
-                <td className="grid-cell w-25">
-                  <span className="cell-label">INVOICE (OR) BILL NO</span>
-                  <div className="cell-value">VEN-{invoiceNo}</div>
+              {/* Row 1: Invoice & Dispatch Metadata */}
+              <tr className="meta-row-1">
+                <td className="grid-cell">
+                  <span className="cell-label">INVOICE NUMBER</span>
+                  <div className="cell-value font-mono">VEN-{invoiceNo}</div>
                 </td>
-                <td className="grid-cell w-25">
+                <td className="grid-cell">
                   <span className="cell-label">INVOICE DATE</span>
                   <div className="cell-value">{invoiceDate}</div>
                 </td>
-                <td className="grid-cell w-25">
-                  <span className="cell-label">CHALLAN NO</span>
-                  <div className="cell-value">{challanNo}</div>
+                <td className="grid-cell desktop-cell">
+                  <span className="cell-label">CHALLAN / ORDER ID</span>
+                  <div className="cell-value font-mono">{challanNo}</div>
                 </td>
-                <td className="grid-cell w-25">
-                  <span className="cell-label">CHALLAN DATE</span>
-                  <div className="cell-value">{challanDate}</div>
+                <td className="grid-cell desktop-cell">
+                  <span className="cell-label">PLACE OF SUPPLY</span>
+                  <div className="cell-value">Tamil Nadu (33)</div>
                 </td>
               </tr>
 
-              {/* Row 2: Buyer, Invoice No & Delivery */}
-              <tr>
+              {/* Row 2: Customer / Buyer & Payment */}
+              <tr className="meta-row-2">
                 <td className="grid-cell" colSpan={2}>
-                  <span className="cell-label">BUYER</span>
+                  <span className="cell-label">BILLED TO / CUSTOMER NAME</span>
                   <div className="cell-value buyer-name">{buyerName}</div>
                 </td>
-                <td className="grid-cell">
-                  <span className="cell-label">INVOICE NO</span>
-                  <div className="cell-value font-mono">ORD-{invoiceNo}</div>
-                </td>
-                <td className="grid-cell">
+                <td className="grid-cell desktop-cell">
                   <span className="cell-label">DELIVERY MODE</span>
-                  <div className="cell-value">Standard</div>
-                </td>
-              </tr>
-
-              {/* Row 3: Address, Phone & Payment */}
-              <tr>
-                <td className="grid-cell" colSpan={2}>
-                  <span className="cell-label">ADDRESS</span>
-                  <div className="cell-value-text">{buyerAddress}</div>
-                </td>
-                <td className="grid-cell">
-                  <span className="cell-label">PHONE</span>
-                  <div className="cell-value font-mono">{buyerPhone}</div>
+                  <div className="cell-value">Express Delivery</div>
                 </td>
                 <td className="grid-cell">
                   <span className="cell-label">PAYMENT STATUS</span>
                   <div className={`cell-value invoice-payment-badge ${isPaid ? 'paid' : 'cod'}`}>
-                    {isPaid ? 'Paid' : 'Cash on Delivery'}
+                    {isPaid ? '✔ Paid Online' : 'Cash on Delivery'}
                   </div>
+                </td>
+              </tr>
+
+              {/* Row 3: Address & Phone */}
+              <tr className="meta-row-3">
+                <td className="grid-cell address-cell" colSpan={2}>
+                  <span className="cell-label">DELIVERY ADDRESS</span>
+                  <div className="cell-value-text">{buyerAddress}</div>
+                </td>
+                <td className="grid-cell" colSpan={2}>
+                  <span className="cell-label">CUSTOMER PHONE</span>
+                  <div className="cell-value font-mono">{buyerPhone}</div>
                 </td>
               </tr>
             </tbody>
           </table>
 
-          {/* Main Line Items Table */}
-          <table className="tax-items-table">
+          {/* Main Desktop Items Table (Full 9-Column) */}
+          <table className="tax-items-table tax-items-desktop-table">
             <thead>
               <tr>
-                <th style={{ width: '42px', textAlign: 'center' }}>S.NO</th>
-                <th style={{ textAlign: 'left' }}>PRODUCT NAME</th>
-                <th style={{ width: '75px', textAlign: 'center' }}>HSN/SAC</th>
-                <th style={{ width: '48px', textAlign: 'center' }}>QTY</th>
+                <th style={{ width: '40px', textAlign: 'center' }}>S.NO</th>
+                <th style={{ textAlign: 'left' }}>PRODUCT DESCRIPTION</th>
+                <th style={{ width: '70px', textAlign: 'center' }}>HSN/SAC</th>
+                <th style={{ width: '45px', textAlign: 'center' }}>QTY</th>
                 <th style={{ width: '80px', textAlign: 'right' }}>RATE (₹)</th>
-                <th style={{ width: '95px', textAlign: 'right' }}>TAXABLE VALUE</th>
+                <th style={{ width: '90px', textAlign: 'right' }}>TAXABLE VALUE</th>
                 <th style={{ width: '65px', textAlign: 'right' }}>CGST 2.5%</th>
                 <th style={{ width: '65px', textAlign: 'right' }}>SGST 2.5%</th>
                 <th style={{ width: '85px', textAlign: 'right' }}>TOTAL (₹)</th>
@@ -400,81 +378,260 @@ export default function TaxInvoice({ order, isOpen, onClose }) {
             <tbody>
               {processedItems.map((item) => (
                 <tr key={item.sNo}>
-                  <td className="text-center">{item.sNo}</td>
+                  <td className="text-center font-mono">{item.sNo}</td>
                   <td className="item-name-cell">
                     <span className="item-title">{item.name}</span>
                     {item.variant && <span className="item-variant"> ({item.variant})</span>}
                   </td>
                   <td className="text-center tabular-num">{item.hsn}</td>
-                  <td className="text-center tabular-num">{item.qty}</td>
+                  <td className="text-center tabular-num font-bold">{item.qty}</td>
                   <td className="text-right tabular-num">{item.rate.toFixed(2)}</td>
                   <td className="text-right tabular-num">{item.taxableValue.toFixed(2)}</td>
                   <td className="text-right tabular-num">{item.cgst.toFixed(2)}</td>
                   <td className="text-right tabular-num">{item.sgst.toFixed(2)}</td>
-                  <td className="text-right tabular-num font-bold">{item.total.toFixed(2)}</td>
+                  <td className="text-right tabular-num font-bold">₹{item.total.toFixed(2)}</td>
                 </tr>
               ))}
 
-              {/* Subtotal Total Row */}
+              {/* Total Row */}
               <tr className="tr-subtotal-row">
-                <td colSpan={5} className="text-right font-bold subtotal-label">Total</td>
-                <td className="text-right font-bold tabular-num">{totalTaxableValue.toFixed(2)}</td>
-                <td className="text-right font-bold tabular-num">{totalCgst.toFixed(2)}</td>
-                <td className="text-right font-bold tabular-num">{totalSgst.toFixed(2)}</td>
+                <td colSpan={5} className="text-right font-bold subtotal-label">SUBTOTAL</td>
+                <td className="text-right font-bold tabular-num">₹{totalTaxableValue.toFixed(2)}</td>
+                <td className="text-right font-bold tabular-num">₹{totalCgst.toFixed(2)}</td>
+                <td className="text-right font-bold tabular-num">₹{totalSgst.toFixed(2)}</td>
                 <td className="text-right font-bold tabular-num total-highlight">₹{totalLineItemsGross.toFixed(2)}</td>
               </tr>
             </tbody>
           </table>
 
-          {/* Amount In Words & Financial Summary */}
-          <div className="tax-bottom-summary-grid">
-            <div className="amount-in-words-box">
-              <span className="words-label">AMOUNT IN WORDS</span>
-              <div className="words-content">
-                Indian Rupees {amountInWords} Only
-              </div>
+          {/* Mobile Items Table (Clean 100% Width Fit for Phones) */}
+          <div className="tax-items-mobile-view">
+            <div className="mobile-items-header">
+              <span>ITEMS ORDERED</span>
+              <span>TOTAL (₹)</span>
             </div>
-
-            <div className="tax-totals-breakdown-box">
-              <div className="total-line-row">
-                <span>Taxable Amount:</span>
-                <span>₹{totalTaxableValue.toFixed(2)}</span>
-              </div>
-              <div className="total-line-row">
-                <span>Total Tax (GST 5%):</span>
-                <span>₹{totalTax.toFixed(2)}</span>
-              </div>
-              {order.shippingCharge > 0 && (
-                <div className="total-line-row">
-                  <span>Shipping Fee:</span>
-                  <span>₹{order.shippingCharge.toFixed(2)}</span>
+            {processedItems.map((item) => (
+              <div key={item.sNo} className="mobile-item-card">
+                <div className="mobile-item-main">
+                  <div className="mobile-item-name">
+                    <strong>{item.name}</strong>
+                    {item.variant && <span className="mobile-item-variant"> ({item.variant})</span>}
+                  </div>
+                  <div className="mobile-item-meta">
+                    <span>HSN: {item.hsn}</span>
+                    <span>&bull;</span>
+                    <span>Qty: <strong>{item.qty}</strong></span>
+                    <span>&bull;</span>
+                    <span>Rate: ₹{item.rate.toFixed(2)}</span>
+                  </div>
                 </div>
-              )}
-              {order.discountAmount > 0 && (
-                <div className="total-line-row discount-row">
-                  <span>Coupon Discount:</span>
-                  <span>-₹{order.discountAmount.toFixed(2)}</span>
+                <div className="mobile-item-price font-bold">
+                  ₹{item.total.toFixed(2)}
                 </div>
-              )}
-              <div className="grand-total-divider" />
-              <div className="grand-total-row">
-                <span>Grand Total:</span>
-                <span>₹{grandTotal.toFixed(2)}</span>
               </div>
-            </div>
+            ))}
           </div>
 
-          {/* Formal Computer Generated Footer */}
+          {/* Bottom Summary Grid */}
+          <div className="tax-bottom-summary-grid">
+            
+            {/* Left Column: Words & Legal Declaration */}
+            <div className="summary-left-column">
+              <div className="amount-in-words-box">
+                <span className="words-label">AMOUNT IN WORDS</span>
+                <div className="words-content">
+                  <span className="words-currency-prefix">Indian Rupees</span>
+                  <span className="words-amount-value">{amountInWords} Only</span>
+                </div>
+              </div>
+
+              <div className="invoice-terms-box">
+                <span className="terms-label">DECLARATION &amp; TERMS:</span>
+                <ul className="terms-list">
+                  <li>Certified 100% natural heritage organic harvest &amp; traditional wood cold-pressed extraction.</li>
+                  <li>We declare that this invoice shows the actual price of goods and all particulars are true and correct.</li>
+                  <li>This is a computer-generated authentic tax invoice issued under GST Rules.</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Right Column: Breakdown & Signature */}
+            <div className="summary-right-column">
+              <div className="tax-totals-breakdown-box">
+                <div className="total-line-row">
+                  <span>Taxable Value:</span>
+                  <span>₹{totalTaxableValue.toFixed(2)}</span>
+                </div>
+                <div className="total-line-row">
+                  <span>CGST (2.5%):</span>
+                  <span>₹{totalCgst.toFixed(2)}</span>
+                </div>
+                <div className="total-line-row">
+                  <span>SGST (2.5%):</span>
+                  <span>₹{totalSgst.toFixed(2)}</span>
+                </div>
+                <div className="total-line-row gst-combined">
+                  <span>Total Tax (GST 5%):</span>
+                  <span>₹{totalTax.toFixed(2)}</span>
+                </div>
+                {order.shippingCharge > 0 && (
+                  <div className="total-line-row">
+                    <span>Shipping &amp; Handling:</span>
+                    <span>₹{order.shippingCharge.toFixed(2)}</span>
+                  </div>
+                )}
+                {order.discountAmount > 0 && (
+                  <div className="total-line-row discount-row">
+                    <span>Promotional Discount:</span>
+                    <span>-₹{order.discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="grand-total-divider" />
+                <div className="grand-total-row">
+                  <span>Grand Total:</span>
+                  <span>₹{grandTotal.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Digital Signatory Stamp Box */}
+              <div className="authorisation-sign-box">
+                <div className="sign-company-title">For VENTHULIR ORGANIC HARVEST</div>
+                <div className="digital-seal-badge">
+                  <ShieldCheck size={14} color="#166534" />
+                  <span>DIGITALLY SIGNED &amp; VERIFIED</span>
+                </div>
+                <div className="sign-label">Authorised Signatory</div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Footer Notes */}
           <div className="tax-invoice-footer-notes">
-            <p>This is a computer-generated invoice. No signature required.</p>
-            <p>Thank you for shopping with Venthulir Organic Harvest.</p>
+            <p>Thank you for choosing Venthulir. Delivering purity and wellness direct from heritage farms.</p>
+            <p>Support / Queries: <strong>+91 8778476414</strong> &bull; <strong>theventhulir@gmail.com</strong></p>
           </div>
 
         </div>
-        {/* End of tax-invoice-paper-wrapper */}
+
+        {/* Hidden Pristine A4 Document Container (Dedicated for High-Res PDF Generation) */}
+        <div 
+          ref={printSheetRef} 
+          className="print-only-a4-sheet"
+          style={{ display: 'none', position: 'fixed', left: '-9999px', width: '800px', background: '#ffffff', padding: '24px 30px' }}
+        >
+          {/* Top GST Banner Header */}
+          <div className="tax-invoice-top-banner">
+            <div className="banner-title">TAX INVOICE</div>
+            <div className="banner-sub">[ Original for Recipient &bull; Bill of Supply under Section 31 of CGST Act, 2017 ]</div>
+          </div>
+
+          <div className="tax-invoice-header-row">
+            <div className="company-logo-block">
+              <div className="logo-circle-frame">
+                <img src="/logo.png" alt="Venthulir Logo" className="invoice-logo-img" />
+              </div>
+              <div className="company-crest-text">VENTHULIR</div>
+            </div>
+
+            <div className="company-info-block">
+              <h1 className="company-brand-name">
+                <span className="brand-primary">VENTHULIR</span>{' '}
+                <span className="brand-accent">ORGANIC HARVEST</span>
+              </h1>
+              <div className="company-tagline">100% Pure Heritage Masala Powders &amp; Wood Cold-Pressed Oils</div>
+              <div className="company-address-text">
+                <strong>Registered Office:</strong> IInd Floor, OM Shiva Towers, 259-B, Advaitha Ashram Rd, Fairlands, Salem, Tamil Nadu - 636004<br />
+                <strong>GSTIN:</strong> 33AAFTO2026V1Z8 &nbsp;|&nbsp; <strong>State:</strong> Tamil Nadu (33) &nbsp;|&nbsp; <strong>FSSAI:</strong> 12423018000421<br />
+                <strong>Phone:</strong> +91 8778476414 &nbsp;|&nbsp; <strong>Email:</strong> theventhulir@gmail.com
+              </div>
+            </div>
+          </div>
+
+          <table className="tax-grid-table">
+            <tbody>
+              <tr>
+                <td className="grid-cell w-25"><span className="cell-label">INVOICE NUMBER</span><div className="cell-value font-mono">VEN-{invoiceNo}</div></td>
+                <td className="grid-cell w-25"><span className="cell-label">INVOICE DATE</span><div className="cell-value">{invoiceDate}</div></td>
+                <td className="grid-cell w-25"><span className="cell-label">CHALLAN ID</span><div className="cell-value font-mono">{challanNo}</div></td>
+                <td className="grid-cell w-25"><span className="cell-label">PLACE OF SUPPLY</span><div className="cell-value">Tamil Nadu (33)</div></td>
+              </tr>
+              <tr>
+                <td className="grid-cell" colSpan={2}><span className="cell-label">BILLED TO</span><div className="cell-value buyer-name">{buyerName}</div></td>
+                <td className="grid-cell"><span className="cell-label">DELIVERY MODE</span><div className="cell-value">Express Delivery</div></td>
+                <td className="grid-cell"><span className="cell-label">PAYMENT STATUS</span><div className="cell-value font-bold">{isPaid ? 'Paid Online' : 'Cash on Delivery'}</div></td>
+              </tr>
+              <tr>
+                <td className="grid-cell" colSpan={2}><span className="cell-label">DELIVERY ADDRESS</span><div className="cell-value-text">{buyerAddress}</div></td>
+                <td className="grid-cell" colSpan={2}><span className="cell-label">CUSTOMER PHONE</span><div className="cell-value font-mono">{buyerPhone}</div></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <table className="tax-items-table">
+            <thead>
+              <tr>
+                <th style={{ width: '40px', textAlign: 'center' }}>S.NO</th>
+                <th style={{ textAlign: 'left' }}>PRODUCT DESCRIPTION</th>
+                <th style={{ width: '70px', textAlign: 'center' }}>HSN/SAC</th>
+                <th style={{ width: '45px', textAlign: 'center' }}>QTY</th>
+                <th style={{ width: '80px', textAlign: 'right' }}>RATE (₹)</th>
+                <th style={{ width: '90px', textAlign: 'right' }}>TAXABLE VALUE</th>
+                <th style={{ width: '65px', textAlign: 'right' }}>CGST 2.5%</th>
+                <th style={{ width: '65px', textAlign: 'right' }}>SGST 2.5%</th>
+                <th style={{ width: '85px', textAlign: 'right' }}>TOTAL (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {processedItems.map((item) => (
+                <tr key={item.sNo}>
+                  <td className="text-center font-mono">{item.sNo}</td>
+                  <td>{item.name} {item.variant && `(${item.variant})`}</td>
+                  <td className="text-center">{item.hsn}</td>
+                  <td className="text-center">{item.qty}</td>
+                  <td className="text-right">{item.rate.toFixed(2)}</td>
+                  <td className="text-right">{item.taxableValue.toFixed(2)}</td>
+                  <td className="text-right">{item.cgst.toFixed(2)}</td>
+                  <td className="text-right">{item.sgst.toFixed(2)}</td>
+                  <td className="text-right font-bold">₹{item.total.toFixed(2)}</td>
+                </tr>
+              ))}
+              <tr className="tr-subtotal-row">
+                <td colSpan={5} className="text-right font-bold">SUBTOTAL</td>
+                <td className="text-right font-bold">₹{totalTaxableValue.toFixed(2)}</td>
+                <td className="text-right font-bold">₹{totalCgst.toFixed(2)}</td>
+                <td className="text-right font-bold">₹{totalSgst.toFixed(2)}</td>
+                <td className="text-right font-bold">₹{totalLineItemsGross.toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="tax-bottom-summary-grid">
+            <div className="summary-left-column">
+              <div className="amount-in-words-box">
+                <span className="words-label">AMOUNT IN WORDS</span>
+                <div className="words-content">
+                  <span className="words-currency-prefix">Indian Rupees</span>
+                  <span className="words-amount-value">{amountInWords} Only</span>
+                </div>
+              </div>
+            </div>
+            <div className="summary-right-column">
+              <div className="tax-totals-breakdown-box">
+                <div className="total-line-row"><span>Taxable Value:</span><span>₹{totalTaxableValue.toFixed(2)}</span></div>
+                <div className="total-line-row"><span>CGST (2.5%):</span><span>₹{totalCgst.toFixed(2)}</span></div>
+                <div className="total-line-row"><span>SGST (2.5%):</span><span>₹{totalSgst.toFixed(2)}</span></div>
+                <div className="total-line-row font-bold"><span>Total GST (5%):</span><span>₹{totalTax.toFixed(2)}</span></div>
+                {order.shippingCharge > 0 && <div className="total-line-row"><span>Shipping:</span><span>₹{order.shippingCharge.toFixed(2)}</span></div>}
+                <div className="grand-total-divider" />
+                <div className="grand-total-row"><span>Grand Total:</span><span>₹{grandTotal.toFixed(2)}</span></div>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

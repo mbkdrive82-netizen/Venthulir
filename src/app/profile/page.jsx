@@ -36,6 +36,9 @@ import {
   X
 } from 'lucide-react';
 import './ProfilePage.css';
+import TaxInvoice from '@/components/TaxInvoice';
+
+let globalCatalogProductsCache = null;
 
 function ProfileContent() {
   const { user, logout, isAuthenticated, updateUser } = useAuth();
@@ -46,14 +49,14 @@ function ProfileContent() {
   // Active Tab from query param (defaults to 'profile')
   const initialTab = searchParams.get('tab') || 'profile';
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // ── Tab 1: Profile Information State ──
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
-    name: '',
-    phone: '',
-    gender: 'Male',
+    name: user?.name || '',
+    phone: user?.phone || '',
+    gender: user?.gender || 'Male',
   });
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
@@ -88,6 +91,7 @@ function ProfileContent() {
   const [orderFilter, setOrderFilter] = useState('All');
   const [orderSearch, setOrderSearch] = useState('');
   const [selectedOrderForTracking, setSelectedOrderForTracking] = useState(null);
+  const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState(null);
 
   // ── Tab 4: Wishlist State ──
   const [wishlistProducts, setWishlistProducts] = useState([
@@ -95,17 +99,19 @@ function ProfileContent() {
     { id: '6aba0cd61452a86806531192', name: 'High-Curcumin Pure Turmeric Powder', price: 140, mrp: 165, rating: 4.9, reviews: 89, image: '/assets/hero/turmeric.png', inStock: true },
     { id: '6aba0cd61452a86806531196', name: 'Royal Chettinad Garam Masala Blend', price: 180, mrp: 210, rating: 4.7, reviews: 64, image: '/assets/hero/garam_masala.png', inStock: true }
   ]);
-  const [catalogProducts, setCatalogProducts] = useState([]);
+  const [catalogProducts, setCatalogProducts] = useState(globalCatalogProductsCache || []);
 
   useEffect(() => {
-    fetch('/api/products?nocache=true&limit=100')
+    if (globalCatalogProductsCache) {
+      setCatalogProducts(globalCatalogProductsCache);
+      return;
+    }
+    fetch('/api/products?limit=50')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (data?.products && Array.isArray(data.products)) {
-          setCatalogProducts(data.products);
-        } else if (Array.isArray(data)) {
-          setCatalogProducts(data);
-        }
+        const prods = data?.products && Array.isArray(data.products) ? data.products : (Array.isArray(data) ? data : []);
+        globalCatalogProductsCache = prods;
+        setCatalogProducts(prods);
       })
       .catch(() => {});
   }, []);
@@ -135,10 +141,11 @@ function ProfileContent() {
 
   // Authentication check
   useEffect(() => {
-    if (!isAuthenticated && typeof window !== 'undefined' && !localStorage.getItem('venthulir_token')) {
-      router.push('/login?redirect=/profile');
-    } else {
-      setLoading(false);
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('venthulir_token');
+    const savedUser = localStorage.getItem('venthulir_user');
+    if (!isAuthenticated && !token && !savedUser) {
+      router.replace('/login?redirect=/profile');
     }
   }, [isAuthenticated, router]);
 
@@ -405,13 +412,36 @@ function ProfileContent() {
           
           {/* Hello User Card */}
           <div className="fk-user-card">
-            <div className="fk-avatar">
-              {userInitial}
+            <div className="fk-avatar" style={user?.avatar ? { background: 'transparent', padding: 0 } : {}}>
+              {user?.avatar ? (
+                <img 
+                  src={user.avatar} 
+                  alt={user?.name || 'User'} 
+                  referrerPolicy="no-referrer"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                />
+              ) : (
+                userInitial
+              )}
             </div>
             <div className="fk-user-details">
               <div className="fk-user-hello">Hello,</div>
               <div className="fk-user-name">{user?.name || 'Valued Patron'}</div>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm('Are you sure you want to log out from Venthulir?')) {
+                  logout();
+                  router.push('/login');
+                }
+              }}
+              className="fk-user-card-logout-btn"
+              title="Log out"
+            >
+              <LogOut size={16} />
+              <span>Logout</span>
+            </button>
           </div>
 
           {/* Navigation Card */}
@@ -565,8 +595,17 @@ function ProfileContent() {
         <div className="fk-mobile-account-hub">
           {/* User Banner */}
           <div className="fk-mobile-user-card">
-            <div className="fk-avatar">
-              {userInitial}
+            <div className="fk-avatar" style={user?.avatar ? { background: 'transparent', padding: 0 } : {}}>
+              {user?.avatar ? (
+                <img 
+                  src={user.avatar} 
+                  alt={user?.name || 'User'} 
+                  referrerPolicy="no-referrer"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                />
+              ) : (
+                userInitial
+              )}
             </div>
             <div className="fk-mobile-user-details">
               <div className="fk-user-hello">Hello,</div>
@@ -755,6 +794,7 @@ function ProfileContent() {
                         required
                         disabled={!isEditingProfile}
                         className="fk-text-input"
+                        placeholder="Your full name"
                         value={profileForm.name} 
                         onChange={e => setProfileForm(p => ({ ...p, name: e.target.value }))}
                       />
@@ -779,27 +819,23 @@ function ProfileContent() {
                       ))}
                     </div>
                   </div>
-
-                  {isEditingProfile && (
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-                      <button type="submit" disabled={savingProfile} className="fk-btn-save">
-                        {savingProfile ? 'Saving...' : 'SAVE'}
-                      </button>
-                      <button type="button" onClick={() => setIsEditingProfile(false)} className="fk-btn-cancel">
-                        CANCEL
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 {/* Email Address Section */}
                 <div className="fk-section-block">
                   <div className="fk-block-title">
                     <span>Email Address</span>
-                    <span className="fk-badge-verified">
-                      <CheckCircle2 size={12} />
-                      <span>Verified</span>
-                    </span>
+                    {user?.authProvider === 'google' || user?.googleId ? (
+                      <span className="fk-badge-google">
+                        <CheckCircle2 size={12} />
+                        <span>Google Verified</span>
+                      </span>
+                    ) : (
+                      <span className="fk-badge-verified">
+                        <CheckCircle2 size={12} />
+                        <span>Verified</span>
+                      </span>
+                    )}
                   </div>
                   <div className="fk-inputs-row">
                     <div className="fk-input-group">
@@ -817,10 +853,16 @@ function ProfileContent() {
                 <div className="fk-section-block">
                   <div className="fk-block-title">
                     <span>Mobile Number</span>
-                    <span className="fk-badge-verified">
-                      <CheckCircle2 size={12} />
-                      <span>Verified</span>
-                    </span>
+                    {profileForm.phone || user?.phone ? (
+                      <span className="fk-badge-verified">
+                        <CheckCircle2 size={12} />
+                        <span>Verified</span>
+                      </span>
+                    ) : (
+                      <span className="fk-badge-empty">
+                        <span>Not Added</span>
+                      </span>
+                    )}
                   </div>
                   <div className="fk-inputs-row">
                     <div className="fk-input-group">
@@ -828,13 +870,36 @@ function ProfileContent() {
                         type="tel" 
                         disabled={!isEditingProfile}
                         className="fk-text-input"
-                        placeholder="+91 98765 43210"
+                        placeholder={isEditingProfile ? "Enter 10-digit mobile number (e.g. 9876543210)" : "No mobile number added yet"}
                         value={profileForm.phone} 
                         onChange={e => setProfileForm(p => ({ ...p, phone: e.target.value }))}
                       />
                     </div>
                   </div>
                 </div>
+
+                {/* Save / Cancel Bar when editing */}
+                {isEditingProfile && (
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '20px', padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <button type="submit" disabled={savingProfile} className="fk-btn-save" style={{ minWidth: '130px' }}>
+                      {savingProfile ? 'SAVING...' : 'SAVE CHANGES'}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setIsEditingProfile(false);
+                        setProfileForm({
+                          name: user?.name || '',
+                          phone: user?.phone || '',
+                          gender: user?.gender || 'Male'
+                        });
+                      }} 
+                      className="fk-btn-cancel"
+                    >
+                      CANCEL
+                    </button>
+                  </div>
+                )}
 
               </form>
 
@@ -1171,6 +1236,15 @@ function ProfileContent() {
                             style={{ fontSize: '0.8rem' }}
                           >
                             Track Package
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={() => setSelectedOrderForInvoice(order)}
+                            className="fk-link-btn"
+                            style={{ fontSize: '0.8rem' }}
+                          >
+                            <FileText size={13} />
+                            Invoice
                           </button>
                           {order.items?.[0] && (
                             <button 
@@ -1671,6 +1745,15 @@ function ProfileContent() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* ── Official Tax Invoice Modal for Customer ── */}
+      {selectedOrderForInvoice && (
+        <TaxInvoice
+          order={selectedOrderForInvoice}
+          isOpen={!!selectedOrderForInvoice}
+          onClose={() => setSelectedOrderForInvoice(null)}
+        />
       )}
 
     </div>
